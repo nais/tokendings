@@ -1,0 +1,23 @@
+# Idea project files
+*.iml
+.idea/
+
+# Gradle files
+out/
+build/
+.gradle/
+/gradle/caches/
+/gradle/daemon/
+/gradle/native/
+/gradle/wrapper/dists/
+
+# Generated sources
+src/generated
+
+# OS specific
+.DS_Store
+
+#node
+node_modules/
+jspm_packages/
+dist/
