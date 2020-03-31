@@ -6,9 +6,33 @@
         </encoder>
     </appender>
 
-    <logger name="no.nav" level="DEBUG"/>
+    <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
+<!--
+    <appender name="secureLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/secure-logs/secure.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>/secure-logs/secure.log.%i</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>1</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>50MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
+-->
+    <logger name="securelog" level="DEBUG" additivity="false">
+        <appender-ref ref="secureLog" />
+    </logger>
+
+    <logger name="io.ktor.auth.jwt" level="TRACE" />
+
+    <logger name="io.nais" level="DEBUG"/>
     <logger name="ktor.application" level="DEBUG"/>
     <logger name="io.ktor" level="TRACE"/>
+
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

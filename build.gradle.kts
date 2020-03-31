@@ -1,4 +1,4 @@
-val ktorVersion = "1.2.5"
+val ktorVersion = "1.3.2"
 val mockkVersion = "1.9.3"
 val kotlinResultVersion = "1.1.4"
 val assertjVersion = "3.14.0"
@@ -11,7 +11,10 @@ val junitJupiterVersion = "5.5.2"
 val konfigVersion = "1.6.10.0"
 val kotlinVersion = "1.3.61"
 val freemarkerVersion = "2.3.29"
-val mainClassKt = "io.nais.security.oauth2.TokenExchangeServiceKt"
+val micrometerRegistryPrometheusVersion = "1.3.5"
+val logstashLogbackEncoderVersion = "5.2"
+
+val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
@@ -47,10 +50,14 @@ dependencies {
     implementation("io.ktor:ktor-client-json:$ktorVersion")
     implementation("io.ktor:ktor-client-jackson:$ktorVersion")
     implementation("com.natpryce:konfig:$konfigVersion")
+    implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
+    implementation("io.ktor:ktor-metrics-micrometer:$ktorVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus:$micrometerRegistryPrometheusVersion")
     implementation("io.ktor:ktor-jackson:$ktorVersion")
     implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
+    implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$mockWebServerVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")

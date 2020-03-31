@@ -34,6 +34,7 @@ class JwtTokenIssuer(
     fun publicJwkSet(): JWKSet = jwkSet.toPublicJWKSet()
 
     fun issueTokenFor(
+        clientId: String,
         claimsSet: JWTClaimsSet,
         audience: String
     ): SignedJWT {
@@ -46,6 +47,8 @@ class JwtTokenIssuer(
                 .issueTime(Date.from(now))
                 .jwtID(UUID.randomUUID().toString())
                 .audience(audience)
+                .claim("client_id", clientId)
+                .claim("idp", claimsSet.issuer)
                 .build()
         )
     }
