@@ -2,27 +2,29 @@ package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.nimbusds.oauth2.sdk.ErrorObject
 
-data class WellKnown(
-    val issuer: String,
-    @JsonProperty("authorization_endpoint")
-    val authorizationEndpoint: String,
-    @JsonProperty("token_endpoint")
-    val tokenEndpoint: String,
-    @JsonProperty("jwks_uri")
-    val jwksUri: String,
-    /*@JsonProperty("response_types_supported")
-val responseTypesSupported: List<String> = listOf("code"),*/
-    @JsonProperty("grant_types_supported")
-    val grantTypesSupported: List<String> = listOf("urn:ietf:params:oauth:grant-type:token-exchange"),
-    @JsonProperty("token_endpoint_auth_methods_supported")
-    val tokenEndpointAuthMethodsSupported: List<String> = listOf("private_key_jwt"),
-    @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
-    val tokenEndpointAuthSigningAlgValuesSupported: List<String> = listOf("RS256"),
-    @JsonProperty("subject_types_supported")
-    val subjectTypesSupported: List<String> = listOf("public")
-    /* @JsonProperty("id_token_signing_alg_values_supported")
- val idTokenSigningAlgValuesSupported: List<String> = listOf("RS256")*/
+data class OAuth2Exception(val errorObject: ErrorObject? = null, val throwable: Throwable? = null) : RuntimeException(errorObject?.toString(), throwable)
+
+object GrantType {
+    const val tokenExchangeGrant = "urn:ietf:params:oauth:grant-type:token-exchange"
+}
+
+object TokenType {
+    const val tokenTypeJwt = "urn:ietf:params:oauth:token-type:jwt"
+}
+
+// actually form-url-encoded
+data class OAuth2TokenRequest(
+    @JsonProperty("grant_type")
+    val grantType: String,
+    @JsonProperty("subject_token_type")
+    val subjectTokenType: String,
+    @JsonProperty("subject_token")
+    val subjectToken: String,
+    val audience: String,
+    val resource: String?,
+    val scope: String?
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -39,4 +41,22 @@ data class OAuth2TokenResponse(
     val scope: String? = null,
     @JsonProperty("refresh_token")
     val refreshToken: String? = null
+)
+
+data class WellKnown(
+    val issuer: String,
+    @JsonProperty("authorization_endpoint")
+    val authorizationEndpoint: String,
+    @JsonProperty("token_endpoint")
+    val tokenEndpoint: String,
+    @JsonProperty("jwks_uri")
+    val jwksUri: String,
+    @JsonProperty("grant_types_supported")
+    val grantTypesSupported: List<String> = listOf("urn:ietf:params:oauth:grant-type:token-exchange"),
+    @JsonProperty("token_endpoint_auth_methods_supported")
+    val tokenEndpointAuthMethodsSupported: List<String> = listOf("private_key_jwt"),
+    @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
+    val tokenEndpointAuthSigningAlgValuesSupported: List<String> = listOf("RS256"),
+    @JsonProperty("subject_types_supported")
+    val subjectTypesSupported: List<String> = listOf("public")
 )

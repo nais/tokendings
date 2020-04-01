@@ -16,12 +16,10 @@ import io.ktor.auth.UnauthorizedResponse
 import io.ktor.http.Parameters
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
-import io.nais.security.oauth2.OAuth2Exception
+import io.nais.security.oauth2.model.OAuth2Exception
 
-abstract class ClientAuthenticationCredential(val clientAuthenticationMethod: ClientAuthenticationMethod) : Credential
-
-data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) :
-    ClientAuthenticationCredential(ClientAuthenticationMethod.PRIVATE_KEY_JWT) {
+data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) : Credential {
+    val clientAuthenticationMethod: ClientAuthenticationMethod = ClientAuthenticationMethod.PRIVATE_KEY_JWT
     val signedJWT: SignedJWT = when (clientAssertionType) {
         JWT_BEARER -> {
             SignedJWT.parse(clientAssertion)
@@ -44,7 +42,7 @@ class ClientAuthenticationProvider internal constructor(
 
     class Configuration internal constructor(name: String?) : AuthenticationProvider.Configuration(name) {
 
-        internal var authenticationFunction: AuthenticationFunction<ClientAuthenticationCredential> = {
+        internal var authenticationFunction: AuthenticationFunction<ClientAssertionCredential> = {
             throw NotImplementedError(
                 "client_asssertion validate function is not specified. Use oauth2ClientAuth { validate { ... } } to fix."
             )
@@ -91,7 +89,7 @@ fun Authentication.Configuration.oauth2ClientAuth(
     register(provider)
 }
 
-private suspend fun ApplicationCall.receiveClientAuthenticationCredentials(): ClientAuthenticationCredential? =
+private suspend fun ApplicationCall.receiveClientAuthenticationCredentials(): ClientAssertionCredential? =
     clientAssertion(this.receiveParameters())
 
 private fun clientAssertion(postParameters: Parameters?): ClientAssertionCredential? {

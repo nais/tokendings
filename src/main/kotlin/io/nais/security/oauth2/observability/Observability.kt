@@ -1,4 +1,4 @@
-package io.nais.security.oauth2
+package io.nais.security.oauth2.observability
 
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCallPipeline
@@ -34,7 +34,7 @@ import org.slf4j.Logger
 
 private val ignoredPathsForTracing = listOf("/metrics", "/isalive", "/isready")
 
-internal fun Application.probesAndMetrics() {
+internal fun Application.observability() {
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(
             PrometheusConfig.DEFAULT,

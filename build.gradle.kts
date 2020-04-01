@@ -58,6 +58,7 @@ dependencies {
     implementation("com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
+    testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$mockWebServerVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
