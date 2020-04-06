@@ -1,56 +1,83 @@
 package io.nais.security.oauth2.config
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.natpryce.konfig.ConfigurationProperties
+import com.natpryce.konfig.ConfigurationMap
+import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.get
+import io.nais.security.oauth2.authentication.ClientRegistry
+import io.nais.security.oauth2.authentication.OAuth2Client
+import io.nais.security.oauth2.config.ConfigKeys.APPLICATION_INGRESS
+import io.nais.security.oauth2.config.ConfigKeys.APPLICATION_PORT
+import io.nais.security.oauth2.config.ConfigKeys.APPLICATION_PROFILE
+import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner
-import java.net.ProxySelector
 
-internal val defaultHttpClient = HttpClient(Apache) {
-    install(JsonFeature) {
-        serializer = JacksonSerializer {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        }
-    }
-    engine {
-        customizeClient { setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault())) }
-    }
-}
-
-private val config = ConfigurationProperties.systemProperties() overriding
-    EnvironmentVariables() overriding
-    ConfigurationProperties.fromResource("application.properties")
+//TODO ensure local props cannot be enabled in prod
+private val config =
+    systemProperties() overriding
+        EnvironmentVariables() overriding
+        localProperties()
+//fromResource("application.properties")
 
 private val log = KotlinLogging.logger {}
 
-data class Configuration(
+private const val appName = "tokendings"
+
+object ConfigKeys {
+    const val APPLICATION_PROFILE = "$appName.profile"
+    const val APPLICATION_PORT = "$appName.port"
+    const val APPLICATION_INGRESS = "$appName.ingress"
+}
+
+private fun localProperties() = ConfigurationMap(
+    mapOf(
+        APPLICATION_PROFILE to Profile.LOCAL.toString(),
+        APPLICATION_PORT to "8080",
+        APPLICATION_INGRESS to "http://localhost:8080"
+    )
+)
+
+enum class Profile {
+    LOCAL,
+    DEV,
+    PROD
+}
+
+class Configuration(
     val application: Application = Application(),
     val tokenIssuerConfig: TokenIssuerConfig = TokenIssuerConfig(application.ingress),
-    val tokenValidatorConfig: TokenValidatorConfig = TokenValidatorConfig(emptyList())
-) {
+    val tokenValidatorConfig: TokenValidatorConfig = TokenValidatorConfig(application.profile)
+){
 
     data class Application(
-        val port: Int = config[Key("application.port", intType)],
-        val name: String = config[Key("application.name", stringType)],
-        val ingress: String = config[Key("application.ingress", stringType)]
+        val profile: Profile = config[Key(APPLICATION_PROFILE, stringType)].let { Profile.valueOf(it) },
+        val port: Int = config[Key(APPLICATION_PORT, intType)],
+        val ingress: String = config[Key(APPLICATION_INGRESS, stringType)]
     )
+
+    private fun tokenValidatorConfig(profile: Profile): TokenValidatorConfig =
+        when (profile) {
+            Profile.LOCAL -> TokenValidatorConfig(listOf())
+            Profile.DEV -> TokenValidatorConfig(listOf())
+            else -> TokenValidatorConfig(listOf())
+        }
 }
 
 data class TokenValidatorConfig(private val externalIssuerDiscoveryUrls: List<String>) {
+
+    constructor(profile: Profile):this(
+        when (profile) {
+            Profile.LOCAL -> listOf<String>()
+            Profile.DEV -> listOf<String>()
+            else -> listOf<String>()
+        }
+    )
 
     val issuerToWellKnownMap: Map<String, WellKnown> = externalIssuerDiscoveryUrls.asSequence()
         .map {
@@ -62,7 +89,12 @@ data class TokenValidatorConfig(private val externalIssuerDiscoveryUrls: List<St
 }
 
 // TODO keys with expiration?
-data class TokenIssuerConfig(val issuerUrl: String) {
+data class TokenIssuerConfig(
+    val issuerUrl: String,
+    val oauth2Clients: List<OAuth2Client> = listOf()
+) {
+
+    val clientRegistry: ClientRegistry = ClientRegistry(issuerUrl.path(tokenPath), oauth2Clients)
 
     val wellKnown: WellKnown = WellKnown(
         issuer = issuerUrl,

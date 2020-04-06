@@ -5,28 +5,19 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.auth.Authentication
 import io.ktor.auth.authenticate
 import io.ktor.auth.principal
-import io.ktor.features.ContentNegotiation
-import io.ktor.http.ContentType
 import io.ktor.http.Parameters
-import io.ktor.jackson.JacksonConverter
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
+import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
-import io.ktor.routing.routing
-import io.nais.security.oauth2.Jackson.defaultMapper
 import io.nais.security.oauth2.authentication.ClientAuthenticationPrincipal
-import io.nais.security.oauth2.authentication.ClientRegistry
 import io.nais.security.oauth2.authentication.OAuth2Client
-import io.nais.security.oauth2.authentication.oauth2ClientAuth
 import io.nais.security.oauth2.config.Configuration
 import io.nais.security.oauth2.config.TokenIssuerConfig
 import io.nais.security.oauth2.model.GrantType.tokenExchangeGrant
@@ -49,53 +40,36 @@ object Jackson {
     }
 }
 
-internal fun Application.tokenExchangeApi(config: Configuration) {
-
+internal fun Routing.tokenExchangeApi(config: Configuration) {
     val tokenIssuer = TokenIssuer(config.tokenIssuerConfig, config.tokenValidatorConfig)
-    val clientRegistry = ClientRegistry(config.tokenIssuerConfig, emptyList())
 
-    install(ContentNegotiation) {
-        register(ContentType.Application.Json, JacksonConverter(defaultMapper))
+    get(TokenIssuerConfig.wellKnownPath) {
+        call.respond(config.tokenIssuerConfig.wellKnown)
     }
 
-    install(Authentication) {
-        oauth2ClientAuth("oauth2ClientAuth") {
-            validate { credential ->
-                clientRegistry.authenticate(credential)
-            }
-        }
+    get(TokenIssuerConfig.jwksPath) {
+        call.respond(tokenIssuer.publicJwkSet().toJSONObject())
     }
 
-    routing {
-
-        get(TokenIssuerConfig.wellKnownPath) {
-            call.respond(config.tokenIssuerConfig.wellKnown)
-        }
-
-        get(TokenIssuerConfig.jwksPath) {
-            call.respond(tokenIssuer.publicJwkSet().toJSONObject())
-        }
-
-        route(TokenIssuerConfig.tokenPath) {
-            authenticate("oauth2ClientAuth") {
-                post {
-                    val client: OAuth2Client = call.authenticatedClient()
-                    val tokenRequest: OAuth2TokenRequest = call.receiveTokenRequest()
-                    val token: SignedJWT = tokenIssuer.issueTokenFor(client, tokenRequest)
-                    call.respond(
-                        OAuth2TokenResponse(
-                            accessToken = token.serialize(),
-                            expiresIn = token.expiresIn(),
-                            scope = tokenRequest.scope
-                        )
+    route(TokenIssuerConfig.tokenPath) {
+        authenticate("oauth2ClientAuth") {
+            post {
+                val client: OAuth2Client = call.authenticatedClient()
+                val tokenRequest: OAuth2TokenRequest = call.receiveTokenRequest()
+                val token: SignedJWT = tokenIssuer.issueTokenFor(client, tokenRequest)
+                call.respond(
+                    OAuth2TokenResponse(
+                        accessToken = token.serialize(),
+                        expiresIn = token.expiresIn(),
+                        scope = tokenRequest.scope
                     )
-                }
+                )
             }
         }
     }
 }
 
-private suspend fun ApplicationCall.authenticatedClient(): OAuth2Client =
+private fun ApplicationCall.authenticatedClient(): OAuth2Client =
     principal<ClientAuthenticationPrincipal>()?.oauth2Client ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT)
 
 private suspend fun ApplicationCall.receiveTokenRequest(): OAuth2TokenRequest {

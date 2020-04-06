@@ -7,7 +7,6 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod
 import io.ktor.auth.Credential
 import io.ktor.auth.Principal
-import io.nais.security.oauth2.config.TokenIssuerConfig
 import io.nais.security.oauth2.token.verifyJwt
 import mu.KotlinLogging
 
@@ -18,7 +17,7 @@ data class ClientAuthenticationPrincipal(val oauth2Client: OAuth2Client, val cli
 data class OAuth2Client(val clientId: String, val jwkSet: JWKSet)
 
 class ClientRegistry(
-    private val tokenIssuerConfig: TokenIssuerConfig,
+    private val acceptedAudience: String,
     private val clients: List<OAuth2Client>
 ) {
 
@@ -58,7 +57,7 @@ class ClientRegistry(
             JWTClaimsSet.Builder()
                 .issuer(oAuth2Client.clientId)
                 .subject(oAuth2Client.clientId)
-                .audience(tokenIssuerConfig.wellKnown.tokenEndpoint)
+                .audience(acceptedAudience)
                 .build(),
             HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti"))
         )

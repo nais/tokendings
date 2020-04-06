@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.nimbusds.oauth2.sdk.ErrorObject
 
-data class OAuth2Exception(val errorObject: ErrorObject? = null, val throwable: Throwable? = null) : RuntimeException(errorObject?.toString(), throwable)
+data class OAuth2Exception(
+    val errorObject: ErrorObject? = null,
+    val throwable: Throwable? = null)
+    : RuntimeException(errorObject?.toJSONObject()?.toJSONString(), throwable)
 
 object GrantType {
     const val tokenExchangeGrant = "urn:ietf:params:oauth:grant-type:token-exchange"

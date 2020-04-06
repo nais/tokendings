@@ -58,7 +58,7 @@ class TokenIssuer(tokenIssuerConfig: TokenIssuerConfig, tokenValidatorConfig: To
 }
 
 // TODO support more keys - i.e for rotating
-internal class JwtTokenProvider(
+class JwtTokenProvider(
     val issuerUrl: String,
     private val tokenExpiry: Long = 60,
     keySize: Int = 2048
@@ -91,22 +91,24 @@ internal class JwtTokenProvider(
                 .audience(audience)
                 .claim("client_id", clientId)
                 .claim("idp", claimsSet.issuer)
-                .build()
+                .build(),
+            rsaKey
         )
     }
 
-    private fun createSignedJWT(claimsSet: JWTClaimsSet): SignedJWT =
-        SignedJWT(
-            JWSHeader.Builder(JWSAlgorithm.RS256)
-                .keyID(rsaKey.keyID)
-                .type(JOSEObjectType.JWT).build(),
-            claimsSet
-        ).apply {
-            sign(RSASSASigner(rsaKey.toPrivateKey()))
-        }
-
     companion object {
-        private fun generateJWKSet(keyId: String, keySize: Int): JWKSet =
+
+        fun createSignedJWT(claimsSet: JWTClaimsSet, rsaKey: RSAKey): SignedJWT =
+            SignedJWT(
+                JWSHeader.Builder(JWSAlgorithm.RS256)
+                    .keyID(rsaKey.keyID)
+                    .type(JOSEObjectType.JWT).build(),
+                claimsSet
+            ).apply {
+                sign(RSASSASigner(rsaKey.toPrivateKey()))
+            }
+
+        fun generateJWKSet(keyId: String, keySize: Int): JWKSet =
             JWKSet(
                 createJWK(
                     keyId,

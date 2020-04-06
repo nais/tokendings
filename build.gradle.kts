@@ -13,6 +13,7 @@ val kotlinVersion = "1.3.61"
 val freemarkerVersion = "2.3.29"
 val micrometerRegistryPrometheusVersion = "1.3.5"
 val logstashLogbackEncoderVersion = "5.2"
+val mockOAuth2ServerVersion = "0.1.33"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -58,6 +59,7 @@ dependencies {
     implementation("com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
+    testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$mockWebServerVersion")
