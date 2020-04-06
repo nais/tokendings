@@ -2,19 +2,12 @@ package io.nais.security.oauth2
 
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
-import io.ktor.application.call
-import io.ktor.response.respond
-import io.ktor.routing.get
-import io.ktor.routing.route
-import io.ktor.routing.routing
 import io.ktor.util.KtorExperimentalAPI
-import io.nais.security.oauth2.authentication.ClientRegistry
 import io.nais.security.oauth2.authentication.OAuth2Client
 import io.nais.security.oauth2.config.Configuration
 import io.nais.security.oauth2.config.TokenIssuerConfig
 import io.nais.security.oauth2.config.TokenValidatorConfig
 import io.nais.security.oauth2.config.path
-import io.nais.security.oauth2.token.JwtTokenProvider
 import io.nais.security.oauth2.token.JwtTokenProvider.Companion.createSignedJWT
 import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import mu.KotlinLogging
@@ -24,9 +17,8 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 
-val log = KotlinLogging.logger {  }
+val log = KotlinLogging.logger { }
 
 @KtorExperimentalAPI
 fun main() {
@@ -48,8 +40,17 @@ fun main() {
         ),
         tokenValidatorConfig = TokenValidatorConfig(listOf(mockOAuth2Server.wellKnownUrl("mock").toString()))
     )
-   tokenExchangeApp(config, DefaultRouting(config)).start(wait = true)
+    tokenExchangeApp(config, DefaultRouting(config)).start(wait = true)
 }
+
+private fun startMockOAuth2Server(): MockOAuth2Server =
+    MockOAuth2Server(
+        OAuth2Config(
+            interactiveLogin = true
+        )
+    ).apply {
+        this.start(1111)
+    }
 
 private fun oauth2Clients(app: Configuration.Application): List<OAuth2Client> {
     val clientId = "local:client"
