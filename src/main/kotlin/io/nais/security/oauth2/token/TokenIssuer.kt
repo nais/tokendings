@@ -10,10 +10,9 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.authentication.OAuth2Client
-import io.nais.security.oauth2.config.TokenIssuerConfig
 import io.nais.security.oauth2.config.TokenValidatorConfig
 import io.nais.security.oauth2.model.OAuth2Exception
-import io.nais.security.oauth2.model.OAuth2TokenRequest
+import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import mu.KotlinLogging
 import java.net.URL
 import java.security.KeyPair
@@ -26,9 +25,9 @@ import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
-class TokenIssuer(tokenIssuerConfig: TokenIssuerConfig, tokenValidatorConfig: TokenValidatorConfig) {
+class TokenIssuer(issuerUrl: String, tokenValidatorConfig: TokenValidatorConfig) {
 
-    private val tokenProvider = JwtTokenProvider(tokenIssuerConfig.issuerUrl)
+    private val tokenProvider = JwtTokenProvider(issuerUrl)
     private val tokenValidators: Map<String, TokenValidator> =
         tokenValidatorConfig.issuerToWellKnownMap.entries.associate { it.key to TokenValidator(it.key, URL(it.value.jwksUri)) }
 
@@ -38,13 +37,24 @@ class TokenIssuer(tokenIssuerConfig: TokenIssuerConfig, tokenValidatorConfig: To
 
     fun issueTokenFor(
         oAuth2Client: OAuth2Client,
-        tokenRequest: OAuth2TokenRequest
+        tokenExchangeRequest: OAuth2TokenExchangeRequest
     ): SignedJWT {
-        val targetAudience: String = tokenRequest.audience
-        val subjectTokenJwt = SignedJWT.parse(tokenRequest.subjectToken)!!
+        val targetAudience: String = tokenExchangeRequest.audience
+        val subjectTokenJwt = SignedJWT.parse(tokenExchangeRequest.subjectToken)!!
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)
         return tokenProvider.issueTokenFor(oAuth2Client.clientId, subjectTokenClaims, targetAudience)
+    }
+
+    fun issueTokenFor(
+        clientId: String,
+        audience: String
+    ): SignedJWT {
+        return tokenProvider.issueTokenFor(
+            clientId,
+            JWTClaimsSet.Builder().subject(clientId).build(),
+            audience
+        )
     }
 
     private fun validator(issuer: String?): TokenValidator =
@@ -60,7 +70,7 @@ class TokenIssuer(tokenIssuerConfig: TokenIssuerConfig, tokenValidatorConfig: To
 // TODO support more keys - i.e for rotating
 class JwtTokenProvider(
     val issuerUrl: String,
-    private val tokenExpiry: Long = 60,
+    private val tokenExpiry: Long = 300,
     keySize: Int = 2048
 ) {
     private val jwkSet: JWKSet
@@ -90,7 +100,9 @@ class JwtTokenProvider(
                 .jwtID(UUID.randomUUID().toString())
                 .audience(audience)
                 .claim("client_id", clientId)
-                .claim("idp", claimsSet.issuer)
+                .apply {
+                    claimsSet.issuer?.let { claim("idp", it) }
+                }
                 .build(),
             rsaKey
         )

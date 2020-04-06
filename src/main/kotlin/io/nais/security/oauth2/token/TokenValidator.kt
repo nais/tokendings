@@ -19,6 +19,7 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import java.net.URL
 import java.util.HashSet
 
+// TODO remove blocking calls from i.e. RemoteJWKSet
 class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityContext?>) {
 
     constructor(issuer: String, jwkSetUri: URL) : this(issuer, RemoteJWKSet(jwkSetUri))

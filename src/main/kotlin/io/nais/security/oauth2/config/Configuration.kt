@@ -15,15 +15,16 @@ import io.nais.security.oauth2.config.ConfigKeys.APPLICATION_PORT
 import io.nais.security.oauth2.config.ConfigKeys.APPLICATION_PROFILE
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
-//TODO ensure local props cannot be enabled in prod
+// TODO ensure local props cannot be enabled in prod
 private val config =
     systemProperties() overriding
         EnvironmentVariables() overriding
         localProperties()
-//fromResource("application.properties")
+// fromResource("application.properties")
 
 private val log = KotlinLogging.logger {}
 
@@ -50,12 +51,12 @@ enum class Profile {
 }
 
 class Configuration(
-    val application: Application = Application(),
-    val tokenIssuerConfig: TokenIssuerConfig = TokenIssuerConfig(application.ingress),
-    val tokenValidatorConfig: TokenValidatorConfig = TokenValidatorConfig(application.profile)
-){
+    val serverConfig: ServerConfig = ServerConfig(),
+    val tokenValidatorConfig: TokenValidatorConfig = TokenValidatorConfig(serverConfig.profile),
+    val tokenIssuerConfig: TokenIssuerConfig = TokenIssuerConfig(serverConfig.ingress, tokenValidatorConfig)
+) {
 
-    data class Application(
+    data class ServerConfig(
         val profile: Profile = config[Key(APPLICATION_PROFILE, stringType)].let { Profile.valueOf(it) },
         val port: Int = config[Key(APPLICATION_PORT, intType)],
         val ingress: String = config[Key(APPLICATION_INGRESS, stringType)]
@@ -71,7 +72,7 @@ class Configuration(
 
 data class TokenValidatorConfig(private val externalIssuerDiscoveryUrls: List<String>) {
 
-    constructor(profile: Profile):this(
+    constructor(profile: Profile) : this(
         when (profile) {
             Profile.LOCAL -> listOf<String>()
             Profile.DEV -> listOf<String>()
@@ -91,9 +92,10 @@ data class TokenValidatorConfig(private val externalIssuerDiscoveryUrls: List<St
 // TODO keys with expiration?
 data class TokenIssuerConfig(
     val issuerUrl: String,
+    val tokenValidatorConfig: TokenValidatorConfig,
     val oauth2Clients: List<OAuth2Client> = listOf()
 ) {
-
+    val tokenIssuer: TokenIssuer = TokenIssuer(issuerUrl, tokenValidatorConfig)
     val clientRegistry: ClientRegistry = ClientRegistry(issuerUrl.path(tokenPath), oauth2Clients)
 
     val wellKnown: WellKnown = WellKnown(

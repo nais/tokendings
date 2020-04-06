@@ -22,10 +22,9 @@ import io.nais.security.oauth2.config.Configuration
 import io.nais.security.oauth2.config.TokenIssuerConfig
 import io.nais.security.oauth2.model.GrantType.tokenExchangeGrant
 import io.nais.security.oauth2.model.OAuth2Exception
-import io.nais.security.oauth2.model.OAuth2TokenRequest
+import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.TokenType.tokenTypeJwt
-import io.nais.security.oauth2.token.TokenIssuer
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
@@ -41,7 +40,7 @@ object Jackson {
 }
 
 internal fun Routing.tokenExchangeApi(config: Configuration) {
-    val tokenIssuer = TokenIssuer(config.tokenIssuerConfig, config.tokenValidatorConfig)
+    val tokenIssuer = config.tokenIssuerConfig.tokenIssuer
 
     get(TokenIssuerConfig.wellKnownPath) {
         call.respond(config.tokenIssuerConfig.wellKnown)
@@ -55,13 +54,13 @@ internal fun Routing.tokenExchangeApi(config: Configuration) {
         authenticate("oauth2ClientAuth") {
             post {
                 val client: OAuth2Client = call.authenticatedClient()
-                val tokenRequest: OAuth2TokenRequest = call.receiveTokenRequest()
-                val token: SignedJWT = tokenIssuer.issueTokenFor(client, tokenRequest)
+                val tokenExchangeRequest: OAuth2TokenExchangeRequest = call.receiveTokenRequest()
+                val token: SignedJWT = tokenIssuer.issueTokenFor(client, tokenExchangeRequest)
                 call.respond(
                     OAuth2TokenResponse(
                         accessToken = token.serialize(),
                         expiresIn = token.expiresIn(),
-                        scope = tokenRequest.scope
+                        scope = tokenExchangeRequest.scope
                     )
                 )
             }
@@ -72,9 +71,9 @@ internal fun Routing.tokenExchangeApi(config: Configuration) {
 private fun ApplicationCall.authenticatedClient(): OAuth2Client =
     principal<ClientAuthenticationPrincipal>()?.oauth2Client ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT)
 
-private suspend fun ApplicationCall.receiveTokenRequest(): OAuth2TokenRequest {
+private suspend fun ApplicationCall.receiveTokenRequest(): OAuth2TokenExchangeRequest {
     val formParams: Parameters = receiveParameters()
-    return OAuth2TokenRequest(
+    return OAuth2TokenExchangeRequest(
         formParams.require("grant_type", tokenExchangeGrant),
         formParams.require("subject_token_type", tokenTypeJwt),
         formParams.require("subject_token"),
@@ -85,11 +84,11 @@ private suspend fun ApplicationCall.receiveTokenRequest(): OAuth2TokenRequest {
 }
 
 @Throws(OAuth2Exception::class)
-private fun Parameters.require(name: String, requiredValue: String? = null): String =
+fun Parameters.require(name: String, requiredValue: String? = null): String =
     when {
         requiredValue != null -> {
             this[name]
-                ?.filter { it.toString() == requiredValue }
+                ?.takeIf { it == requiredValue }
                 ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("Parameter $name must be $requiredValue"))
         }
         else -> {

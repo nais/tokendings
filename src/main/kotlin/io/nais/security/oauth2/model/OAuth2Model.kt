@@ -6,8 +6,9 @@ import com.nimbusds.oauth2.sdk.ErrorObject
 
 data class OAuth2Exception(
     val errorObject: ErrorObject? = null,
-    val throwable: Throwable? = null)
-    : RuntimeException(errorObject?.toJSONObject()?.toJSONString(), throwable)
+    val throwable: Throwable? = null
+) :
+    RuntimeException(errorObject?.toJSONObject()?.toJSONString(), throwable)
 
 object GrantType {
     const val tokenExchangeGrant = "urn:ietf:params:oauth:grant-type:token-exchange"
@@ -18,7 +19,7 @@ object TokenType {
 }
 
 // actually form-url-encoded
-data class OAuth2TokenRequest(
+data class OAuth2TokenExchangeRequest(
     @JsonProperty("grant_type")
     val grantType: String,
     @JsonProperty("subject_token_type")

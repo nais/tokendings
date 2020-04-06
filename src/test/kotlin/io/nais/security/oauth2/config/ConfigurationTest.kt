@@ -6,6 +6,5 @@ internal class ConfigurationTest {
 
     @Test
     fun testConfig() {
-
     }
 }
