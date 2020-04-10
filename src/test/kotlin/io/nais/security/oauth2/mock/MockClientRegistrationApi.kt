@@ -20,11 +20,11 @@ import io.ktor.routing.Route
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.nais.security.oauth2.authentication.ClientAssertionCredential.Companion.JWT_BEARER
+import io.nais.security.oauth2.authorization.require
 import io.nais.security.oauth2.config.Configuration
 import io.nais.security.oauth2.expiresIn
 import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.OAuth2TokenResponse
-import io.nais.security.oauth2.require
 import io.nais.security.oauth2.token.verifyJwt
 import java.net.URL
 
@@ -98,6 +98,14 @@ data class ClientRegistration(
     @JsonProperty("software_statement")
     val softwareStatement: String
 ) {
-    val grantTypes: List<String> = listOf(GrantType.tokenExchangeGrant)
+    @JsonProperty("grant_types")
+    val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
+    @JsonProperty("token_endpoint_auth_method")
     val tokenEndpointAuthMethod: String = "private_key_jwt"
 }
+
+data class SoftwareStatement(
+    val appId: String,
+    val accessPolicyInbound: List<String> = emptyList(),
+    val accessPolicyOutbound: List<String> = emptyList()
+)

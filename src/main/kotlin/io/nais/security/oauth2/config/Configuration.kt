@@ -93,10 +93,9 @@ data class TokenValidatorConfig(private val externalIssuerDiscoveryUrls: List<St
 data class TokenIssuerConfig(
     val issuerUrl: String,
     val tokenValidatorConfig: TokenValidatorConfig,
-    val oauth2Clients: List<OAuth2Client> = listOf()
+    val clientRegistry: ClientRegistry = ClientRegistry(issuerUrl.path(tokenPath), listOf())
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(issuerUrl, tokenValidatorConfig)
-    val clientRegistry: ClientRegistry = ClientRegistry(issuerUrl.path(tokenPath), oauth2Clients)
 
     val wellKnown: WellKnown = WellKnown(
         issuer = issuerUrl,

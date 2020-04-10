@@ -37,13 +37,14 @@ import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
-import io.micrometer.core.instrument.binder.kafka.KafkaConsumerMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.nais.security.oauth2.authentication.ClientRegistry
 import io.nais.security.oauth2.authentication.oauth2ClientAuth
+import io.nais.security.oauth2.authorization.TokenExchangeAuthorizer
+import io.nais.security.oauth2.authorization.TokenRequestAuthorizationFeature
 import io.nais.security.oauth2.config.Configuration
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.observability.observabilityRouting
@@ -109,8 +110,7 @@ fun tokenExchangeApp(config: Configuration, routing: ProfileAwareRouting): Netty
                     JvmGcMetrics(),
                     ProcessorMetrics(),
                     JvmThreadMetrics(),
-                    LogbackMetrics(),
-                    KafkaConsumerMetrics()
+                    LogbackMetrics()
                 )
             }
 
@@ -143,6 +143,13 @@ fun tokenExchangeApp(config: Configuration, routing: ProfileAwareRouting): Netty
                 }
             }
 
+            install(TokenRequestAuthorizationFeature) {
+                authorizers = listOf(
+                    TokenExchangeAuthorizer(config.tokenIssuerConfig.clientRegistry)
+                )
+            }
+
+
             install(DoubleReceive)
             install(ForwardedHeaderSupport)
 
@@ -151,6 +158,7 @@ fun tokenExchangeApp(config: Configuration, routing: ProfileAwareRouting): Netty
             routing.apiRouting(this)
         }
     })
+
 
 interface ProfileAwareRouting {
     fun apiRouting(application: Application): Routing

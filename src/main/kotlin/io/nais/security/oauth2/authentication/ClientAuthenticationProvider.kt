@@ -65,7 +65,6 @@ fun Authentication.Configuration.oauth2ClientAuth(
     val authenticate = provider.authenticationFunction
 
     provider.pipeline.intercept(AuthenticationPipeline.RequestAuthentication) { context ->
-
         val credentials = call.receiveClientAuthenticationCredentials()
         val principal = credentials?.let { authenticate(call, it) }
 

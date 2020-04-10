@@ -14,14 +14,24 @@ private val log = KotlinLogging.logger {}
 
 data class ClientAuthenticationPrincipal(val oauth2Client: OAuth2Client, val clientAuthenticationMethod: ClientAuthenticationMethod) : Principal
 
-data class OAuth2Client(val clientId: String, val jwkSet: JWKSet)
+data class OAuth2Client(
+    val clientId: String,
+    val jwkSet: JWKSet,
+    val accessPolicyInbound: AccessPolicy
+)
 
-class ClientRegistry(
-    private val acceptedAudience: String,
+data class AccessPolicy(
+    val clients: List<String> = emptyList()
+){
+    fun contains(clientId: String?): Boolean = clients.contains(clientId)
+}
+
+open class ClientRegistry(
+    private val requiredTokenAudience: String,
     private val clients: List<OAuth2Client>
 ) {
 
-    fun authenticate(credential: Credential): ClientAuthenticationPrincipal? =
+    open fun authenticate(credential: Credential): ClientAuthenticationPrincipal? =
         when (credential) {
             is ClientAssertionCredential -> authenticate(credential)
             else -> null
@@ -44,7 +54,7 @@ class ClientRegistry(
         }
     }
 
-    private fun findClient(clientId: String): OAuth2Client? = clients.asSequence().find { it.clientId == clientId }
+    fun findClient(clientId: String): OAuth2Client? = clients.asSequence().find { it.clientId == clientId }
 
     /**
      * Jwt Bearer token for client authentication: https://tools.ietf.org/html/draft-ietf-oauth-jwt-bearer-12
@@ -57,7 +67,7 @@ class ClientRegistry(
             JWTClaimsSet.Builder()
                 .issuer(oAuth2Client.clientId)
                 .subject(oAuth2Client.clientId)
-                .audience(acceptedAudience)
+                .audience(requiredTokenAudience)
                 .build(),
             HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti"))
         )

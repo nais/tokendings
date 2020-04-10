@@ -3,6 +3,7 @@ package io.nais.security.oauth2.model
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.nimbusds.oauth2.sdk.ErrorObject
+import io.nais.security.oauth2.model.GrantType.TOKEN_EXCHANGE_GRANT
 
 data class OAuth2Exception(
     val errorObject: ErrorObject? = null,
@@ -11,25 +12,29 @@ data class OAuth2Exception(
     RuntimeException(errorObject?.toJSONObject()?.toJSONString(), throwable)
 
 object GrantType {
-    const val tokenExchangeGrant = "urn:ietf:params:oauth:grant-type:token-exchange"
+    const val TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
 }
 
 object TokenType {
-    const val tokenTypeJwt = "urn:ietf:params:oauth:token-type:jwt"
+    const val TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 }
+
+// TODO: rename to AuthorizedOAuth2TokenRequest?
+abstract class OAuth2TokenRequest(
+    @JsonProperty("grant_type")
+    val grantType: String
+)
 
 // actually form-url-encoded
 data class OAuth2TokenExchangeRequest(
-    @JsonProperty("grant_type")
-    val grantType: String,
     @JsonProperty("subject_token_type")
     val subjectTokenType: String,
     @JsonProperty("subject_token")
     val subjectToken: String,
     val audience: String,
-    val resource: String?,
-    val scope: String?
-)
+    val resource: String? = null,
+    val scope: String? = null
+) : OAuth2TokenRequest(TOKEN_EXCHANGE_GRANT)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class OAuth2TokenResponse(

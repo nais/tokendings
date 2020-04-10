@@ -1,0 +1,9 @@
+{
+  "appId" :  "cluster:ns:app1",
+  "accessPolicyInbound" :  [
+    "cluster:ns:app2"
+  ],
+  "accessPolicyOutbound": [
+    "cluster:ns:app3"
+  ]
+}
