@@ -20,22 +20,25 @@ import io.ktor.routing.Route
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.nais.security.oauth2.authentication.ClientAssertionCredential.Companion.JWT_BEARER
-import io.nais.security.oauth2.authorization.require
-import io.nais.security.oauth2.config.Configuration
+import io.nais.security.oauth2.authentication.require
+import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.expiresIn
 import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.OAuth2TokenResponse
+import io.nais.security.oauth2.token.TokenIssuer
 import io.nais.security.oauth2.token.verifyJwt
+import net.minidev.json.JSONObject
 import java.net.URL
 
 private val jwkerJwksUrl = "http://localhost:3000/jwks"
 
-internal fun Route.clientRegistrationApi(config: Configuration) {
-    val tokenIssuer = config.tokenIssuerConfig.tokenIssuer
+internal fun Route.clientRegistrationApi(config: AppConfiguration) {
+    val issuerUrl: String = config.tokenIssuerProperties.issuerUrl
+    val tokenIssuer: TokenIssuer = config.tokenIssuer
     route("/registration") {
 
         post("/token") {
-            val allowedScope = "${config.serverConfig.ingress}/registration/client"
+            val allowedScope = "$issuerUrl/registration/client"
             val tokenRequest: OAuth2ClientCredentialsGrantRequest = call.receiveClientCredentialsTokenRequest(allowedScope)
             // TODO verify signature on client_assertion
             val jwt: SignedJWT = SignedJWT.parse(tokenRequest.clientAssertion)
@@ -65,6 +68,7 @@ internal fun Route.clientRegistrationApi(config: Configuration) {
                 claimsVerifier,
                 JWSVerificationKeySelector(JWSAlgorithm.RS256, RemoteJWKSet(URL(jwkerJwksUrl)))
             )
+
             call.respond(HttpStatusCode.Created, clientRegistration)
         }
     }
@@ -94,7 +98,7 @@ data class OAuth2ClientCredentialsGrantRequest(
 data class ClientRegistration(
     @JsonProperty("client_name")
     val clientName: String,
-    val jwks: String,
+    val jwks: JSONObject,
     @JsonProperty("software_statement")
     val softwareStatement: String
 ) {

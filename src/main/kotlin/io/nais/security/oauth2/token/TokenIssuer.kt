@@ -9,8 +9,8 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.nais.security.oauth2.authentication.OAuth2Client
-import io.nais.security.oauth2.config.TokenValidatorConfig
+import io.nais.security.oauth2.config.TokenIssuerProperties
+import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import mu.KotlinLogging
@@ -25,11 +25,19 @@ import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
-class TokenIssuer(issuerUrl: String, tokenValidatorConfig: TokenValidatorConfig) {
+class TokenIssuer(tokenIssuerProperties: TokenIssuerProperties) {
 
-    private val tokenProvider = JwtTokenProvider(issuerUrl)
+    private val tokenProvider = JwtTokenProvider(
+        tokenIssuerProperties.issuerUrl,
+        tokenIssuerProperties.tokenExpiry,
+        tokenIssuerProperties.keySize
+    )
+
     private val tokenValidators: Map<String, TokenValidator> =
-        tokenValidatorConfig.issuerToWellKnownMap.entries.associate { it.key to TokenValidator(it.key, URL(it.value.jwksUri)) }
+        tokenIssuerProperties.subjectTokenIssuers.associate {
+            it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
+        }
+    // tokenValidatorConfig.issuerToWellKnownMap.entries.associate { it.key to TokenValidator(it.key, URL(it.value.jwksUri)) }
 
     private val internalTokenValidator: TokenValidator = TokenValidator(tokenProvider.issuerUrl, tokenProvider.publicJwkSet())
 

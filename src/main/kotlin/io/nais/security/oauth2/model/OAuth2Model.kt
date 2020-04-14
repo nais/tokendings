@@ -2,6 +2,7 @@ package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.oauth2.sdk.ErrorObject
 import io.nais.security.oauth2.model.GrantType.TOKEN_EXCHANGE_GRANT
 
@@ -19,7 +20,6 @@ object TokenType {
     const val TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 }
 
-// TODO: rename to AuthorizedOAuth2TokenRequest?
 abstract class OAuth2TokenRequest(
     @JsonProperty("grant_type")
     val grantType: String
@@ -35,6 +35,18 @@ data class OAuth2TokenExchangeRequest(
     val resource: String? = null,
     val scope: String? = null
 ) : OAuth2TokenRequest(TOKEN_EXCHANGE_GRANT)
+
+data class OAuth2Client(
+    val clientId: String,
+    val jwkSet: JWKSet,
+    val accessPolicyInbound: AccessPolicy
+)
+
+data class AccessPolicy(
+    val clients: List<String> = emptyList()
+) {
+    fun contains(clientId: String?): Boolean = clients.contains(clientId)
+}
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class OAuth2TokenResponse(
