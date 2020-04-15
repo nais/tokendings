@@ -5,7 +5,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod
 import io.ktor.application.ApplicationCall
 import io.ktor.auth.Credential
 import io.ktor.http.Parameters
@@ -90,7 +89,6 @@ class TokenRequestConfig internal constructor(
 }
 
 data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) : Credential {
-    val clientAuthenticationMethod: ClientAuthenticationMethod = ClientAuthenticationMethod.PRIVATE_KEY_JWT
     val signedJWT: SignedJWT = when (clientAssertionType) {
         JWT_BEARER -> {
             SignedJWT.parse(clientAssertion)

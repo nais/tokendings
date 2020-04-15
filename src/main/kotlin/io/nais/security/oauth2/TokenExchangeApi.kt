@@ -8,14 +8,16 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
+import io.nais.security.oauth2.authentication.ClientCredentialsRequestAuthorizer
 import io.nais.security.oauth2.authentication.TokenExchangeRequestAuthorizer
 import io.nais.security.oauth2.authentication.receiveTokenRequestContext
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.authorizationPath
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.jwksPath
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.tokenPath
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.wellKnownPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.authorizationPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.tokenPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
 import io.nais.security.oauth2.config.path
+import io.nais.security.oauth2.model.OAuth2ClientCredentialsTokenRequest
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
@@ -31,7 +33,7 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     val tokenIssuer = config.tokenIssuer
 
     get(wellKnownPath) {
-        val issuerUrl: String = config.tokenIssuerProperties.issuerUrl
+        val issuerUrl: String = config.authorizationServerProperties.issuerUrl
         call.respond(
             WellKnown(
                 issuer = issuerUrl,
@@ -48,15 +50,28 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     route(tokenPath) {
         post {
             log.debug("received call to token endpoint.")
-            val tokenRequestContext = call.receiveTokenRequestContext(config.tokenIssuerProperties.tokenEndpointUrl()) {
+            val tokenRequestContext = call.receiveTokenRequestContext(config.authorizationServerProperties.tokenEndpointUrl()) {
                 authenticateAndAuthorize {
                     clientFinder = { config.clientRegistry.findClient(it.clientId) }
-                    authorizers = listOf(TokenExchangeRequestAuthorizer(config.clientRegistry))
+                    authorizers = listOf(
+                        TokenExchangeRequestAuthorizer(config.clientRegistry),
+                        ClientCredentialsRequestAuthorizer()
+                    )
                 }
             }
             when (val tokenRequest: OAuth2TokenRequest = tokenRequestContext.oauth2TokenRequest) {
                 is OAuth2TokenExchangeRequest -> {
                     val token: SignedJWT = tokenIssuer.issueTokenFor(tokenRequestContext.oauth2Client, tokenRequest)
+                    call.respond(
+                        OAuth2TokenResponse(
+                            accessToken = token.serialize(),
+                            expiresIn = token.expiresIn(),
+                            scope = tokenRequest.scope
+                        )
+                    )
+                }
+                is OAuth2ClientCredentialsTokenRequest -> {
+                    val token: SignedJWT = tokenIssuer.issueTokenFor(tokenRequestContext.oauth2Client.clientId, tokenRequest.scope)
                     call.respond(
                         OAuth2TokenResponse(
                             accessToken = token.serialize(),

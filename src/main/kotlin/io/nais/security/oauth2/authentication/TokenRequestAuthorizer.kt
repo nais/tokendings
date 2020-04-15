@@ -4,6 +4,7 @@ import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.Parameters
 import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.OAuth2Client
+import io.nais.security.oauth2.model.OAuth2ClientCredentialsTokenRequest
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
@@ -45,6 +46,29 @@ class TokenExchangeRequestAuthorizer(
             else -> throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
                     "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${targetClient.clientId}"
+                )
+            )
+        }
+    }
+}
+
+class ClientCredentialsRequestAuthorizer : TokenRequestAuthorizer<OAuth2ClientCredentialsTokenRequest> {
+
+    override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.CLIENT_CREDENTIALS_GRANT
+
+    override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2ClientCredentialsTokenRequest {
+        log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
+        val tokenRequest = OAuth2ClientCredentialsTokenRequest(
+            parameters.require("scope")
+        )
+        val authenticatedClient: OAuth2Client = oauth2Client
+            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"))
+
+        return when {
+            authenticatedClient.allowedScopes.contains(tokenRequest.scope) -> tokenRequest
+            else -> throw OAuth2Exception(
+                OAuth2Error.INVALID_REQUEST.setDescription(
+                    "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${tokenRequest.scope}"
                 )
             )
         }

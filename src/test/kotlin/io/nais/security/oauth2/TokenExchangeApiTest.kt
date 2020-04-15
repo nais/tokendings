@@ -19,8 +19,8 @@ import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.jwksPath
-import io.nais.security.oauth2.config.TokenIssuerProperties.Companion.wellKnownPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
 import io.nais.security.oauth2.mock.MockClientRegistry
 import io.nais.security.oauth2.mock.generateClientAssertion
 import io.nais.security.oauth2.mock.mockConfig
@@ -46,7 +46,7 @@ internal class TokenExchangeApiTest {
                 with(handleRequest(HttpMethod.Get, wellKnownPath)) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                     val wellKnown: WellKnown = mapper.readValue(response.content!!)
-                    assertThat(wellKnown.issuer).isEqualTo(mockConfig.tokenIssuerProperties.issuerUrl)
+                    assertThat(wellKnown.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
                 }
             }
         }
@@ -72,7 +72,7 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
-    fun `successfull token exchange call with valid client and subject_token`() {
+    fun `successful token exchange call with valid client and subject_token`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val registry = (mockConfig.clientRegistry as MockClientRegistry)
@@ -106,7 +106,7 @@ internal class TokenExchangeApiTest {
                     val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
                     val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
                     assertThat(claims.subject).isEqualTo(subjectToken.jwtClaimsSet.subject)
-                    assertThat(claims.issuer).isEqualTo(mockConfig.tokenIssuerProperties.issuerUrl)
+                    assertThat(claims.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
                     assertThat(claims.audience).containsExactly(client2.clientId)
                 }
             }
@@ -153,7 +153,7 @@ internal class TokenExchangeApiTest {
         val jwkSet = JwtTokenProvider.generateJWKSet("akey", 2048)
         val unknownClientAssertion = generateClientAssertion(
             "unknown",
-            mockConfig.tokenIssuerProperties.tokenEndpointUrl(),
+            mockConfig.authorizationServerProperties.tokenEndpointUrl(),
             jwkSet
         )
         withTestApplication({
@@ -178,22 +178,73 @@ internal class TokenExchangeApiTest {
             }
         }
     }
-}
 
-internal class TestTokenExchangeRequest(
-    private val clientAssertion: String,
-    private val audience: String,
-    private val subjectToken: String
-) {
-    fun formUrlEncode(): String =
-        listOf(
-            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-            "client_assertion" to clientAssertion,
-            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-            "audience" to audience,
-            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-            "subject_token" to subjectToken
-        ).formUrlEncode()
+    @Test
+    fun `successful client_credentials call to token endpoint with scope for registration url should return bearer token with aud equals registration url`() {
+
+        val mockConfig = mockConfig()
+        val registry = (mockConfig.clientRegistry as MockClientRegistry)
+        val jwkerClient = registry.registerClientAndGenerateKeys(
+            "jwker",
+            AccessPolicy(),
+            listOf(mockConfig.authorizationServerProperties.clientRegistrationUrl())
+        )
+        val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
+
+        withTestApplication({
+            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+        }) {
+            with(handleRequest(HttpMethod.Post, "/token") {
+                addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                setBody(
+                    listOf(
+                        "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                        "client_assertion" to clientAssertion,
+                        "grant_type" to "client_credentials",
+                        "scope" to mockConfig.authorizationServerProperties.clientRegistrationUrl()
+                    ).formUrlEncode()
+                )
+            }) {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
+                val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.content!!)
+                assertThat(accessTokenResponse.accessToken).isNotBlank()
+                val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
+                val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
+                assertThat(claims.subject).isEqualTo(jwkerClient.clientId)
+                assertThat(claims.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
+                assertThat(claims.audience).containsExactly(mockConfig.authorizationServerProperties.clientRegistrationUrl())
+            }
+        }
+    }
+
+    @Test
+    fun `client_credentials call to token endpoint with scope for registration url should fail if client doesnt have scope in allowed scopes`() {
+
+        val mockConfig = mockConfig()
+        val registry = (mockConfig.clientRegistry as MockClientRegistry)
+        val jwkerClient = registry.registerClientAndGenerateKeys("jwker", AccessPolicy())
+        val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
+
+        withTestApplication({
+            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+        }) {
+            with(handleRequest(HttpMethod.Post, "/token") {
+                addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                setBody(
+                    listOf(
+                        "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                        "client_assertion" to clientAssertion,
+                        "grant_type" to "client_credentials",
+                        "scope" to mockConfig.authorizationServerProperties.clientRegistrationUrl()
+                    ).formUrlEncode()
+                )
+            }) {
+                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                assertThat(errorResponse.code).isEqualTo("invalid_request")
+            }
+        }
+    }
 }
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -35,7 +35,7 @@ fun configByProfile(): AppConfiguration =
 
 object ProdConfiguration {
     val instance by lazy {
-        val tokenIssuerProperties = TokenIssuerProperties(
+        val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.nais.io",
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer(
@@ -52,7 +52,7 @@ object ProdConfiguration {
 
 object NonProdConfiguration {
     val instance by lazy {
-        val tokenIssuerProperties = TokenIssuerProperties(
+        val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.dev-gcp.nais.io",
             subjectTokenIssuers = listOf()
         )
@@ -65,7 +65,7 @@ object NonProdConfiguration {
 
 object LocalConfiguration {
     val instance by lazy {
-        val tokenIssuerProperties = TokenIssuerProperties(
+        val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "http://localhost:8080",
             subjectTokenIssuers = listOf()
         )
@@ -79,16 +79,16 @@ object LocalConfiguration {
 data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
-    val tokenIssuerProperties: TokenIssuerProperties
+    val authorizationServerProperties: AuthorizationServerProperties
 ) {
-    val tokenIssuer: TokenIssuer = TokenIssuer(tokenIssuerProperties)
+    val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
 
 data class ServerProperties(val port: Int)
 
 data class ClientRegistryProperties(val acceptedTokenAudience: String)
 
-class TokenIssuerProperties(
+class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
@@ -99,12 +99,14 @@ class TokenIssuerProperties(
     fun authorizationEndpointUrl() = issuerUrl.path(authorizationPath)
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun jwksUri() = issuerUrl.path(jwksPath)
+    fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
 
     companion object {
         const val wellKnownPath = "/.well-known/oauth-authorization-server"
         const val authorizationPath = "/authorization"
         const val tokenPath = "/token"
         const val jwksPath = "/jwks"
+        const val registrationPath = "/registration/client"
     }
 }
 

@@ -33,7 +33,7 @@ import java.net.URL
 private val jwkerJwksUrl = "http://localhost:3000/jwks"
 
 internal fun Route.clientRegistrationApi(config: AppConfiguration) {
-    val issuerUrl: String = config.tokenIssuerProperties.issuerUrl
+    val issuerUrl: String = config.authorizationServerProperties.issuerUrl
     val tokenIssuer: TokenIssuer = config.tokenIssuer
     route("/registration") {
 

@@ -8,7 +8,7 @@ import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
-import io.nais.security.oauth2.config.TokenIssuerProperties
+import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.registration.ClientRegistry
@@ -22,12 +22,17 @@ import java.util.UUID
 class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
     ClientRegistryProperties(acceptedAudience)
 ) {
-    fun registerClientAndGenerateKeys(clientId: String, accessPolicy: AccessPolicy): OAuth2Client =
+    fun registerClientAndGenerateKeys(
+        clientId: String,
+        accessPolicy: AccessPolicy = AccessPolicy(),
+        allowedScopes: List<String> = emptyList()
+    ): OAuth2Client =
         registerClient(
             OAuth2Client(
                 clientId,
                 generateJWKSet(clientId, 2048),
-                accessPolicy
+                accessPolicy,
+                allowedScopes
             )
         )
 
@@ -61,7 +66,7 @@ fun generateClientAssertion(clientId: String, audience: String, jwkSet: JWKSet) 
     )
 
 fun mockConfig(mockOAuth2Server: MockOAuth2Server? = null): AppConfiguration {
-    val tokenIssuerProperties = TokenIssuerProperties(
+    val tokenIssuerProperties = AuthorizationServerProperties(
         issuerUrl = "http://localhost:8080",
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
