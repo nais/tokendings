@@ -50,7 +50,7 @@ class TokenRequestContext private constructor(
                     verifyJwt(clientAssertionCredential.signedJWT, config.claimsVerifier.invoke(Pair(it, tokenEndpointUrl)), it.jwkSet)
                 } ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_CLIENT.setDescription(
-                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}"
+                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
                 )
             )
 

@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.mock
 
+import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
@@ -46,13 +47,25 @@ class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
         } ?: throw IllegalArgumentException("cannot generate assertion for unknown clientId=$clientId")
 }
 
-fun mockConfig(mockOAuth2Server: MockOAuth2Server): AppConfiguration {
+fun generateClientAssertion(clientId: String, audience: String, jwkSet: JWKSet) =
+    JwtTokenProvider.createSignedJWT(
+        JWTClaimsSet.Builder()
+            .issuer(clientId)
+            .subject(clientId)
+            .audience(audience)
+            .issueTime(Date.from(Instant.now()))
+            .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+            .jwtID(UUID.randomUUID().toString())
+            .build(),
+        jwkSet.keys.first() as RSAKey
+    )
+
+fun mockConfig(mockOAuth2Server: MockOAuth2Server? = null): AppConfiguration {
     val tokenIssuerProperties = TokenIssuerProperties(
         issuerUrl = "http://localhost:8080",
-        subjectTokenIssuers = listOf(
-            SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("mock1").toString()),
-            SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("mock2").toString())
-        )
+        subjectTokenIssuers = mockOAuth2Server?.let {
+            listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
+        } ?: emptyList()
     )
     val clientRegistry = MockClientRegistry(tokenIssuerProperties.tokenEndpointUrl())
     return AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
