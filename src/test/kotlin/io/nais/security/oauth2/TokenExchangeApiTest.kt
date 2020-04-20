@@ -28,7 +28,8 @@ import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.WellKnown
-import io.nais.security.oauth2.token.JwtTokenProvider
+import io.nais.security.oauth2.routing.DefaultRouting
+import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -41,7 +42,7 @@ internal class TokenExchangeApiTest {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             withTestApplication({
-                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+                tokenExchangeApp(DefaultRouting(mockConfig))
             }) {
                 with(handleRequest(HttpMethod.Get, wellKnownPath)) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
@@ -57,7 +58,7 @@ internal class TokenExchangeApiTest {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             withTestApplication({
-                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+                tokenExchangeApp(DefaultRouting(mockConfig))
             }) {
                 with(handleRequest(HttpMethod.Get, jwksPath)) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
@@ -85,7 +86,7 @@ internal class TokenExchangeApiTest {
             val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
 
             withTestApplication({
-                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+                tokenExchangeApp(DefaultRouting(mockConfig))
             }) {
                 with(handleRequest(HttpMethod.Post, "/token") {
                     addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
@@ -124,7 +125,7 @@ internal class TokenExchangeApiTest {
             val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
 
             withTestApplication({
-                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+                tokenExchangeApp(DefaultRouting(mockConfig))
             }) {
                 with(handleRequest(HttpMethod.Post, "/token") {
                     addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
@@ -150,14 +151,14 @@ internal class TokenExchangeApiTest {
     @Test
     fun `token exchange call with invalid client assertion should fail`() {
         val mockConfig = mockConfig()
-        val jwkSet = JwtTokenProvider.generateJWKSet("akey", 2048)
+        val jwkSet = generateJWKSet("akey", 2048)
         val unknownClientAssertion = generateClientAssertion(
             "unknown",
             mockConfig.authorizationServerProperties.tokenEndpointUrl(),
             jwkSet
         )
         withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            tokenExchangeApp(DefaultRouting(mockConfig))
         }) {
             with(handleRequest(HttpMethod.Post, "/token") {
                 addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
@@ -192,7 +193,7 @@ internal class TokenExchangeApiTest {
         val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
 
         withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            tokenExchangeApp(DefaultRouting(mockConfig))
         }) {
             with(handleRequest(HttpMethod.Post, "/token") {
                 addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
@@ -226,7 +227,7 @@ internal class TokenExchangeApiTest {
         val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
 
         withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            tokenExchangeApp(DefaultRouting(mockConfig))
         }) {
             with(handleRequest(HttpMethod.Post, "/token") {
                 addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())

@@ -1,4 +1,4 @@
-package io.nais.security.oauth2
+package io.nais.security.oauth2.routing
 
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error

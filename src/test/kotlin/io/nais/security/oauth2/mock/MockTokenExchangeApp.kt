@@ -8,10 +8,10 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.util.KtorExperimentalAPI
-import io.nais.security.oauth2.DefaultRouting
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.model.JsonWebKeySet
 import io.nais.security.oauth2.model.OAuth2Client
+import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.server
 import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import mu.KotlinLogging

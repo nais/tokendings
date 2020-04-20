@@ -27,7 +27,6 @@ import io.ktor.jackson.JacksonConverter
 import io.ktor.metrics.micrometer.MicrometerMetrics
 import io.ktor.request.path
 import io.ktor.response.respond
-import io.ktor.routing.Routing
 import io.ktor.routing.routing
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
@@ -47,7 +46,9 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
 import io.nais.security.oauth2.model.OAuth2Exception
-import io.nais.security.oauth2.observability.observabilityRouting
+import io.nais.security.oauth2.routing.observability
+import io.nais.security.oauth2.routing.ApiRouting
+import io.nais.security.oauth2.routing.DefaultRouting
 import io.prometheus.client.CollectorRegistry
 import mu.KotlinLogging
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner
@@ -70,12 +71,12 @@ fun server(config: AppConfiguration, routing: ApiRouting = DefaultRouting(config
             port = config.serverProperties.port
         }
         module {
-            tokenExchangeApp(config, routing)
+            tokenExchangeApp(routing)
         }
     })
 
 @KtorExperimentalAPI
-fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
+fun Application.tokenExchangeApp(routing: ApiRouting) {
     install(CallId) {
         generate {
             UUID.randomUUID().toString()
@@ -131,21 +132,11 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
 
     install(DoubleReceive)
     install(ForwardedHeaderSupport)
-    observabilityRouting()
+
     routing {
+        observability()
         routing.apiRouting(application)
     }
-}
-
-interface ApiRouting {
-    fun apiRouting(application: Application): Routing
-}
-
-open class DefaultRouting(private val config: AppConfiguration) : ApiRouting {
-    override fun apiRouting(application: Application): Routing =
-        application.routing {
-            tokenExchangeApi(config)
-        }
 }
 
 internal val defaultHttpClient = HttpClient(Apache) {

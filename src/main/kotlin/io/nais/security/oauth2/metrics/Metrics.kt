@@ -1,4 +1,4 @@
-package io.nais.security.oauth2.observability
+package io.nais.security.oauth2.metrics
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter

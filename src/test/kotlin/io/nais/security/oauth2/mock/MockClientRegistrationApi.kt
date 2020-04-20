@@ -21,7 +21,7 @@ import io.ktor.routing.route
 import io.nais.security.oauth2.authentication.ClientAssertionCredential.Companion.JWT_BEARER
 import io.nais.security.oauth2.authentication.require
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.expiresIn
+import io.nais.security.oauth2.routing.expiresIn
 import io.nais.security.oauth2.registration.ClientRegistrationRequest
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.token.TokenIssuer

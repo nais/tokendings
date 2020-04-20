@@ -2,7 +2,7 @@ package io.nais.security.oauth2.registration
 
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.OAuth2Client
-import io.nais.security.oauth2.observability.Metrics
+import io.nais.security.oauth2.metrics.Metrics
 import kotliquery.Query
 import kotliquery.Row
 import kotliquery.queryOf
@@ -61,7 +61,7 @@ class ClientStore(private val dataSource: DataSource) {
                 session.run(
                     queryOf("""SELECT * FROM $TABLE_NAME WHERE CLIENT_ID=?""", clientId)
                         .map {
-                            mapToOAuth2Client(it)
+                            it.mapToOAuth2Client()
                         }.asSingle
                 )
             }
@@ -73,14 +73,14 @@ class ClientStore(private val dataSource: DataSource) {
                 session.run(
                     queryOf("""SELECT * FROM $TABLE_NAME""")
                         .map {
-                            mapToOAuth2Client(it)
+                            it.mapToOAuth2Client()
                         }.asList
                 )
             }
         }
 
-    private fun mapToOAuth2Client(row: Row): OAuth2Client {
-        return OAuth2Client.fromJson(row.string("data"))
+    private fun Row.mapToOAuth2Client(): OAuth2Client {
+        return OAuth2Client.fromJson(this.string("data"))
     }
 
     private fun OAuth2Client.mapToColumns(): Map<String, *> =
