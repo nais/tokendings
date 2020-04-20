@@ -4,23 +4,28 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
-import io.nais.security.oauth2.config.AuthorizationServerProperties
+import io.nais.security.oauth2.config.clean
+import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.model.AccessPolicy
+import io.nais.security.oauth2.model.JsonWebKeySet
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.token.JwtTokenProvider
 import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
 class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
-    ClientRegistryProperties(acceptedAudience)
+    ClientRegistryProperties(DataSource.instance.apply { clean(this) }.apply { migrate(this) })
 ) {
     fun registerClientAndGenerateKeys(
         clientId: String,
@@ -30,7 +35,8 @@ class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
         registerClient(
             OAuth2Client(
                 clientId,
-                generateJWKSet(clientId, 2048),
+                JsonWebKeySet(generateJWKSet(clientId, 2048)),
+                accessPolicy,
                 accessPolicy,
                 allowedScopes
             )
@@ -87,3 +93,28 @@ fun <R> withMockOAuth2Server(
         server.shutdown()
     }
 }
+
+// TODO bump version
+internal object PostgresContainer {
+    val instance by lazy {
+        PostgreSQLContainer<Nothing>("postgres:11.2").apply {
+            start()
+        }
+    }
+}
+
+internal object DataSource {
+    val instance: HikariDataSource by lazy {
+        HikariDataSource().apply {
+            username = PostgresContainer.instance.username
+            password = PostgresContainer.instance.password
+            jdbcUrl = PostgresContainer.instance.jdbcUrl
+            connectionTimeout = 1000L
+        }
+    }
+}
+
+internal fun withCleanDb(test: () -> Unit) = DataSource.instance.also { clean(it) }.run { test() }
+
+internal fun withMigratedDb(test: () -> Unit) =
+    DataSource.instance.also { clean(it) }.also { migrate(it) }.run { test() }

@@ -6,16 +6,17 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import io.ktor.client.request.get
-import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
 
-private val konfig =
+val konfig =
     ConfigurationProperties.systemProperties() overriding
         EnvironmentVariables()
 
@@ -33,6 +34,13 @@ fun configByProfile(): AppConfiguration =
         else -> ProdConfiguration.instance
     }
 
+fun environmentDatabaseConfig(): DatabaseConfig =
+    DatabaseConfig(
+        konfig[Key("DB_URL", stringType)],
+        konfig[Key("DB_USER", stringType)],
+        konfig[Key("DB_PASSWORD", stringType)]
+    )
+
 object ProdConfiguration {
     val instance by lazy {
         val tokenIssuerProperties = AuthorizationServerProperties(
@@ -44,7 +52,9 @@ object ProdConfiguration {
             )
         )
         val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(tokenIssuerProperties.tokenEndpointUrl())
+            ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
+                migrate(this)
+            })
         )
         AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
     }
@@ -57,7 +67,9 @@ object NonProdConfiguration {
             subjectTokenIssuers = listOf()
         )
         val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(tokenIssuerProperties.tokenEndpointUrl())
+            ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
+                migrate(this)
+            })
         )
         AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
     }
@@ -70,7 +82,18 @@ object LocalConfiguration {
             subjectTokenIssuers = listOf()
         )
         val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(tokenIssuerProperties.tokenEndpointUrl())
+            ClientRegistryProperties(
+                dataSourceFrom(
+                    // requires docker instance of postgres
+                    DatabaseConfig(
+                        "jdbc:postgresql://localhost:5432/token-exchange",
+                        "user",
+                        "pwd"
+                    )
+                ).apply {
+                    migrate(this)
+                }
+            )
         )
         AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
     }
@@ -86,7 +109,9 @@ data class AppConfiguration(
 
 data class ServerProperties(val port: Int)
 
-data class ClientRegistryProperties(val acceptedTokenAudience: String)
+data class ClientRegistryProperties(
+    val dataSource: DataSource
+)
 
 class AuthorizationServerProperties(
     val issuerUrl: String,

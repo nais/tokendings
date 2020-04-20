@@ -2,10 +2,11 @@ package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.oauth2.sdk.ErrorObject
 import io.nais.security.oauth2.model.GrantType.CLIENT_CREDENTIALS_GRANT
 import io.nais.security.oauth2.model.GrantType.TOKEN_EXCHANGE_GRANT
+
+typealias ClientId = String
 
 data class OAuth2Exception(
     val errorObject: ErrorObject? = null,
@@ -40,19 +41,6 @@ data class OAuth2TokenExchangeRequest(
 data class OAuth2ClientCredentialsTokenRequest(
     val scope: String
 ) : OAuth2TokenRequest(CLIENT_CREDENTIALS_GRANT)
-
-data class OAuth2Client(
-    val clientId: String,
-    val jwkSet: JWKSet,
-    val accessPolicyInbound: AccessPolicy,
-    val allowedScopes: List<String> = emptyList()
-)
-
-data class AccessPolicy(
-    val clients: List<String> = emptyList()
-) {
-    fun contains(clientId: String?): Boolean = clients.contains(clientId)
-}
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class OAuth2TokenResponse(

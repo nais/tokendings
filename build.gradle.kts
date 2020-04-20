@@ -14,6 +14,12 @@ val freemarkerVersion = "2.3.29"
 val micrometerRegistryPrometheusVersion = "1.3.5"
 val logstashLogbackEncoderVersion = "5.2"
 val mockOAuth2ServerVersion = "0.1.33"
+val kotliqueryVersion = "1.3.1"
+val hikarycpVersion = "3.4.2"
+val postgresqlVersion = "42.2.12"
+val flywayVersion = "6.3.3"
+val h2Version = "1.4.200"
+val testcontainersPostgresVersion = "1.14.0"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -57,8 +63,13 @@ dependencies {
     implementation("io.ktor:ktor-jackson:$ktorVersion")
     implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
     implementation("com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion")
+    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
+    implementation("com.zaxxer:HikariCP:$hikarycpVersion")
+    implementation("org.postgresql:postgresql:$postgresqlVersion")
+    implementation("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
+    testImplementation("com.h2database:h2:$h2Version")
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
@@ -67,6 +78,7 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
+    testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 }
 

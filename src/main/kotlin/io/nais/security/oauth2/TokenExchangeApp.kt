@@ -25,6 +25,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.JacksonConverter
 import io.ktor.metrics.micrometer.MicrometerMetrics
+import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.routing.routing
@@ -85,6 +86,11 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
         logger = log
         level = Level.INFO
         callIdMdc("callId")
+        filter { call ->
+            !call.request.path().startsWith("/isAlive") &&
+                !call.request.path().startsWith("/isReady") &&
+                !call.request.path().startsWith("/metrics")
+        }
     }
 
     install(MicrometerMetrics) {
@@ -126,7 +132,9 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     install(DoubleReceive)
     install(ForwardedHeaderSupport)
     observabilityRouting()
-    routing.apiRouting(this)
+    routing {
+        routing.apiRouting(application)
+    }
 }
 
 interface ApiRouting {

@@ -1,6 +1,5 @@
 package io.nais.security.oauth2.mock
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
@@ -23,11 +22,10 @@ import io.nais.security.oauth2.authentication.ClientAssertionCredential.Companio
 import io.nais.security.oauth2.authentication.require
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.expiresIn
-import io.nais.security.oauth2.model.GrantType
+import io.nais.security.oauth2.registration.ClientRegistrationRequest
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.token.TokenIssuer
 import io.nais.security.oauth2.token.verifyJwt
-import net.minidev.json.JSONObject
 import java.net.URL
 
 private val jwkerJwksUrl = "http://localhost:3000/jwks"
@@ -54,8 +52,8 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
         }
 
         post("/client") {
-            val clientRegistration: ClientRegistration = call.receive(ClientRegistration::class)
-            val softwareStatementJwt: SignedJWT = SignedJWT.parse(clientRegistration.softwareStatement)
+            val clientRegistrationRequest: ClientRegistrationRequest = call.receive(ClientRegistrationRequest::class)
+            val softwareStatementJwt: SignedJWT = SignedJWT.parse(clientRegistrationRequest.softwareStatement)
 
             val claimsVerifier = DefaultJWTClaimsVerifier<SecurityContext>(
                 JWTClaimsSet.Builder().build(),
@@ -69,7 +67,7 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 JWSVerificationKeySelector(JWSAlgorithm.RS256, RemoteJWKSet(URL(jwkerJwksUrl)))
             )
 
-            call.respond(HttpStatusCode.Created, clientRegistration)
+            call.respond(HttpStatusCode.Created, clientRegistrationRequest)
         }
     }
 }
@@ -92,24 +90,4 @@ data class OAuth2ClientCredentialsGrantRequest(
     val clientAssertionType: String,
     @JsonProperty("client_assertion")
     val clientAssertion: String
-)
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-data class ClientRegistration(
-    @JsonProperty("client_name")
-    val clientName: String,
-    val jwks: JSONObject,
-    @JsonProperty("software_statement")
-    val softwareStatement: String
-) {
-    @JsonProperty("grant_types")
-    val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
-    @JsonProperty("token_endpoint_auth_method")
-    val tokenEndpointAuthMethod: String = "private_key_jwt"
-}
-
-data class SoftwareStatement(
-    val appId: String,
-    val accessPolicyInbound: List<String> = emptyList(),
-    val accessPolicyOutbound: List<String> = emptyList()
 )
