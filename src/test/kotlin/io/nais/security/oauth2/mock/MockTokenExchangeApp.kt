@@ -67,7 +67,7 @@ internal class MockApiRouting(private val config: AppConfiguration) : DefaultRou
             route("/admin") {
                 post("/client") {
                     val adminClient: AdminClient = call.receive()
-                    val jwks = when {
+                    val jwks: JsonWebKeys = when {
                         adminClient.jwks != null -> adminClient.jwks
                         adminClient.jwks_uri != null ->
                             runBlocking {
