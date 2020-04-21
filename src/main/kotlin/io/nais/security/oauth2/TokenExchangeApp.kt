@@ -1,15 +1,21 @@
 package io.nais.security.oauth2
 
+import com.auth0.jwk.Jwk
+import com.auth0.jwk.JwkProvider
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.oauth2.sdk.ErrorObject
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.auth.Authentication
+import io.ktor.auth.jwt.JWTPrincipal
+import io.ktor.auth.jwt.jwt
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
@@ -58,6 +64,7 @@ import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
+// TODO: stop server on unrecoverable error (i.e. exception getting SubjectTokenIssuer)
 @KtorExperimentalAPI
 fun main() {
     val config: AppConfiguration = configByProfile()
@@ -71,12 +78,12 @@ fun server(config: AppConfiguration, routing: ApiRouting = DefaultRouting(config
             port = config.serverProperties.port
         }
         module {
-            tokenExchangeApp(routing)
+            tokenExchangeApp(config, routing)
         }
     })
 
 @KtorExperimentalAPI
-fun Application.tokenExchangeApp(routing: ApiRouting) {
+fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
         generate {
             UUID.randomUUID().toString()
@@ -125,7 +132,41 @@ fun Application.tokenExchangeApp(routing: ApiRouting) {
                     call.respond(HttpStatusCode.fromValue(statusCode), errorObject)
                 }
                 // TODO remove cause message when closer to finished product
-                else -> call.respond(HttpStatusCode.InternalServerError, cause.message ?: "unknown internal server error")
+                else -> {
+                    call.respond(HttpStatusCode.InternalServerError, cause.message ?: "unknown internal server error")
+                    throw cause
+                }
+            }
+        }
+    }
+
+    install(Authentication) {
+        jwt("BEARER_TOKEN") {
+            val jwkProvider = object : JwkProvider {
+                private val jwkSet: JWKSet = config.tokenIssuer.publicJwkSet()
+                override fun get(keyId: String?): Jwk {
+                    val jwk = jwkSet.getKeyByKeyId(keyId)
+                    return Jwk.fromValues(jwk.toJSONObject())
+                }
+            }
+            val issuerUrl = config.authorizationServerProperties.issuerUrl
+            verifier(jwkProvider, issuerUrl)
+            validate { credentials ->
+                try {
+                    val path = this.request.path()
+                    requireNotNull(credentials.payload.audience) {
+                        "Auth: Missing audience in token"
+                    }
+
+                    require(credentials.payload.audience.contains("$issuerUrl/$path")) {
+                        "Auth: Valid audience not found in claims"
+                    }
+
+                    JWTPrincipal(credentials.payload)
+                } catch (e: Throwable) {
+                    log.debug("error in auth.", e)
+                    null
+                }
             }
         }
     }
@@ -135,7 +176,7 @@ fun Application.tokenExchangeApp(routing: ApiRouting) {
 
     routing {
         observability()
-        routing.apiRouting(application)
+        routing.apiRouting(this.application)
     }
 }
 

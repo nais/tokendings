@@ -1,9 +1,8 @@
-package io.nais.security.oauth2
+package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.oauth2.sdk.`as`.AuthorizationServerMetadata
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-import io.nais.security.oauth2.model.WellKnown
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

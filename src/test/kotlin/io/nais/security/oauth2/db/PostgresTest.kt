@@ -1,6 +1,8 @@
-package io.nais.security.oauth2.mock
+package io.nais.security.oauth2.db
 
 import io.nais.security.oauth2.config.migrate
+import io.nais.security.oauth2.mock.DataSource
+import io.nais.security.oauth2.mock.withCleanDb
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

@@ -5,7 +5,7 @@ import io.nais.security.oauth2.config.dataSourceFrom
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.model.ClientId
-import io.nais.security.oauth2.model.JsonWebKeySet
+import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.token.JwtTokenProvider
 import org.assertj.core.api.Assertions.assertThat
@@ -51,7 +51,7 @@ internal class ClientStoreTest {
 
     private fun oauth2Client(clientId: ClientId) = OAuth2Client(clientId, jwks())
 
-    private fun jwks() = JsonWebKeySet(JwtTokenProvider.generateJWKSet("testkey", 2048))
+    private fun jwks() = JsonWebKeys(JwtTokenProvider.generateJWKSet("testkey", 2048))
 
     private fun h2DataSource() = dataSourceFrom(
         DatabaseConfig(

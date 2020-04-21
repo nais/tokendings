@@ -13,5 +13,6 @@ open class DefaultRouting(private val config: AppConfiguration) : ApiRouting {
     override fun apiRouting(application: Application): Routing =
         application.routing {
             tokenExchangeApi(config)
+            clientRegistrationApi(config)
         }
 }

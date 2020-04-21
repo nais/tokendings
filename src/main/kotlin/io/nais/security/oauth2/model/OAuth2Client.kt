@@ -4,58 +4,47 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSet
 import io.nais.security.oauth2.Jackson
-import net.minidev.json.JSONObject
 
 // JWKSet does not implement equals and cant be directly serialized as json
-data class JsonWebKeySet(
-    @JsonDeserialize(using = JWKSetDeserializer::class)
-    @JsonSerialize(using = JWKSetSerializer::class)
-    val jwkSet: JWKSet
+data class JsonWebKeys(
+    @JsonSerialize(using = JWKListSerializer::class)
+    @JsonDeserialize(using = JWKListDeserializer::class)
+    val keys: List<JWK>
 ) {
-    @JsonIgnore
-    val jsonObject = jwkSet.toJSONObject()
+    constructor(jwkSet: JWKSet) : this(jwkSet.keys)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as JsonWebKeySet
-        if (jsonObject != other.jsonObject) return false
-        return true
+    class JWKListSerializer : JsonSerializer<List<JWK>>() {
+        override fun serialize(value: List<JWK>, gen: JsonGenerator, serializers: SerializerProvider) {
+            gen.writeObject(value.map { it.toJSONObject() }.toList())
+        }
     }
 
-    override fun hashCode(): Int {
-        return jsonObject.hashCode()
+    class JWKListDeserializer : JsonDeserializer<List<JWK>>() {
+        override fun deserialize(p: JsonParser, ctxt: DeserializationContext): List<JWK> {
+            return p.readValueAsTree<JsonNode>().map { JWK.parse(it.toString()) }
+        }
     }
-}
-
-class JWKSetDeserializer : StdDeserializer<JWKSet>(JWKSet::class.java) {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): JWKSet {
-        return JWKSet.parse(p.readValueAs(JSONObject::class.java).toJSONString())
-    }
-}
-
-class JWKSetSerializer : StdSerializer<JWKSet>(JWKSet::class.java) {
-    override fun serialize(value: JWKSet, gen: JsonGenerator, provider: SerializerProvider) =
-        gen.writeObject(value.toJSONObject(false))
 }
 
 data class OAuth2Client(
-    val clientId: String,
-    val jwks: JsonWebKeySet,
+    val clientId: ClientId,
+    val jwks: JsonWebKeys,
     val accessPolicyInbound: AccessPolicy = AccessPolicy(),
     val accessPolicyOutbound: AccessPolicy = AccessPolicy(),
     val allowedScopes: List<String> = emptyList(),
     val allowedGrantTypes: List<String> = emptyList()
 ) {
     @JsonIgnore
-    val jwkSet: JWKSet = jwks.jwkSet
+    val jwkSet: JWKSet = JWKSet(jwks.keys)
 
     companion object Mapper {
         private val reader = Jackson.defaultMapper.readerFor(OAuth2Client::class.java)
