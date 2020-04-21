@@ -10,6 +10,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import io.ktor.routing.delete
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.nais.security.oauth2.config.AppConfiguration
@@ -34,13 +35,23 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 val clientToRegister: OAuth2Client = mapRequestToOAuth2Client(request, adminClient.jwkSet)
                 config.clientRegistry.registerClient(clientToRegister)
 
-                call.respond(HttpStatusCode.Created, ClientRegistration(
-                    clientToRegister.clientId,
-                    clientToRegister.jwks,
-                    request.softwareStatement,
-                    clientToRegister.allowedGrantTypes,
-                    "private_key_jwt"
-                ))
+                call.respond(
+                    HttpStatusCode.Created, ClientRegistration(
+                        clientToRegister.clientId,
+                        clientToRegister.jwks,
+                        request.softwareStatement,
+                        clientToRegister.allowedGrantTypes,
+                        "private_key_jwt"
+                    )
+                )
+            }
+            delete("/client/{clientId}") {
+                val clientId = call.parameters["clientId"]
+                if (clientId != null) {
+                    config.clientRegistry.deleteClient(clientId)
+                    call.respond(HttpStatusCode.NoContent)
+                }
+                call.respond(HttpStatusCode.BadRequest, "clientId not found")
             }
         }
     }
