@@ -95,8 +95,8 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
         level = Level.INFO
         callIdMdc("callId")
         filter { call ->
-            !call.request.path().startsWith("/isAlive") &&
-                !call.request.path().startsWith("/isReady") &&
+            !call.request.path().startsWith("/internal/isalive") &&
+                !call.request.path().startsWith("/internal/isready") &&
                 !call.request.path().startsWith("/metrics")
         }
     }
