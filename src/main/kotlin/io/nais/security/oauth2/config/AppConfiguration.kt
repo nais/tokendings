@@ -49,11 +49,7 @@ object ProdConfiguration {
     val instance by lazy {
         val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.nais.io",
-            subjectTokenIssuers = listOf(
-                SubjectTokenIssuer(
-                    "https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten"
-                )
-            )
+            subjectTokenIssuers = listOf()
         )
         val clientRegistry = ClientRegistry(
             ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
@@ -68,11 +64,7 @@ object NonProdConfiguration {
     val instance by lazy {
         val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.dev-gcp.nais.io",
-            subjectTokenIssuers = listOf(
-                SubjectTokenIssuer(
-                "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
-                )
-            )
+            subjectTokenIssuers = listOf()
         )
         val clientRegistry = ClientRegistry(
             ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
