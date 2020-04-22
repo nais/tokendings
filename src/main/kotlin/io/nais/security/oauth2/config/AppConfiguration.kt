@@ -27,17 +27,22 @@ enum class Profile {
 }
 
 fun configByProfile(): AppConfiguration =
-    when (konfig.getOrNull(Key("APPLICATION_PROFILE", stringType))?.let { Profile.valueOf(it) }) {
-        Profile.LOCAL -> LocalConfiguration.instance
-        Profile.NON_PROD -> NonProdConfiguration.instance
-        Profile.PROD -> ProdConfiguration.instance
-        else -> ProdConfiguration.instance
+    try {
+        when (konfig.getOrNull(Key("APPLICATION_PROFILE", stringType))?.let { Profile.valueOf(it) }) {
+            Profile.LOCAL -> LocalConfiguration.instance
+            Profile.NON_PROD -> NonProdConfiguration.instance
+            Profile.PROD -> ProdConfiguration.instance
+            else -> ProdConfiguration.instance
+        }
+    } catch (t: Throwable) {
+        log.error("could not initialize application configuration, message: ${t.localizedMessage}", t)
+        throw t
     }
 
 fun environmentDatabaseConfig(): DatabaseConfig {
     val hostname = konfig[Key("DB_HOST", stringType)]
     val port = konfig[Key("DB_PORT", stringType)]
-    val name =  konfig[Key("DB_DATABASE", stringType)]
+    val name = konfig[Key("DB_DATABASE", stringType)]
     return DatabaseConfig(
         "jdbc:postgresql://$hostname:$port/$name",
         konfig[Key("DB_USERNAME", stringType)],
