@@ -46,10 +46,9 @@ spec:
      - {{url}}
   {{/each}}
   env:
-  {{#each env}}
-     - name: {{@key}}
-       value: "{{this}}"
-  {{/each}}
+    - name: PROFILE
+      value: NON_PROD
 
-    #envFrom:
-    # - secret: {{app}}-encryptionkey
+
+  #envFrom:
+  # - secret: {{app}}-encryptionkey
