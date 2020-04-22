@@ -5,8 +5,12 @@ import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.client.request.get
 import io.nais.security.oauth2.defaultHttpClient
+import io.nais.security.oauth2.model.GrantType
+import io.nais.security.oauth2.model.JsonWebKeys
+import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.token.TokenIssuer
@@ -70,11 +74,21 @@ object NonProdConfiguration {
                 )
             )
         )
+        val initialClientJwks = this::class.java.getResource("/adminclient-jwks.json").readText(Charsets.UTF_8)
         val clientRegistry = ClientRegistry(
             ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
                 migrate(this)
             })
-        )
+        ).apply {
+            registerClient(
+                OAuth2Client(
+                    clientId = "dev-gcp:plattformsikkerhet:adminclient",
+                    jwks = JsonWebKeys(JWKSet.parse(initialClientJwks)),
+                    allowedScopes = listOf(tokenIssuerProperties.clientRegistrationUrl()),
+                    allowedGrantTypes = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
+                )
+            )
+        }
         AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
     }
 }
