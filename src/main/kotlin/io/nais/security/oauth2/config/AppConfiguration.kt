@@ -34,12 +34,16 @@ fun configByProfile(): AppConfiguration =
         else -> ProdConfiguration.instance
     }
 
-fun environmentDatabaseConfig(): DatabaseConfig =
-    DatabaseConfig(
-        konfig[Key("DB_URL", stringType)],
-        konfig[Key("DB_USER", stringType)],
+fun environmentDatabaseConfig(): DatabaseConfig {
+    val hostname = konfig[Key("DB_HOSTNAME", stringType)]
+    val port = konfig[Key("DB_PORT", stringType)]
+    val name =  konfig[Key("DB_DATABASE", stringType)]
+    return DatabaseConfig(
+        "jdbc:postgresql://$hostname:$port/$name",
+        konfig[Key("DB_USERNAME", stringType)],
         konfig[Key("DB_PASSWORD", stringType)]
     )
+}
 
 object ProdConfiguration {
     val instance by lazy {
@@ -64,7 +68,11 @@ object NonProdConfiguration {
     val instance by lazy {
         val tokenIssuerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.dev-gcp.nais.io",
-            subjectTokenIssuers = listOf()
+            subjectTokenIssuers = listOf(
+                SubjectTokenIssuer(
+                "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
+                )
+            )
         )
         val clientRegistry = ClientRegistry(
             ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
