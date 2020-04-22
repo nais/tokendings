@@ -18,6 +18,7 @@ import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.auth.jwt.jwt
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.features.CallId
@@ -180,15 +181,12 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 }
 
-internal val defaultHttpClient = HttpClient(Apache) {
+internal val defaultHttpClient = HttpClient(CIO) {
     install(JsonFeature) {
         serializer = JacksonSerializer {
             configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             setSerializationInclusion(JsonInclude.Include.NON_NULL)
         }
-    }
-    engine {
-        customizeClient { setRoutePlanner(SystemDefaultRoutePlanner(ProxySelector.getDefault())) }
     }
 }
 

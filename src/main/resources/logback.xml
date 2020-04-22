@@ -11,8 +11,8 @@
     </appender>
 
     <logger name="io.nais" level="INFO"/>
-    <logger name="ktor.application" level="INFO"/>
-    <logger name="io.ktor" level="INFO"/>
+    <logger name="ktor.application" level="WARN"/>
+    <logger name="io.ktor" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT_JSON"/>
