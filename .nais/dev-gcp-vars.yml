@@ -1,0 +1,7 @@
+app: tokendings
+namespace: plattformsikkerhet
+team: plattformsikkerhet
+ingresses:
+  - https://tokendings.dev-gcp.nais.io
+env:
+  #TODO
