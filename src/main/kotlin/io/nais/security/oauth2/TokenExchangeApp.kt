@@ -17,7 +17,6 @@ import io.ktor.auth.Authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.auth.jwt.jwt
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.apache.Apache
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
@@ -35,9 +34,11 @@ import io.ktor.metrics.micrometer.MicrometerMetrics
 import io.ktor.request.path
 import io.ktor.response.respond
 import io.ktor.routing.routing
+import io.ktor.server.engine.addShutdownHook
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.engine.stop
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.util.KtorExperimentalAPI
@@ -53,23 +54,31 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
 import io.nais.security.oauth2.model.OAuth2Exception
-import io.nais.security.oauth2.routing.observability
 import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
+import io.nais.security.oauth2.routing.observability
 import io.prometheus.client.CollectorRegistry
 import mu.KotlinLogging
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner
 import org.slf4j.event.Level
-import java.net.ProxySelector
 import java.util.UUID
+import java.util.concurrent.TimeUnit
+import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger { }
 
-// TODO: stop server on unrecoverable error (i.e. exception getting SubjectTokenIssuer)
 @KtorExperimentalAPI
 fun main() {
-    val config: AppConfiguration = configByProfile()
-    server(config).start(wait = true)
+    try {
+        val config: AppConfiguration = configByProfile()
+        val engine = server(config)
+        engine.addShutdownHook {
+            engine.stop(3, 5, TimeUnit.SECONDS)
+        }
+        engine.start(wait = true)
+    } catch (t: Throwable) {
+        log.error("received unexpected exception when starting app, message: ${t.message}", t)
+        exitProcess(1)
+    }
 }
 
 @KtorExperimentalAPI

@@ -27,16 +27,11 @@ enum class Profile {
 }
 
 fun configByProfile(): AppConfiguration =
-    try {
-        when (konfig.getOrNull(Key("APPLICATION_PROFILE", stringType))?.let { Profile.valueOf(it) }) {
-            Profile.LOCAL -> LocalConfiguration.instance
-            Profile.NON_PROD -> NonProdConfiguration.instance
-            Profile.PROD -> ProdConfiguration.instance
-            else -> ProdConfiguration.instance
-        }
-    } catch (t: Throwable) {
-        log.error("could not initialize application configuration, message: ${t.localizedMessage}", t)
-        throw t
+    when (konfig.getOrNull(Key("APPLICATION_PROFILE", stringType))?.let { Profile.valueOf(it) }) {
+        Profile.LOCAL -> LocalConfiguration.instance
+        Profile.NON_PROD -> NonProdConfiguration.instance
+        Profile.PROD -> ProdConfiguration.instance
+        else -> ProdConfiguration.instance
     }
 
 fun environmentDatabaseConfig(): DatabaseConfig {
