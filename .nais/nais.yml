@@ -46,10 +46,10 @@ spec:
      - {{url}}
   {{/each}}
   env:
-    {{#each env}}
-    - name: {{@key}}
-      value: "{{this}}"
-    {{/each}}
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}
 
     #envFrom:
     # - secret: {{app}}-encryptionkey
