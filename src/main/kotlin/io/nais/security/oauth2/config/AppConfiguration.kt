@@ -35,7 +35,7 @@ fun configByProfile(): AppConfiguration =
     }
 
 fun environmentDatabaseConfig(): DatabaseConfig {
-    val hostname = konfig[Key("DB_HOSTNAME", stringType)]
+    val hostname = konfig[Key("DB_HOST", stringType)]
     val port = konfig[Key("DB_PORT", stringType)]
     val name =  konfig[Key("DB_DATABASE", stringType)]
     return DatabaseConfig(
@@ -63,7 +63,7 @@ object ProdConfiguration {
 object NonProdConfiguration {
     val instance by lazy {
         val tokenIssuerProperties = AuthorizationServerProperties(
-            issuerUrl = "https://token-exchange.dev-gcp.nais.io",
+            issuerUrl = "https://tokendings.dev-gcp.nais.io",
             subjectTokenIssuers = listOf()
         )
         val clientRegistry = ClientRegistry(
