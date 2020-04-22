@@ -14,8 +14,8 @@ import javax.sql.DataSource
 class ClientStore(private val dataSource: DataSource) {
 
     companion object {
-        private const val TABLE_NAME = "CLIENTS"
-        private const val PRIMARY_KEY = "CLIENT_ID"
+        private const val TABLE_NAME = "clients"
+        private const val PRIMARY_KEY = "client_id"
     }
 
     fun storeClient(oAuth2Client: OAuth2Client): Int =
@@ -44,14 +44,14 @@ class ClientStore(private val dataSource: DataSource) {
             .map { "$it=:$it" }
             .toList().joinToString(", ")
         return queryOf(
-            """UPDATE $TABLE_NAME SET $keyValues WHERE CLIENT_ID=:CLIENT_ID""".trimMargin(), columnMap
+            """UPDATE $TABLE_NAME SET $keyValues WHERE client_id=:client_id""".trimMargin(), columnMap
         )
     }
 
     fun delete(clientId: ClientId) =
         withTimer("delete") {
             using(sessionOf(dataSource)) { session ->
-                session.run(queryOf("""DELETE FROM $TABLE_NAME WHERE CLIENT_ID=?""", clientId).asUpdate)
+                session.run(queryOf("""DELETE FROM $TABLE_NAME WHERE client_id=?""", clientId).asUpdate)
             }
         }
 
@@ -59,7 +59,7 @@ class ClientStore(private val dataSource: DataSource) {
         withTimer("find") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
-                    queryOf("""SELECT * FROM $TABLE_NAME WHERE CLIENT_ID=?""", clientId)
+                    queryOf("""SELECT * FROM $TABLE_NAME WHERE client_id=?""", clientId)
                         .map {
                             it.mapToOAuth2Client()
                         }.asSingle
@@ -85,7 +85,7 @@ class ClientStore(private val dataSource: DataSource) {
 
     private fun OAuth2Client.mapToColumns(): Map<String, *> =
         mapOf(
-            "CLIENT_ID" to this.clientId,
+            "client_id" to this.clientId,
             "data" to PGobject().also {
                 it.type = "jsonb"
                 it.value = this.toJson()

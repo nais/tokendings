@@ -71,7 +71,7 @@ internal class MockApiRouting(private val config: AppConfiguration) : DefaultRou
                         adminClient.jwks != null -> adminClient.jwks
                         adminClient.jwks_uri != null ->
                             runBlocking {
-                                defaultHttpClient.get(adminClient.jwks_uri)
+                                defaultHttpClient.get<JsonWebKeys>(adminClient.jwks_uri)
                             }
                         else -> JsonWebKeys(generateJWKSet("generated-for-${adminClient.clientId}", 2048))
                     }

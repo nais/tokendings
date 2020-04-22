@@ -34,7 +34,6 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 val request: ClientRegistrationRequest = call.receive(ClientRegistrationRequest::class)
                 val clientToRegister: OAuth2Client = mapRequestToOAuth2Client(request, adminClient.jwkSet)
                 config.clientRegistry.registerClient(clientToRegister)
-
                 call.respond(
                     HttpStatusCode.Created, ClientRegistration(
                         clientToRegister.clientId,

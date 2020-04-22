@@ -1,14 +1,13 @@
-CREATE TABLE IF NOT EXISTS CLIENTS_V0 (
-    CLIENT_ID varchar(100) PRIMARY KEY,
-    JWKS text,
-    ACCESS_POLICY_INBOUND text,
-    ACCESS_POLICY_OUTBOUND text,
-    ALLOWED_SCOPES text,
-    ALLOWED_GRANT_TYPES text
+CREATE TABLE IF NOT EXISTS clients (
+    client_id varchar(100) NOT NULL,
+    data JSONB NOT NULL,
+    PRIMARY KEY (client_id),
+    created TIMESTAMP WITH TIME ZONE NOT NULL default (now() at time zone 'utc')
 );
 
-CREATE TABLE IF NOT EXISTS CLIENTS (
-    CLIENT_ID varchar(100) NOT NULL,
-    data JSONB NOT NULL,
-    PRIMARY KEY (CLIENT_ID)
+CREATE TABLE IF NOT EXISTS token_issuer_keys (
+    kid varchar(36) NOT NULL,
+    jwk text NOT NULL,
+    PRIMARY KEY (kid),
+    created TIMESTAMP WITH TIME ZONE NOT NULL default (now() at time zone 'utc')
 );

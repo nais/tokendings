@@ -7,7 +7,7 @@ import io.prometheus.client.Histogram
 class Metrics {
     companion object {
         val collectorRegistry = CollectorRegistry.defaultRegistry
-        val httpTimer = Histogram.build("request_latency_histogram", "Distribution of reponse times")
+        val httpTimer = Histogram.build("request_latency_histogram", "Distribution of response times")
             .labelNames("path")
             .register(collectorRegistry)
         val dbTimer = Histogram.build("db_query_latency_histogram", "Distribution of db execution times")
