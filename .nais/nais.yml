@@ -46,7 +46,7 @@ spec:
      - {{url}}
   {{/each}}
   env:
-    - name: PROFILE
+    - name: APPLICATION_PROFILE
       value: NON_PROD
 
 

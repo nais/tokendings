@@ -10,11 +10,11 @@
         <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
     </appender>
 
-    <logger name="io.nais" level="DEBUG"/>
-    <logger name="ktor.application" level="DEBUG"/>
-    <logger name="io.ktor" level="TRACE"/>
+    <logger name="io.nais" level="INFO"/>
+    <logger name="ktor.application" level="INFO"/>
+    <logger name="io.ktor" level="INFO"/>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="STDOUT_JSON"/>
     </root>
 </configuration>
