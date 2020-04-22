@@ -11,6 +11,7 @@ import io.nais.security.oauth2.utils.generateAESKey
 import kotliquery.queryOf
 import kotliquery.sessionOf
 import kotliquery.using
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.text.ParseException
 
@@ -26,6 +27,7 @@ internal class TokenIssuerKeyStoreTest {
         }
     }
 
+    @Disabled("temorarily disabled")
     @Test
     fun `latestKeyPair should return latest keypair as JWK`() {
         withMigratedDb {

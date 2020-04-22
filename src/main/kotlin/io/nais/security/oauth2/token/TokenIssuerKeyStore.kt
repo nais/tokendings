@@ -18,11 +18,10 @@ import java.util.UUID
 import javax.crypto.SecretKey
 import javax.sql.DataSource
 
-// TODO: encrypt storage of keys
 internal class TokenIssuerKeyStore(
     private val dataSource: DataSource,
     private val keySize: Int,
-    private val encryptionKey: SecretKey
+    private val encryptionKeyAES128: SecretKey
 ) {
 
     companion object {
@@ -32,7 +31,7 @@ internal class TokenIssuerKeyStore(
 
     fun insertNewKeyPair(): RSAKey {
         val rsaKey = generateRSAKey(keySize)
-        val encryptedRsaKey = encryptJwk(rsaKey)
+        val encryptedRsaKey = rsaKey.encryptJwk(encryptionKeyAES128)
         withTimer(Metrics.dbTimer.labels("insertNewKeyPair")) {
             using(sessionOf(dataSource)) { session ->
                 session.run(
@@ -52,7 +51,7 @@ internal class TokenIssuerKeyStore(
                     queryOf(
                         """SELECT * FROM $TABLE_NAME WHERE kid=?""", kid
                     ).map {
-                        decryptAndParseJwk(it)
+                        it.decryptAndParseJwk(encryptionKeyAES128)
                     }.asSingle
                 )
             }
@@ -65,17 +64,17 @@ internal class TokenIssuerKeyStore(
                     queryOf(
                         """SELECT DISTINCT ON (kid) kid, jwk, created FROM $TABLE_NAME ORDER BY kid, created ASC;"""
                     ).map {
-                        decryptAndParseJwk(it)
+                        it.decryptAndParseJwk(encryptionKeyAES128)
                     }.asSingle
                 )
             }
         }
 
-    private fun encryptJwk(jwk: JWK): String =
-        jwk.toJSONString().encrypt(encryptionKey)
+    private fun JWK.encryptJwk(key: SecretKey): String =
+        this.toJSONString().encrypt(key)
 
-    private fun decryptAndParseJwk(row: Row): JWK =
-        JWK.parse(row.string("jwk").decrypt(encryptionKey))
+    private fun Row.decryptAndParseJwk(key: SecretKey): JWK =
+        JWK.parse(this.string("jwk").decrypt(key))
 
     private fun generateRSAKey(keySize: Int): RSAKey =
         KeyPairGenerator.getInstance("RSA").apply { initialize(keySize) }.generateKeyPair()
