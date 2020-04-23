@@ -1,5 +1,8 @@
 package io.nais.security.oauth2.mock
 
+import com.nimbusds.jose.jwk.JWKMatcher
+import com.nimbusds.jose.jwk.JWKSelector
+import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import io.ktor.application.Application
@@ -35,7 +38,7 @@ val log = KotlinLogging.logger { }
 // TODO: remove, keep for now for local integration testing.
 private val adminJwksUrl = "http://localhost:3000/jwks"
 private val adminClientId = "the_best_cluster_in_the_finstadjordet:nais:jwker"
-private val enableRemoteAdminClient = false
+private val enableRemoteAdminClient = true
 
 @KtorExperimentalAPI
 fun main() {
@@ -54,7 +57,14 @@ fun main() {
 fun remoteAdminClient(authorizationServerProperties: AuthorizationServerProperties): OAuth2Client =
     OAuth2Client(
         clientId = adminClientId,
-        jwks = JsonWebKeys(RemoteJWKSet<SecurityContext?>(URL(adminJwksUrl)).cachedJWKSet),
+        jwks = JsonWebKeys(
+            RemoteJWKSet<SecurityContext?>(URL(adminJwksUrl)).get(
+                JWKSelector(
+                    JWKMatcher.Builder().keyType(KeyType.RSA).build()
+                ),
+                null
+            )
+        ),
         allowedScopes = listOf(authorizationServerProperties.clientRegistrationUrl()),
         allowedGrantTypes = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
     )
