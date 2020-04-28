@@ -1,13 +1,15 @@
 package io.nais.security.oauth2.config
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
-import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.client.request.get
+import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.defaultHttpClient
+import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
@@ -25,14 +27,12 @@ val konfig =
         EnvironmentVariables()
 
 enum class Profile {
-    LOCAL,
     NON_PROD,
     PROD
 }
 
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key("APPLICATION_PROFILE", stringType))?.let { Profile.valueOf(it) }) {
-        Profile.LOCAL -> LocalConfiguration.instance
         Profile.NON_PROD -> NonProdConfiguration.instance
         Profile.PROD -> ProdConfiguration.instance
         else -> ProdConfiguration.instance
@@ -49,24 +49,43 @@ fun environmentDatabaseConfig(): DatabaseConfig {
     )
 }
 
+fun clientRegistryFromEnvironment(): ClientRegistry =
+    ClientRegistry(
+        ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
+            migrate(this)
+        })
+    )
+
+fun ClientRegistry.bootstrapAdminClients(
+    authorizationServerProperties: AuthorizationServerProperties,
+    bootstrapClientProperties: List<BootstrapClientProperties>
+) = bootstrapClientProperties.forEach {
+    if (this.findClient(it.clientId) == null) {
+        this.registerClient(
+            OAuth2Client(
+                clientId = it.clientId,
+                jwks = it.jwks,
+                allowedScopes = listOf(authorizationServerProperties.clientRegistrationUrl()),
+                allowedGrantTypes = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
+            )
+        )
+    }
+}
+
 object ProdConfiguration {
     val instance by lazy {
-        val tokenIssuerProperties = AuthorizationServerProperties(
+        val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://token-exchange.nais.io",
             subjectTokenIssuers = listOf()
         )
-        val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
-                migrate(this)
-            })
-        )
-        AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
+        val clientRegistry = clientRegistryFromEnvironment()
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties)
     }
 }
 
 object NonProdConfiguration {
     val instance by lazy {
-        val tokenIssuerProperties = AuthorizationServerProperties(
+        val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.dev-gcp.nais.io",
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer(
@@ -74,50 +93,8 @@ object NonProdConfiguration {
                 )
             )
         )
-        val initialClientJwks = this::class.java.getResource("/adminclient-jwks.json").readText(Charsets.UTF_8)
-        val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(dataSourceFrom(environmentDatabaseConfig()).apply {
-                migrate(this)
-            })
-        ).apply {
-            registerClient(
-                OAuth2Client(
-                    clientId = "dev-gcp:plattformsikkerhet:adminclient",
-                    jwks = JsonWebKeys(JWKSet.parse(initialClientJwks)),
-                    allowedScopes = listOf(tokenIssuerProperties.clientRegistrationUrl()),
-                    allowedGrantTypes = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
-                )
-            )
-        }
-        AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
-    }
-}
-
-object LocalConfiguration {
-    val instance by lazy {
-        val tokenIssuerProperties = AuthorizationServerProperties(
-            issuerUrl = "http://localhost:8080",
-            subjectTokenIssuers = listOf(
-                SubjectTokenIssuer(
-                    "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
-                )
-            )
-        )
-        val clientRegistry = ClientRegistry(
-            ClientRegistryProperties(
-                dataSourceFrom(
-                    // requires docker instance of postgres
-                    DatabaseConfig(
-                        "jdbc:postgresql://localhost:5432/token-exchange",
-                        "user",
-                        "pwd"
-                    )
-                ).apply {
-                    migrate(this)
-                }
-            )
-        )
-        AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
+        val clientRegistry = clientRegistryFromEnvironment()
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties)
     }
 }
 
@@ -134,6 +111,20 @@ data class ServerProperties(val port: Int)
 data class ClientRegistryProperties(
     val dataSource: DataSource
 )
+
+data class BootstrapClientProperties(
+    val clientId: ClientId,
+    val clientJwksUri: String
+) {
+    val jwks: JsonWebKeys by lazy {
+        runBlocking {
+            log.info("getting keys for bootstrap client from jwks uri=$clientJwksUri")
+            // TODO: figure out why JsonWebKeys cant be deserialized directly.....
+            val string: String = defaultHttpClient.get<String>(clientJwksUri)
+            Jackson.defaultMapper.readValue<JsonWebKeys>(string)
+        }
+    }
+}
 
 class AuthorizationServerProperties(
     val issuerUrl: String,

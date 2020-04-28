@@ -16,6 +16,9 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
+import com.nimbusds.oauth2.sdk.OAuth2Error
+import io.nais.security.oauth2.model.OAuth2Exception
+import java.lang.Exception
 import java.net.URL
 import java.util.HashSet
 
@@ -62,8 +65,12 @@ fun verifyJwt(signedJwt: SignedJWT, jwtClaimsSetVerifier: JWTClaimsSetVerifier<S
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
 fun verifyJwt(signedJwt: SignedJWT, jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>, keySelector: JWSVerificationKeySelector<SecurityContext?>):
     JWTClaimsSet {
-    val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
-    jwtProcessor.jwsKeySelector = keySelector
-    jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
-    return jwtProcessor.process(signedJwt, null)
+    try {
+        val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
+        jwtProcessor.jwsKeySelector = keySelector
+        jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
+        return jwtProcessor.process(signedJwt, null)
+    } catch (e: Exception) {
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
+    }
 }

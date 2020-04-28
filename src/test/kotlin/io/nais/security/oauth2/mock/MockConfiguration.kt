@@ -2,8 +2,6 @@ package io.nais.security.oauth2.mock
 
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
-import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.zaxxer.hikari.HikariDataSource
@@ -16,8 +14,6 @@ import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.model.AccessPolicy
-import io.nais.security.oauth2.model.ClientId
-import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.registration.ClientRegistry
@@ -27,7 +23,6 @@ import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import io.nais.security.oauth2.tokenExchangeApp
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
-import java.net.URL
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
@@ -35,14 +30,14 @@ import java.util.UUID
 // TODO do not init database for every test
 fun mockConfig(mockOAuth2Server: MockOAuth2Server? = null): AppConfiguration {
     val issuerUrl = "http://localhost:8080"
-    val tokenIssuerProperties = AuthorizationServerProperties(
+    val authorizationServerProperties = AuthorizationServerProperties(
         issuerUrl = issuerUrl,
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList()
     )
-    val clientRegistry = MockClientRegistry(tokenIssuerProperties.tokenEndpointUrl())
-    return AppConfiguration(ServerProperties(8080), clientRegistry, tokenIssuerProperties)
+    val clientRegistry = MockClientRegistry(authorizationServerProperties.tokenEndpointUrl())
+    return AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties)
 }
 
 fun MockApp(
@@ -51,17 +46,6 @@ fun MockApp(
     return fun Application.() {
         tokenExchangeApp(config, DefaultRouting(config))
     }
-}
-
-data class AdminOAuth2Client(
-    val clientId: ClientId,
-    val jwkSet: JWKSet,
-    val allowedScopes: List<String>
-) {
-    constructor(clientId: ClientId, jwksUrl: URL, allowedScopes: List<String>) :
-        this(clientId, RemoteJWKSet<SecurityContext?>(jwksUrl).cachedJWKSet, allowedScopes)
-
-    val allowedGrantTypes: List<String> = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
 }
 
 class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(

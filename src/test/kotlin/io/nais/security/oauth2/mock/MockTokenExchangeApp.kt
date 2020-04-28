@@ -1,10 +1,5 @@
 package io.nais.security.oauth2.mock
 
-import com.nimbusds.jose.jwk.JWKMatcher
-import com.nimbusds.jose.jwk.JWKSelector
-import com.nimbusds.jose.jwk.KeyType
-import com.nimbusds.jose.jwk.source.RemoteJWKSet
-import com.nimbusds.jose.proc.SecurityContext
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.client.request.get
@@ -18,7 +13,8 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.AuthorizationServerProperties
+import io.nais.security.oauth2.config.BootstrapClientProperties
+import io.nais.security.oauth2.config.bootstrapAdminClients
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.GrantType
@@ -31,43 +27,45 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
-import java.net.URL
 
 val log = KotlinLogging.logger { }
 
-// TODO: remove, keep for now for local integration testing.
-private val adminJwksUrl = "http://localhost:3000/jwks"
-private val adminClientId = "the_best_cluster_in_the_finstadjordet:nais:jwker"
-private val enableRemoteAdminClient = true
+private const val enableRemoteBootstrapClient = false
+
+internal object RemoteAdminClientProperties {
+    val adminClientPort = 3000
+    val adminJwksUrl = "http://localhost:$adminClientPort/jwks"
+    val adminClientId = "the_best_cluster_in_the_finstadjordet:nais:jwker"
+}
+
+internal object MockAdminClientProperties {
+    val adminClientPort = 2222
+    val adminJwksUrl = "http://localhost:$adminClientPort/jwks"
+    val adminClientId = "mock:nais:jwker"
+}
 
 @KtorExperimentalAPI
 fun main() {
     val mockOAuth2Server: MockOAuth2Server = startMockOAuth2Server()
     val config: AppConfiguration = mockConfig(mockOAuth2Server)
-    if (enableRemoteAdminClient) {
+
+    if (enableRemoteBootstrapClient) {
         // will fail if remote admin client server is not started before this one
-        config.clientRegistry.registerClient(remoteAdminClient(config.authorizationServerProperties))
+
+        // config.clientRegistry.registerClient(remoteAdminClient(config.authorizationServerProperties))
+    } else {
+        val mockAdminClient = startMockAdminClient(config)
+        config.clientRegistry.bootstrapAdminClients(
+            config.authorizationServerProperties,
+            listOf(BootstrapClientProperties(mockAdminClient.clientId, mockAdminClient.jwksUrl()))
+        )
     }
+
     server(
         config,
         MockApiRouting(config)
     ).start(wait = true)
 }
-
-fun remoteAdminClient(authorizationServerProperties: AuthorizationServerProperties): OAuth2Client =
-    OAuth2Client(
-        clientId = adminClientId,
-        jwks = JsonWebKeys(
-            RemoteJWKSet<SecurityContext?>(URL(adminJwksUrl)).get(
-                JWKSelector(
-                    JWKMatcher.Builder().keyType(KeyType.RSA).build()
-                ),
-                null
-            )
-        ),
-        allowedScopes = listOf(authorizationServerProperties.clientRegistrationUrl()),
-        allowedGrantTypes = listOf(GrantType.CLIENT_CREDENTIALS_GRANT)
-    )
 
 internal class MockApiRouting(private val config: AppConfiguration) : DefaultRouting(config) {
     override fun apiRouting(application: Application): Routing {
@@ -120,6 +118,16 @@ internal class MockApiRouting(private val config: AppConfiguration) : DefaultRou
         val jwks_uri: String?
     )
 }
+
+private fun startMockAdminClient(config: AppConfiguration): MockAdminClient =
+    MockAdminClient(
+        MockAdminClientProperties.adminClientPort,
+        MockAdminClientProperties.adminClientId,
+        config.authorizationServerProperties.clientRegistrationUrl(),
+        config.authorizationServerProperties.tokenEndpointUrl()
+    ).apply {
+        start()
+    }
 
 private fun startMockOAuth2Server(): MockOAuth2Server =
     MockOAuth2Server(

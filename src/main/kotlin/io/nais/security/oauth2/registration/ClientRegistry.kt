@@ -10,10 +10,8 @@ private val log = KotlinLogging.logger {}
 open class ClientRegistry(
     clientRegistryProperties: ClientRegistryProperties
 ) {
-    // TODO fix how to inject db config
     private val clientStore = ClientStore(clientRegistryProperties.dataSource)
 
-    // TODO: check out if suspend and coroutines makes sense with kotliquery
     fun findClient(clientId: ClientId): OAuth2Client? = clientStore.find(clientId)
 
     fun registerClient(client: OAuth2Client): OAuth2Client {

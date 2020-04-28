@@ -22,13 +22,11 @@ data class ClientRegistrationRequest(
     val clientName: String,
     val jwks: JsonWebKeys,
     @JsonProperty("software_statement")
-    val softwareStatement: SoftwareStatementJwt
-) {
+    val softwareStatement: SoftwareStatementJwt? = null,
+    val scopes: List<String> = emptyList(),
     @JsonProperty("grant_types")
     val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
-    @JsonProperty("token_endpoint_auth_method")
-    val tokenEndpointAuthMethod: String = "private_key_jwt"
-
+) {
     companion object Mapper {
         val writer = Jackson.defaultMapper.writerFor(ClientRegistrationRequest::class.java)
         fun toJson(clientRegistrationRequest: ClientRegistrationRequest): String = writer.writeValueAsString(clientRegistrationRequest)
@@ -42,7 +40,7 @@ data class ClientRegistration(
     val clientId: ClientId,
     val jwks: JsonWebKeys,
     @JsonProperty("software_statement")
-    val softwareStatement: SoftwareStatementJwt,
+    val softwareStatement: SoftwareStatementJwt?,
     @JsonProperty("grant_types")
     val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT),
     @JsonProperty("token_endpoint_auth_method")
