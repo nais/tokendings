@@ -48,7 +48,8 @@ spec:
   env:
     - name: APPLICATION_PROFILE
       value: NON_PROD
-
+  envFrom:
+    - secret: {{app}}-bearerauth
 
   #envFrom:
   # - secret: {{app}}-encryptionkey
