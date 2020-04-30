@@ -65,8 +65,7 @@ private val log = KotlinLogging.logger { }
 @KtorExperimentalAPI
 fun main() {
     try {
-        val config: AppConfiguration = configByProfile()
-        val engine = server(config)
+        val engine = server()
         engine.addShutdownHook {
             engine.stop(3, 5, TimeUnit.SECONDS)
         }
@@ -78,13 +77,14 @@ fun main() {
 }
 
 @KtorExperimentalAPI
-fun server(config: AppConfiguration, routing: ApiRouting = DefaultRouting(config)): NettyApplicationEngine =
+fun server(): NettyApplicationEngine =
     embeddedServer(Netty, applicationEngineEnvironment {
+        val config = configByProfile()
         connector {
             port = config.serverProperties.port
         }
         module {
-            tokenExchangeApp(config, routing)
+            tokenExchangeApp(config, DefaultRouting(config))
         }
     })
 

@@ -47,13 +47,11 @@ spec:
   {{/each}}
 
   env:
-  {{#each env}}
-    - name: {{@key}}
+{{#each env}}
+    - name: "{{@key}}"
       value: "{{this}}"
-  {{/each}}
+{{/each}}
 
   envFrom:
     - secret: {{app}}-bearerauth
-
-  #envFrom:
   # - secret: {{app}}-encryptionkey
