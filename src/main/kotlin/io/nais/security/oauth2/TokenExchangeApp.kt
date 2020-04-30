@@ -71,7 +71,7 @@ fun main() {
         }
         engine.start(wait = true)
     } catch (t: Throwable) {
-        log.error("received unexpected exception when starting app, message: ${t.message}", t)
+        log.error("received unexpected exception when starting app. message: ${t.message}", t)
         exitProcess(1)
     }
 }
