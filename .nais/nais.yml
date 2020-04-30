@@ -43,11 +43,15 @@ spec:
 
   ingresses:
   {{#each ingresses as |url|}}
-     - {{url}}
+    - {{url}}
   {{/each}}
+
   env:
-    - name: APPLICATION_PROFILE
-      value: NON_PROD
+  {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+  {{/each}}
+
   envFrom:
     - secret: {{app}}-bearerauth
 
