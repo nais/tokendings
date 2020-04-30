@@ -11,6 +11,7 @@ import com.natpryce.konfig.stringType
 import io.ktor.client.request.get
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
+import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_SUB
 import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
 import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
@@ -44,6 +45,7 @@ object EnvKey {
     const val DB_USERNAME = "DB_USERNAME"
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
+    const val AUTH_JWKER_SUB = "AUTH_JWKER_SUB"
 }
 
 fun configByProfile(): AppConfiguration =
@@ -67,7 +69,8 @@ fun environmentDatabaseConfig(): DatabaseConfig {
 fun authenticationPropertiesFromEnvironment(): ClientReqistrationAuthProperties =
     ClientReqistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
-        acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))]
+        acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
+        requiredClaims = mapOf("sub" to konfig[Key(AUTH_JWKER_SUB, stringType)])
     )
 
 fun clientRegistryFromEnvironment(): ClientRegistry =
