@@ -22,3 +22,4 @@ node_modules/
 jspm_packages/
 dist/
 /src/test/kotlin/io/nais/security/oauth2/token/TokenVerifyTest.kt
+/.nais/k8s.secrets.yml
