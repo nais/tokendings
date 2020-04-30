@@ -32,6 +32,7 @@ import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import io.nais.security.oauth2.tokenExchangeApp
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class TokenExchangeApiTest {
@@ -150,36 +151,40 @@ internal class TokenExchangeApiTest {
 
     @Test
     fun `token exchange call with invalid client assertion should fail`() {
-        val mockConfig = mockConfig()
-        val jwkSet = generateJWKSet("akey", 2048)
-        val unknownClientAssertion = generateClientAssertion(
-            "unknown",
-            mockConfig.authorizationServerProperties.tokenEndpointUrl(),
-            jwkSet
-        )
-        withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
-        }) {
-            with(handleRequest(HttpMethod.Post, "/token") {
-                addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                setBody(
-                    listOf(
-                        "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                        "client_assertion" to unknownClientAssertion.serialize(),
-                        "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                        "audience" to "client2",
-                        "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                        "subject_token" to "sometoken"
-                    ).formUrlEncode()
-                )
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val jwkSet = generateJWKSet("akey", 2048)
+            val unknownClientAssertion = generateClientAssertion(
+                "unknown",
+                mockConfig.authorizationServerProperties.tokenEndpointUrl(),
+                jwkSet
+            )
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                assertThat(response.status()).isEqualTo(HttpStatusCode.Unauthorized)
-                val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                assertThat(errorResponse.code).isEqualTo("invalid_client")
+                with(handleRequest(HttpMethod.Post, "/token") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                    setBody(
+                        listOf(
+                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                            "client_assertion" to unknownClientAssertion.serialize(),
+                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                            "audience" to "client2",
+                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                            "subject_token" to "sometoken"
+                        ).formUrlEncode()
+                    )
+                }) {
+                    assertThat(response.status()).isEqualTo(HttpStatusCode.Unauthorized)
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    assertThat(errorResponse.code).isEqualTo("invalid_client")
+                }
             }
         }
     }
 
+    // TODO: remove later
+    @Disabled("functionality no longer needed")
     @Test
     fun `successful client_credentials call to token endpoint with scope for registration url should return bearer token with aud equals registration url`() {
 
@@ -218,6 +223,8 @@ internal class TokenExchangeApiTest {
         }
     }
 
+    // TODO: remove later
+    @Disabled("functionality no longer needed")
     @Test
     fun `client_credentials call to token endpoint with scope for registration url should fail if client doesnt have scope in allowed scopes`() {
 

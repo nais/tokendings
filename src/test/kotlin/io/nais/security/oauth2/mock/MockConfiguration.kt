@@ -1,13 +1,17 @@
 package io.nais.security.oauth2.mock
 
+import com.auth0.jwk.JwkProvider
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
+import io.mockk.every
+import io.mockk.mockk
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
+import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
@@ -16,6 +20,7 @@ import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
+import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.token.JwtTokenProvider
@@ -28,7 +33,11 @@ import java.util.Date
 import java.util.UUID
 
 // TODO do not init database for every test
-fun mockConfig(mockOAuth2Server: MockOAuth2Server? = null): AppConfiguration {
+fun mockConfig(
+    mockOAuth2Server: MockOAuth2Server? = null,
+    clientReqistrationAuthProperties: ClientReqistrationAuthProperties? = null
+): AppConfiguration {
+
     val issuerUrl = "http://localhost:8080"
     val authorizationServerProperties = AuthorizationServerProperties(
         issuerUrl = issuerUrl,
@@ -36,9 +45,32 @@ fun mockConfig(mockOAuth2Server: MockOAuth2Server? = null): AppConfiguration {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList()
     )
+    val clientRegAuthProperties = when {
+        clientReqistrationAuthProperties != null -> clientReqistrationAuthProperties
+        mockOAuth2Server != null -> ClientReqistrationAuthProperties(
+            mockOAuth2Server.wellKnownUrl("aadmock").toString(),
+            listOf("tokendings")
+        )
+        else -> mockBearerTokenAuthenticationProperties()
+    }
+        clientReqistrationAuthProperties ?: mockBearerTokenAuthenticationProperties()
     val clientRegistry = MockClientRegistry(authorizationServerProperties.tokenEndpointUrl())
-    return AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties)
+    return AppConfiguration(
+        ServerProperties(8080),
+        clientRegistry,
+        authorizationServerProperties,
+        clientRegAuthProperties
+    )
 }
+
+fun mockBearerTokenAuthenticationProperties(): ClientReqistrationAuthProperties =
+    mockBearerTokenAuthenticationProperties(mockk(), mockk())
+
+fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientReqistrationAuthProperties =
+    mockk<ClientReqistrationAuthProperties>().also {
+            every { it.wellKnown } returns wellKnown
+            every { it.jwkProvider } returns jwkProvider
+    }
 
 fun MockApp(
     config: AppConfiguration = mockConfig()
@@ -104,7 +136,6 @@ fun <R> withMockOAuth2Server(
     }
 }
 
-// TODO bump version
 internal object PostgresContainer {
     val instance by lazy {
         PostgreSQLContainer<Nothing>("postgres:11.2").apply {

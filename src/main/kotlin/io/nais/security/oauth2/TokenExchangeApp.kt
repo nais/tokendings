@@ -46,7 +46,7 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.nais.security.oauth2.authentication.clientBearerToken
+import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
 import io.nais.security.oauth2.model.OAuth2Exception
@@ -147,7 +147,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(Authentication) {
-        clientBearerToken(config)
+        clientRegistrationAuth(config)
     }
 
     install(DoubleReceive)

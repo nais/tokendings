@@ -52,7 +52,12 @@ data class SoftwareStatement(
     val appId: String,
     val accessPolicyInbound: List<String> = emptyList(),
     val accessPolicyOutbound: List<String> = emptyList()
-)
+) {
+    companion object Mapper {
+        private val reader = Jackson.defaultMapper.readerFor(SoftwareStatement::class.java)
+        fun fromJson(json: String): SoftwareStatement = reader.readValue(json)
+    }
+}
 
 fun ClientRegistrationRequest.verifySoftwareStatement(jwkSet: JWKSet): SoftwareStatement =
     verifyJwt(

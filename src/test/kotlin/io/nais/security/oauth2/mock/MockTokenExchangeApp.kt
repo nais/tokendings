@@ -13,8 +13,7 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.BootstrapClientProperties
-import io.nais.security.oauth2.config.bootstrapAdminClients
+import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.GrantType
@@ -30,36 +29,22 @@ import no.nav.security.mock.oauth2.OAuth2Config
 
 val log = KotlinLogging.logger { }
 
-private const val enableRemoteBootstrapClient = false
-
-internal object RemoteAdminClientProperties {
-    val adminClientPort = 3000
-    val adminJwksUrl = "http://localhost:$adminClientPort/jwks"
-    val adminClientId = "the_best_cluster_in_the_finstadjordet:nais:jwker"
-}
-
 internal object MockAdminClientProperties {
-    val adminClientPort = 2222
-    val adminJwksUrl = "http://localhost:$adminClientPort/jwks"
-    val adminClientId = "mock:nais:jwker"
+    const val adminClientPort = 2222
+    const val adminJwksUrl = "http://localhost:$adminClientPort/jwks"
+    const val adminClientId = "mock:nais:jwker"
 }
 
 @KtorExperimentalAPI
 fun main() {
     val mockOAuth2Server: MockOAuth2Server = startMockOAuth2Server()
-    val config: AppConfiguration = mockConfig(mockOAuth2Server)
 
-    if (enableRemoteBootstrapClient) {
-        // will fail if remote admin client server is not started before this one
+    val clientRegistrationAuthProps = ClientReqistrationAuthProperties(
+        mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
+        listOf("tokendings")
+    )
 
-        // config.clientRegistry.registerClient(remoteAdminClient(config.authorizationServerProperties))
-    } else {
-        val mockAdminClient = startMockAdminClient(config)
-        config.clientRegistry.bootstrapAdminClients(
-            config.authorizationServerProperties,
-            listOf(BootstrapClientProperties(mockAdminClient.clientId, mockAdminClient.jwksUrl()))
-        )
-    }
+    val config: AppConfiguration = mockConfig(mockOAuth2Server, clientRegistrationAuthProps)
 
     server(
         config,
@@ -118,16 +103,6 @@ internal class MockApiRouting(private val config: AppConfiguration) : DefaultRou
         val jwks_uri: String?
     )
 }
-
-private fun startMockAdminClient(config: AppConfiguration): MockAdminClient =
-    MockAdminClient(
-        MockAdminClientProperties.adminClientPort,
-        MockAdminClientProperties.adminClientId,
-        config.authorizationServerProperties.clientRegistrationUrl(),
-        config.authorizationServerProperties.tokenEndpointUrl()
-    ).apply {
-        start()
-    }
 
 private fun startMockOAuth2Server(): MockOAuth2Server =
     MockOAuth2Server(
