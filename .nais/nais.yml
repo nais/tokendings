@@ -37,6 +37,7 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_11
+        name: tokendings-postgres
         databases:
           - name: tokendings
             envVarPrefix: DB
