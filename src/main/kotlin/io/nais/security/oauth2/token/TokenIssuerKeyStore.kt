@@ -62,7 +62,7 @@ internal class TokenIssuerKeyStore(
             using(sessionOf(dataSource)) { session ->
                 session.run(
                     queryOf(
-                        """SELECT DISTINCT ON (kid) kid, jwk, created FROM $TABLE_NAME ORDER BY kid, created ASC;"""
+                        """SELECT DISTINCT ON (created) kid, jwk, created FROM $TABLE_NAME ORDER BY created DESC;"""
                     ).map {
                         it.decryptAndParseJwk(encryptionKeyAES128)
                     }.asSingle

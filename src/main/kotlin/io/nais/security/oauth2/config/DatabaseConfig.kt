@@ -4,14 +4,6 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
 
-object InmemoryDatabaseConfig {
-    val instance = DatabaseConfig(
-        "jdbc:h2:mem:test",
-        "user",
-        "pwd"
-    )
-}
-
 data class DatabaseConfig(
     val url: String,
     val user: String,

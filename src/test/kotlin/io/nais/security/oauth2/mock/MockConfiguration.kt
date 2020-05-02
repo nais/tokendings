@@ -53,7 +53,7 @@ fun mockConfig(
         )
         else -> mockBearerTokenAuthenticationProperties()
     }
-        clientReqistrationAuthProperties ?: mockBearerTokenAuthenticationProperties()
+
     val clientRegistry = MockClientRegistry(authorizationServerProperties.tokenEndpointUrl())
     return AppConfiguration(
         ServerProperties(8080),
@@ -64,7 +64,12 @@ fun mockConfig(
 }
 
 fun mockBearerTokenAuthenticationProperties(): ClientReqistrationAuthProperties =
-    mockBearerTokenAuthenticationProperties(mockk(), mockk())
+    mockBearerTokenAuthenticationProperties(
+        mockk<WellKnown>().also {
+            every { it.jwksUri } returns "http://na"
+            every { it.issuer } returns "http://na"
+        },
+        mockk())
 
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientReqistrationAuthProperties =
     mockk<ClientReqistrationAuthProperties>().also {

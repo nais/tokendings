@@ -223,8 +223,6 @@ internal class TokenExchangeApiTest {
         }
     }
 
-    // TODO: remove later
-    @Disabled("functionality no longer needed")
     @Test
     fun `client_credentials call to token endpoint with scope for registration url should fail if client doesnt have scope in allowed scopes`() {
 
