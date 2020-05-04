@@ -32,7 +32,6 @@ import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import io.nais.security.oauth2.tokenExchangeApp
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class TokenExchangeApiTest {
@@ -179,75 +178,6 @@ internal class TokenExchangeApiTest {
                     val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
                     assertThat(errorResponse.code).isEqualTo("invalid_client")
                 }
-            }
-        }
-    }
-
-    // TODO: remove later
-    @Disabled("functionality no longer needed")
-    @Test
-    fun `successful client_credentials call to token endpoint with scope for registration url should return bearer token with aud equals registration url`() {
-
-        val mockConfig = mockConfig()
-        val registry = (mockConfig.clientRegistry as MockClientRegistry)
-        val jwkerClient = registry.registerClientAndGenerateKeys(
-            "jwker",
-            AccessPolicy(),
-            listOf(mockConfig.authorizationServerProperties.clientRegistrationUrl())
-        )
-        val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
-
-        withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
-        }) {
-            with(handleRequest(HttpMethod.Post, "/token") {
-                addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                setBody(
-                    listOf(
-                        "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                        "client_assertion" to clientAssertion,
-                        "grant_type" to "client_credentials",
-                        "scope" to mockConfig.authorizationServerProperties.clientRegistrationUrl()
-                    ).formUrlEncode()
-                )
-            }) {
-                assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
-                val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.content!!)
-                assertThat(accessTokenResponse.accessToken).isNotBlank()
-                val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
-                val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
-                assertThat(claims.subject).isEqualTo(jwkerClient.clientId)
-                assertThat(claims.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
-                assertThat(claims.audience).containsExactly(mockConfig.authorizationServerProperties.clientRegistrationUrl())
-            }
-        }
-    }
-
-    @Test
-    fun `client_credentials call to token endpoint with scope for registration url should fail if client doesnt have scope in allowed scopes`() {
-
-        val mockConfig = mockConfig()
-        val registry = (mockConfig.clientRegistry as MockClientRegistry)
-        val jwkerClient = registry.registerClientAndGenerateKeys("jwker", AccessPolicy())
-        val clientAssertion = registry.generateClientAssertionFor(jwkerClient.clientId).serialize()
-
-        withTestApplication({
-            tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
-        }) {
-            with(handleRequest(HttpMethod.Post, "/token") {
-                addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                setBody(
-                    listOf(
-                        "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                        "client_assertion" to clientAssertion,
-                        "grant_type" to "client_credentials",
-                        "scope" to mockConfig.authorizationServerProperties.clientRegistrationUrl()
-                    ).formUrlEncode()
-                )
-            }) {
-                assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                assertThat(errorResponse.code).isEqualTo("invalid_request")
             }
         }
     }
