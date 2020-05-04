@@ -8,7 +8,7 @@ import io.nais.security.oauth2.model.OAuth2ClientCredentialsTokenRequest
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
-import io.nais.security.oauth2.model.TokenType
+import io.nais.security.oauth2.model.SubjectTokenType
 import io.nais.security.oauth2.registration.ClientRegistry
 import mu.KotlinLogging
 import org.slf4j.Logger
@@ -29,7 +29,7 @@ class TokenExchangeRequestAuthorizer(
     override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2TokenExchangeRequest {
         log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
         val tokenRequest = OAuth2TokenExchangeRequest(
-            parameters.require("subject_token_type", TokenType.TOKEN_TYPE_JWT),
+            parameters.require("subject_token_type", SubjectTokenType.TOKEN_TYPE_JWT),
             parameters.require("subject_token"),
             parameters.require("audience"),
             parameters["resource"],

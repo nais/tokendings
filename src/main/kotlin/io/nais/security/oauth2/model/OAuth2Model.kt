@@ -18,7 +18,7 @@ object GrantType {
     const val CLIENT_CREDENTIALS_GRANT = "client_credentials"
 }
 
-object TokenType {
+object SubjectTokenType {
     const val TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 }
 

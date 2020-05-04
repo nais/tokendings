@@ -37,16 +37,12 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         authorizationServerProperties.subjectTokenIssuers.associate {
             it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
         }
-    // tokenValidatorConfig.issuerToWellKnownMap.entries.associate { it.key to TokenValidator(it.key, URL(it.value.jwksUri)) }
 
     private val internalTokenValidator: TokenValidator = TokenValidator(tokenProvider.issuerUrl, tokenProvider.publicJwkSet())
 
     fun publicJwkSet(): JWKSet = tokenProvider.publicJwkSet()
 
-    fun issueTokenFor(
-        oAuth2Client: OAuth2Client,
-        tokenExchangeRequest: OAuth2TokenExchangeRequest
-    ): SignedJWT {
+    fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
         val subjectTokenJwt = SignedJWT.parse(tokenExchangeRequest.subjectToken)!!
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
@@ -54,10 +50,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         return tokenProvider.issueTokenFor(oAuth2Client.clientId, subjectTokenClaims, targetAudience)
     }
 
-    fun issueTokenFor(
-        clientId: String,
-        audience: String
-    ): SignedJWT {
+    fun issueTokenFor(clientId: String, audience: String): SignedJWT {
         return tokenProvider.issueTokenFor(
             clientId,
             JWTClaimsSet.Builder().subject(clientId).build(),
@@ -92,28 +85,20 @@ class JwtTokenProvider(
 
     fun publicJwkSet(): JWKSet = jwkSet.toPublicJWKSet()
 
-    // TODO include desired scope in token without validating? so it is transparent for this service
-    fun issueTokenFor(
-        clientId: String,
-        claimsSet: JWTClaimsSet,
-        audience: String
-    ): SignedJWT {
+    fun issueTokenFor(clientId: String, claimsSet: JWTClaimsSet, audience: String): SignedJWT {
         val now = Instant.now()
-        return createSignedJWT(
-            JWTClaimsSet.Builder(claimsSet)
-                .issuer(issuerUrl)
-                .expirationTime(Date.from(now.plusSeconds(tokenExpiry)))
-                .notBeforeTime(Date.from(now))
-                .issueTime(Date.from(now))
-                .jwtID(UUID.randomUUID().toString())
-                .audience(audience)
-                .claim("client_id", clientId)
-                .apply {
-                    claimsSet.issuer?.let { claim("idp", it) }
-                }
-                .build(),
-            rsaKey
-        )
+        return JWTClaimsSet.Builder(claimsSet)
+            .issuer(issuerUrl)
+            .expirationTime(Date.from(now.plusSeconds(tokenExpiry)))
+            .notBeforeTime(Date.from(now))
+            .issueTime(Date.from(now))
+            .jwtID(UUID.randomUUID().toString())
+            .audience(audience)
+            .claim("client_id", clientId)
+            .apply {
+                claimsSet.issuer?.let { claim("idp", it) }
+            }
+            .build().sign(rsaKey)
     }
 
     companion object {
@@ -148,3 +133,13 @@ class JwtTokenProvider(
                 .build()
     }
 }
+
+fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
+    SignedJWT(
+        JWSHeader.Builder(JWSAlgorithm.RS256)
+            .keyID(rsaKey.keyID)
+            .type(JOSEObjectType.JWT).build(),
+        this
+    ).apply {
+        sign(RSASSASigner(rsaKey.toPrivateKey()))
+    }
