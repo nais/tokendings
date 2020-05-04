@@ -1,6 +1,5 @@
 package io.nais.security.oauth2.routing
 
-import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import io.kotlintest.shouldBe
@@ -19,8 +18,8 @@ import io.nais.security.oauth2.model.ClientRegistrationRequest
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.SoftwareStatement
 import io.nais.security.oauth2.model.SoftwareStatementJwt
-import io.nais.security.oauth2.token.JwtTokenProvider.Companion.createSignedJWT
-import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
+import io.nais.security.oauth2.token.sign
+import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.Test
 
@@ -86,7 +85,7 @@ internal class ClientRegistrationApiTest {
                 )
             ).serialize()
 
-            val jwkSet = generateJWKSet("test", 2048)
+            val signingKeySet = jwkSet()
 
             withTestApplication(MockApp(config)) {
                 with(handleRequest(HttpMethod.Post, "registration/client") {
@@ -95,14 +94,14 @@ internal class ClientRegistrationApiTest {
                     setBody(
                         ClientRegistrationRequest(
                             "cluster1:ns1:client1",
-                            JsonWebKeys(generateJWKSet("client1keyid", 2048)),
+                            JsonWebKeys(jwkSet()),
                             softwareStatementJwt(
                                 SoftwareStatement(
                                     "cluster1:ns1:client1",
                                     listOf("cluster1:ns1:client2"),
                                     emptyList()
                                 ),
-                                jwkSet
+                                signingKeySet.keys.first() as RSAKey
                             )
                         ).toJson()
                     )
@@ -114,13 +113,12 @@ internal class ClientRegistrationApiTest {
         }
     }
 
-    private fun softwareStatementJwt(softwareStatement: SoftwareStatement, jwks: JWKSet): SoftwareStatementJwt =
-        createSignedJWT(
-            JWTClaimsSet.Builder()
-                .claim("appId", softwareStatement.appId)
-                .claim("accessPolicyInbound", softwareStatement.accessPolicyInbound)
-                .claim("accessPolicyOutbound", softwareStatement.accessPolicyOutbound)
-                .build(),
-            jwks.keys.first() as RSAKey
-        ).serialize()
+    private fun softwareStatementJwt(softwareStatement: SoftwareStatement, rsaKey: RSAKey): SoftwareStatementJwt =
+        JWTClaimsSet.Builder()
+            .claim("appId", softwareStatement.appId)
+            .claim("accessPolicyInbound", softwareStatement.accessPolicyInbound)
+            .claim("accessPolicyOutbound", softwareStatement.accessPolicyOutbound)
+            .build()
+            .sign(rsaKey)
+            .serialize()
 }

@@ -1,18 +1,14 @@
 package io.nais.security.oauth2.mock
 
 import com.auth0.jwk.JwkProvider
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
 import io.mockk.every
 import io.mockk.mockk
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
-import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
+import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
@@ -23,14 +19,10 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
-import io.nais.security.oauth2.token.JwtTokenProvider
-import io.nais.security.oauth2.token.JwtTokenProvider.Companion.generateJWKSet
 import io.nais.security.oauth2.tokenExchangeApp
+import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
-import java.time.Instant
-import java.util.Date
-import java.util.UUID
 
 // TODO do not init database for every test
 fun mockConfig(
@@ -54,7 +46,7 @@ fun mockConfig(
         else -> mockBearerTokenAuthenticationProperties()
     }
 
-    val clientRegistry = MockClientRegistry(authorizationServerProperties.tokenEndpointUrl())
+    val clientRegistry = MockClientRegistry()
     return AppConfiguration(
         ServerProperties(8080),
         clientRegistry,
@@ -69,12 +61,13 @@ fun mockBearerTokenAuthenticationProperties(): ClientReqistrationAuthProperties 
             every { it.jwksUri } returns "http://na"
             every { it.issuer } returns "http://na"
         },
-        mockk())
+        mockk()
+    )
 
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientReqistrationAuthProperties =
     mockk<ClientReqistrationAuthProperties>().also {
-            every { it.wellKnown } returns wellKnown
-            every { it.jwkProvider } returns jwkProvider
+        every { it.wellKnown } returns wellKnown
+        every { it.jwkProvider } returns jwkProvider
     }
 
 fun MockApp(
@@ -85,7 +78,7 @@ fun MockApp(
     }
 }
 
-class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
+class MockClientRegistry : ClientRegistry(
     ClientRegistryProperties(DataSource.instance.apply { clean(this) }.apply { migrate(this) })
 ) {
 
@@ -98,36 +91,14 @@ class MockClientRegistry(private val acceptedAudience: String) : ClientRegistry(
         registerClient(
             OAuth2Client(
                 clientId,
-                JsonWebKeys(generateJWKSet(clientId, 2048)),
+                JsonWebKeys(jwkSet()),
                 accessPolicy,
                 accessPolicy,
                 allowedScopes,
                 allowedGrantTypes
             )
         )
-
-    fun generateClientAssertionFor(clientId: String): SignedJWT =
-        findClient(clientId)?.let {
-            generateClientAssertion(
-                clientId,
-                acceptedAudience,
-                it.jwkSet
-            )
-        } ?: throw IllegalArgumentException("cannot generate assertion for unknown clientId=$clientId")
 }
-
-fun generateClientAssertion(clientId: String, audience: String, jwkSet: JWKSet) =
-    JwtTokenProvider.createSignedJWT(
-        JWTClaimsSet.Builder()
-            .issuer(clientId)
-            .subject(clientId)
-            .audience(audience)
-            .issueTime(Date.from(Instant.now()))
-            .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-            .jwtID(UUID.randomUUID().toString())
-            .build(),
-        jwkSet.keys.first() as RSAKey
-    )
 
 fun <R> withMockOAuth2Server(
     test: MockOAuth2Server.() -> R

@@ -7,7 +7,7 @@ import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
-import io.nais.security.oauth2.token.JwtTokenProvider
+import io.nais.security.oauth2.utils.jwkSet
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -49,9 +49,7 @@ internal class ClientStoreTest {
         }
     }
 
-    private fun oauth2Client(clientId: ClientId) = OAuth2Client(clientId, jwks())
-
-    private fun jwks() = JsonWebKeys(JwtTokenProvider.generateJWKSet("testkey", 2048))
+    private fun oauth2Client(clientId: ClientId) = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
 
     private fun h2DataSource() = dataSourceFrom(
         DatabaseConfig(
