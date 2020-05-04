@@ -8,7 +8,6 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
-import io.nais.security.oauth2.authentication.ClientCredentialsRequestAuthorizer
 import io.nais.security.oauth2.authentication.TokenExchangeRequestAuthorizer
 import io.nais.security.oauth2.authentication.receiveTokenRequestContext
 import io.nais.security.oauth2.config.AppConfiguration
@@ -17,7 +16,6 @@ import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jw
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.tokenPath
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
 import io.nais.security.oauth2.config.path
-import io.nais.security.oauth2.model.OAuth2ClientCredentialsTokenRequest
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
@@ -54,8 +52,7 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                 authenticateAndAuthorize {
                     clientFinder = { config.clientRegistry.findClient(it.clientId) }
                     authorizers = listOf(
-                        TokenExchangeRequestAuthorizer(config.clientRegistry),
-                        ClientCredentialsRequestAuthorizer()
+                        TokenExchangeRequestAuthorizer(config.clientRegistry)
                     )
                 }
             }
@@ -70,21 +67,11 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                         )
                     )
                 }
-                is OAuth2ClientCredentialsTokenRequest -> {
-                    val token: SignedJWT = tokenIssuer.issueTokenFor(tokenRequestContext.oauth2Client.clientId, tokenRequest.scope)
-                    call.respond(
-                        OAuth2TokenResponse(
-                            accessToken = token.serialize(),
-                            expiresIn = token.expiresIn(),
-                            scope = tokenRequest.scope
-                        )
-                    )
-                }
                 else -> throw OAuth2Exception(OAuth2Error.INVALID_GRANT.setDescription("grant_type=${tokenRequest.grantType} is not supported"))
             }
         }
     }
 }
 
-fun SignedJWT.expiresIn(): Int =
+internal fun SignedJWT.expiresIn(): Int =
     Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds.toInt()

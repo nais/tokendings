@@ -44,18 +44,11 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
+        // TODO: consider moving subjectToken validation into authnz feature
         val subjectTokenJwt = SignedJWT.parse(tokenExchangeRequest.subjectToken)!!
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)
         return tokenProvider.issueTokenFor(oAuth2Client.clientId, subjectTokenClaims, targetAudience)
-    }
-
-    fun issueTokenFor(clientId: String, audience: String): SignedJWT {
-        return tokenProvider.issueTokenFor(
-            clientId,
-            JWTClaimsSet.Builder().subject(clientId).build(),
-            audience
-        )
     }
 
     private fun validator(issuer: String?): TokenValidator =
@@ -63,7 +56,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             tokenProvider.issuerUrl -> internalTokenValidator
             else -> {
                 issuer?.let { tokenValidators[it] }
-                    ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, validator for issuer=$issuer not found"))
+                    ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
             }
         }
 }
