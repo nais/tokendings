@@ -20,20 +20,22 @@ private val log = KotlinLogging.logger { }
 
 class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
 
-    private val tokenProvider = JwtTokenProvider(
-        authorizationServerProperties.issuerUrl,
-        authorizationServerProperties.tokenExpiry,
-        authorizationServerProperties.keySize
-    )
+    private val issuerUrl: String = authorizationServerProperties.issuerUrl
+    private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
+    private val keySize: Int = authorizationServerProperties.keySize
+    private val rsaKey: RSAKey = generateRsaKey(keySize = keySize).also {
+        log.debug("generated new key with keyId=${it.keyID}")
+    }
+    private val publicJwkSet: JWKSet = JWKSet(rsaKey).toPublicJWKSet()
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
             it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
         }
 
-    private val internalTokenValidator: TokenValidator = TokenValidator(tokenProvider.issuerUrl, tokenProvider.publicJwkSet())
+    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, publicJwkSet)
 
-    fun publicJwkSet(): JWKSet = tokenProvider.publicJwkSet()
+    fun publicJwkSet(): JWKSet = publicJwkSet
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
@@ -41,49 +43,28 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         val subjectTokenJwt = SignedJWT.parse(tokenExchangeRequest.subjectToken)!!
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)
-        return tokenProvider.issueTokenFor(oAuth2Client.clientId, subjectTokenClaims, targetAudience)
-    }
 
-    private fun validator(issuer: String?): TokenValidator =
-        when (issuer) {
-            tokenProvider.issuerUrl -> internalTokenValidator
-            else -> {
-                issuer?.let { tokenValidators[it] }
-                    ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
-            }
-        }
-}
-
-// TODO support more keys - i.e for rotating
-class JwtTokenProvider(
-    val issuerUrl: String,
-    private val tokenExpiry: Long = 300,
-    keySize: Int = 2048
-) {
-    private val jwkSet: JWKSet
-    private val rsaKey: RSAKey
-
-    init {
-        val keyId = UUID.randomUUID().toString()
-        rsaKey = generateRsaKey(keyId, keySize)
-        jwkSet = JWKSet(rsaKey)
-    }
-
-    fun publicJwkSet(): JWKSet = jwkSet.toPublicJWKSet()
-
-    fun issueTokenFor(clientId: String, claimsSet: JWTClaimsSet, audience: String): SignedJWT {
         val now = Instant.now()
-        return JWTClaimsSet.Builder(claimsSet)
+        return JWTClaimsSet.Builder(subjectTokenClaims)
             .issuer(issuerUrl)
             .expirationTime(Date.from(now.plusSeconds(tokenExpiry)))
             .notBeforeTime(Date.from(now))
             .issueTime(Date.from(now))
             .jwtID(UUID.randomUUID().toString())
-            .audience(audience)
-            .claim("client_id", clientId)
+            .audience(targetAudience)
+            .claim("client_id", oAuth2Client.clientId)
             .apply {
-                claimsSet.issuer?.let { claim("idp", it) }
+                subjectTokenClaims.issuer?.let { claim("idp", it) }
             }
             .build().sign(rsaKey)
     }
+
+    private fun validator(issuer: String?): TokenValidator =
+        when (issuer) {
+            issuerUrl -> internalTokenValidator
+            else -> {
+                issuer?.let { tokenValidators[it] }
+                    ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
+            }
+        }
 }
