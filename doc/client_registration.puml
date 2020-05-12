@@ -1,0 +1,20 @@
+@startuml component
+actor ci as ci
+participant jwker as "jwker"
+collections apps as "apps"
+participant azure as "azure ad"
+participant tokendings as "tokendings"
+database clientstore
+
+==Client Registration==
+ci -> apps : apply ´application´ resource to cluster
+jwker -> apps: Create jwks and k8s secret for application in cluster
+jwker -> azure: POST /token\nwith grant_type=client_credentials
+note right: retrieve bearer token for scope=api://aad-tokendings-id/.default
+azure -> jwker: return bearer token (jwt) with aud=aad-tokendings-id
+jwker -> tokendings: POST /registration/client\nwith bearer token
+note right: application jwks and signed softwarestatement (client_id, accessPolicy) as json
+tokendings -> tokendings: authenticate jwker (access_token from azure ad)\nverify signature on softwarestatement (keys loaded as secret on startup)
+tokendings -> clientstore: store as oauth2 client with allowed grant_types and accessPolicies
+tokendings -> jwker: return json of registered client
+@enduml

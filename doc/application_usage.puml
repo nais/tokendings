@@ -1,0 +1,68 @@
+@startuml component
+actor enduser as enduser
+participant app1 as "app1\n(id=cluster1:ns1:app1)"
+participant app2 as "app2\n(id=cluster1:ns1:app2)"
+participant tokendings as "TokenDings\n"
+database clientstore
+participant idprovider as "idprovider\n(e.g. IDPorten)"
+==Enduser Login ==
+group OIDC Authorization Code Flow (simplified view)
+enduser -> app1: access app1
+app1 -> idprovider: send to login
+idprovider -> app1: return access_token
+note left: iss: "idprovider-url"\nsub: "enduser"\naud: "app1" id from idprovider
+end
+==Invoke API on behalf of enduser==
+group Get token using OAuth 2.0 Token Exchange
+activate app1
+app1 -> app1: create self signed jwt\nwith keypair from secret\nas client_assertion
+note left: iss: "cluster1:ns1:app1"\nsub: "cluster1:ns1:app1"\naud: https://tokendings-url/token
+app1 -> tokendings: POST /token
+note right: client_assertion=<..self-signed-jwt..>\nclient_assertion_type=<..:jwt-bearer>\ngrant_type=<..:token-exchange>\nsubject_token=<..idprovider-token..>\nsubject_token_type=<..:jwt>\naudience=cluster1:ns1:app2
+deactivate app1
+activate tokendings
+tokendings -> tokendings: get sub from client_assertion as client_id
+tokendings -> clientstore: get client based on client_id
+deactivate tokendings
+activate clientstore
+clientstore -> tokendings: return client - "app1"
+deactivate clientstore
+activate tokendings
+note left: client_id, accesspolicy, jwks
+tokendings -> tokendings: verify client_assertion
+note left: use retrieved jwks\naud=https://tokendings-url/token
+tokendings -> clientstore: get client based on "audience"\n(in tokenrequest)
+deactivate tokendings
+activate clientstore
+clientstore -> tokendings: return client - "app2"
+deactivate clientstore
+activate tokendings
+tokendings -> tokendings: check accesspolicy
+note left: can app1 invoke app2?
+tokendings -> tokendings: check subject_token\nagainst list of supported idproviders
+tokendings -> idprovider: get jwks for subject_token
+activate idprovider
+idprovider -> tokendings: return jwks
+deactivate idprovider
+tokendings -> tokendings: verify subject_token signature
+activate app1
+tokendings -> app1: return token response with new access_token signed by tokendings
+note left: iss: "tokendings-url"\nsub: "enduser"\naud: "cluster1:ns1:app2"
+deactivate tokendings
+end
+group Invoke API with bearer token
+app1 -> app2: Invoke API in app2\n(with token from tokendings in auth header)
+deactivate app1
+activate app2
+app2 -> tokendings: get jwks for token
+activate tokendings
+tokendings -> app2: return jwks
+deactivate tokendings
+app2 -> app2: verify token\n(signature and claims)
+note left: check aud=cluster1:ns1:app2
+app2 -> app2: access controll on enduser
+app2 -> app1: return response
+deactivate app2
+app1 -> enduser: return response
+end
+@enduml
