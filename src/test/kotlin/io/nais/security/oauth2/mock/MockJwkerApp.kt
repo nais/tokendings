@@ -63,7 +63,9 @@ data class ClientConfig(
     val bearerTokenScope: String = "tokendings",
     val identityProviderTokenEndpoint: String = "http://localhost:1111/aadmock/token",
     val registrationEndpoint: String = "http://localhost:8080/registration/client",
-    val signingKey: RSAKey = createJWK()
+    val signingKey: RSAKey = "jwker-jwks.json".asResource().readText().let {
+        JWKSet.parse(it).keys.first() as RSAKey
+    }
 )
 
 fun main() {

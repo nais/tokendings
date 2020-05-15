@@ -1,27 +1,35 @@
 package io.nais.security.oauth2.mock
 
+import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
+import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.tokenExchangeApp
 import mu.KotlinLogging
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
+import java.net.URL
 
 val log = KotlinLogging.logger { }
+
+private val jwkerJwks = "jwker-jwks.json".asResource().readText().let {
+    JWKSet.parse(it)
+}
 
 @KtorExperimentalAPI
 fun main() {
     val mockOAuth2Server: MockOAuth2Server = startMockOAuth2Server()
 
-    val clientRegistrationAuthProps = ClientReqistrationAuthProperties(
+    val clientRegistrationAuthProps = ClientRegistrationAuthProperties(
         mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
-        listOf("tokendings")
+        listOf("tokendings"),
+        emptyMap(),
+        jwkerJwks
     )
 
     val config: AppConfiguration = mockConfig(mockOAuth2Server, clientRegistrationAuthProps)
@@ -44,3 +52,5 @@ private fun startMockOAuth2Server(): MockOAuth2Server =
     ).apply {
         this.start(1111)
     }
+
+fun String.asResource(): URL = object {}.javaClass.classLoader.getResource(this)!!

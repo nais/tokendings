@@ -10,7 +10,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
+import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockApp
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
@@ -29,9 +29,11 @@ internal class ClientRegistrationApiTest {
     fun `401 on unauthorized requests`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(
-                this, ClientReqistrationAuthProperties(
+                this, ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
-                    emptyList()
+                    emptyList(),
+                    emptyMap(),
+                    jwkSet()
                 )
             )
             withTestApplication(MockApp(mockConfig)) {
@@ -45,9 +47,11 @@ internal class ClientRegistrationApiTest {
         withMockOAuth2Server {
             val config = mockConfig(
                 this,
-                ClientReqistrationAuthProperties(
+                ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud")
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    jwkSet()
                 )
             )
             val token = this.issueToken(
@@ -70,11 +74,14 @@ internal class ClientRegistrationApiTest {
     @Test
     fun `successful client registration call with valid bearer token and signed software statement`() {
         withMockOAuth2Server {
+            val signingKeySet = jwkSet()
             val config = mockConfig(
                 this,
-                ClientReqistrationAuthProperties(
+                ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud")
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    signingKeySet
                 )
             )
             val token = this.issueToken(
@@ -84,8 +91,6 @@ internal class ClientRegistrationApiTest {
                     audience = "correct_aud"
                 )
             ).serialize()
-
-            val signingKeySet = jwkSet()
 
             withTestApplication(MockApp(config)) {
                 with(handleRequest(HttpMethod.Post, "registration/client") {

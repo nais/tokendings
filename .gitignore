@@ -24,3 +24,4 @@ dist/
 /src/test/kotlin/io/nais/security/oauth2/token/TokenVerifyTest.kt
 /.nais/k8s.secrets.yml
 /.nais/k8s.private_jwks.secrets.yml
+/.nais/jwker-jwks.json

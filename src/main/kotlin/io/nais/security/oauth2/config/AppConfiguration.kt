@@ -12,6 +12,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.client.request.get
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
+import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
 import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_SUB
 import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
 import io.nais.security.oauth2.config.EnvKey.DB_HOST
@@ -50,6 +51,7 @@ object EnvKey {
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_SUB = "AUTH_JWKER_SUB"
+    const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
     const val PRIVATE_JWKS = "PRIVATE_JWKS"
 }
 
@@ -76,11 +78,14 @@ fun keyStoreFromEnv(): KeyStore =
         JWKSet.parse(it)
     })
 
-fun authenticationPropertiesFromEnvironment(): ClientReqistrationAuthProperties =
-    ClientReqistrationAuthProperties(
+fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
+    ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-        requiredClaims = mapOf("sub" to konfig[Key(AUTH_JWKER_SUB, stringType)])
+        requiredClaims = mapOf("sub" to konfig[Key(AUTH_JWKER_SUB, stringType)]),
+        softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
+            JWKSet.parse(it)
+        }
     )
 
 fun clientRegistryFromEnvironment(): ClientRegistry =
@@ -98,7 +103,7 @@ object ProdConfiguration {
             keyStore = keyStoreFromEnv()
         )
         val clientRegistry = clientRegistryFromEnvironment()
-        val bearerTokenAuthenticationProperties = authenticationPropertiesFromEnvironment()
+        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
 }
@@ -115,7 +120,7 @@ object NonProdConfiguration {
             keyStore = keyStoreFromEnv()
         )
         val clientRegistry = clientRegistryFromEnvironment()
-        val bearerTokenAuthenticationProperties = authenticationPropertiesFromEnvironment()
+        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
 }
@@ -124,7 +129,7 @@ data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
-    val clientReqistrationAuthProperties: ClientReqistrationAuthProperties
+    val clientRegistrationAuthProperties: ClientRegistrationAuthProperties
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
@@ -135,10 +140,11 @@ data class ClientRegistryProperties(
     val dataSource: DataSource
 )
 
-data class ClientReqistrationAuthProperties(
+data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
-    val requiredClaims: Map<String, String> = emptyMap()
+    val requiredClaims: Map<String, String> = emptyMap(),
+    val softwareStatementJwks: JWKSet
 ) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OpenID Connect server metadata from well-known url=$identityProviderWellKnownUrl")

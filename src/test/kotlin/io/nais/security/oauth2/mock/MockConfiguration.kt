@@ -9,7 +9,7 @@ import io.mockk.mockk
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
-import io.nais.security.oauth2.config.ClientReqistrationAuthProperties
+import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
@@ -30,7 +30,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 // TODO do not init database for every test
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
-    clientReqistrationAuthProperties: ClientReqistrationAuthProperties? = null
+    clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null
 ): AppConfiguration {
 
     val issuerUrl = "http://localhost:8080"
@@ -42,10 +42,12 @@ fun mockConfig(
         keyStore = DefaultKeyStore(JWKSet(generateRsaKey()))
     )
     val clientRegAuthProperties = when {
-        clientReqistrationAuthProperties != null -> clientReqistrationAuthProperties
-        mockOAuth2Server != null -> ClientReqistrationAuthProperties(
+        clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
+        mockOAuth2Server != null -> ClientRegistrationAuthProperties(
             mockOAuth2Server.wellKnownUrl("aadmock").toString(),
-            listOf("tokendings")
+            listOf("tokendings"),
+            emptyMap(),
+            jwkSet()
         )
         else -> mockBearerTokenAuthenticationProperties()
     }
@@ -59,7 +61,7 @@ fun mockConfig(
     )
 }
 
-fun mockBearerTokenAuthenticationProperties(): ClientReqistrationAuthProperties =
+fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties =
     mockBearerTokenAuthenticationProperties(
         mockk<WellKnown>().also {
             every { it.jwksUri } returns "http://na"
@@ -68,8 +70,8 @@ fun mockBearerTokenAuthenticationProperties(): ClientReqistrationAuthProperties 
         mockk()
     )
 
-fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientReqistrationAuthProperties =
-    mockk<ClientReqistrationAuthProperties>().also {
+fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
+    mockk<ClientRegistrationAuthProperties>().also {
         every { it.wellKnown } returns wellKnown
         every { it.jwkProvider } returns jwkProvider
     }

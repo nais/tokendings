@@ -50,7 +50,7 @@ fun Authentication.Configuration.internalBearerToken(appConfig: AppConfiguration
 // TODO fix realm so we do not disclose this is a Ktor server when sending auth challenge
 fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
-        val properties = appConfig.clientReqistrationAuthProperties
+        val properties = appConfig.clientRegistrationAuthProperties
         val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))
             .cached(10, 24, TimeUnit.HOURS)
             .rateLimited(10, 1, TimeUnit.MINUTES)
