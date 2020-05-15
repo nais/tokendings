@@ -1,6 +1,7 @@
 package io.nais.security.oauth2.mock
 
 import com.auth0.jwk.JwkProvider
+import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
 import io.mockk.every
@@ -19,7 +20,9 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
+import io.nais.security.oauth2.token.DefaultKeyStore
 import io.nais.security.oauth2.tokenExchangeApp
+import io.nais.security.oauth2.utils.generateRsaKey
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
@@ -35,7 +38,8 @@ fun mockConfig(
         issuerUrl = issuerUrl,
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
-        } ?: emptyList()
+        } ?: emptyList(),
+        keyStore = DefaultKeyStore(JWKSet(generateRsaKey()))
     )
     val clientRegAuthProperties = when {
         clientReqistrationAuthProperties != null -> clientReqistrationAuthProperties

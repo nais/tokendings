@@ -8,6 +8,7 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.client.request.get
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
@@ -17,9 +18,12 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.config.EnvKey.PRIVATE_JWKS
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
+import io.nais.security.oauth2.token.DefaultKeyStore
+import io.nais.security.oauth2.token.KeyStore
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -46,6 +50,7 @@ object EnvKey {
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_SUB = "AUTH_JWKER_SUB"
+    const val PRIVATE_JWKS = "PRIVATE_JWKS"
 }
 
 fun configByProfile(): AppConfiguration =
@@ -66,6 +71,11 @@ fun environmentDatabaseConfig(): DatabaseConfig {
     )
 }
 
+fun keyStoreFromEnv(): KeyStore =
+    DefaultKeyStore(konfig[Key(PRIVATE_JWKS, stringType)].let {
+        JWKSet.parse(it)
+    })
+
 fun authenticationPropertiesFromEnvironment(): ClientReqistrationAuthProperties =
     ClientReqistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
@@ -84,7 +94,8 @@ object ProdConfiguration {
     val instance by lazy {
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
-            subjectTokenIssuers = listOf()
+            subjectTokenIssuers = listOf(),
+            keyStore = keyStoreFromEnv()
         )
         val clientRegistry = clientRegistryFromEnvironment()
         val bearerTokenAuthenticationProperties = authenticationPropertiesFromEnvironment()
@@ -100,7 +111,8 @@ object NonProdConfiguration {
                 SubjectTokenIssuer(
                     "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
                 )
-            )
+            ),
+            keyStore = keyStoreFromEnv()
         )
         val clientRegistry = clientRegistryFromEnvironment()
         val bearerTokenAuthenticationProperties = authenticationPropertiesFromEnvironment()
@@ -142,7 +154,7 @@ class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val keySize: Int = 2048
+    val keyStore: KeyStore
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
