@@ -3,6 +3,7 @@ package io.nais.security.oauth2.model
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectWriter
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
@@ -28,7 +29,7 @@ data class ClientRegistrationRequest(
     val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
 ) {
     companion object Mapper {
-        val writer = Jackson.defaultMapper.writerFor(ClientRegistrationRequest::class.java)
+        private val writer: ObjectWriter = Jackson.defaultMapper.writerFor(ClientRegistrationRequest::class.java)
         fun toJson(clientRegistrationRequest: ClientRegistrationRequest): String = writer.writeValueAsString(clientRegistrationRequest)
     }
 
@@ -52,12 +53,7 @@ data class SoftwareStatement(
     val appId: String,
     val accessPolicyInbound: List<String> = emptyList(),
     val accessPolicyOutbound: List<String> = emptyList()
-) {
-    companion object Mapper {
-        private val reader = Jackson.defaultMapper.readerFor(SoftwareStatement::class.java)
-        fun fromJson(json: String): SoftwareStatement = reader.readValue(json)
-    }
-}
+)
 
 fun ClientRegistrationRequest.verifySoftwareStatement(jwkSet: JWKSet): SoftwareStatement =
     verifyJwt(
