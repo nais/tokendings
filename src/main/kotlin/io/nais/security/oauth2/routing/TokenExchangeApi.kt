@@ -21,6 +21,7 @@ import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.token.expiresIn
 import mu.KotlinLogging
 import java.time.Duration
 import java.time.Instant
@@ -72,6 +73,3 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
         }
     }
 }
-
-internal fun SignedJWT.expiresIn(): Int =
-    Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds.toInt()

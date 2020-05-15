@@ -7,6 +7,8 @@ import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import java.time.Duration
+import java.time.Instant
 
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
@@ -17,3 +19,6 @@ fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     ).apply {
         sign(RSASSASigner(rsaKey.toPrivateKey()))
     }
+
+fun SignedJWT.expiresIn(): Int =
+    Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds.toInt()
