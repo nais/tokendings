@@ -2,16 +2,10 @@ package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.nimbusds.oauth2.sdk.ErrorObject
 import io.nais.security.oauth2.model.GrantType.CLIENT_CREDENTIALS_GRANT
 import io.nais.security.oauth2.model.GrantType.TOKEN_EXCHANGE_GRANT
 
 typealias ClientId = String
-
-data class OAuth2Exception(
-    val errorObject: ErrorObject? = null,
-    val throwable: Throwable? = null
-) : RuntimeException(errorObject?.toJSONObject()?.toJSONString(), throwable)
 
 object GrantType {
     const val TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
