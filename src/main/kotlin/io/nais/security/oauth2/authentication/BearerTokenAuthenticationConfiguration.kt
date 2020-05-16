@@ -47,7 +47,7 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
             try {
                 JWTPrincipal(credentials.payload)
             } catch (e: Throwable) {
-                log.debug("error in validation when authenticating.", e)
+                log.error ("error in validation when authenticating.", e)
                 null
             }
         }
