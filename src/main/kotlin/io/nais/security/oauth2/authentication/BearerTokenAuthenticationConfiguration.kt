@@ -1,13 +1,24 @@
 package io.nais.security.oauth2.authentication
 
+import com.auth0.jwk.Jwk
+import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
+import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.Verification
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.auth.Authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.auth.jwt.jwt
+import io.ktor.http.auth.HttpAuthHeader
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 import java.net.URL
+import java.security.interfaces.ECPublicKey
+import java.security.interfaces.RSAPublicKey
 import java.util.concurrent.TimeUnit
 
 private val log = KotlinLogging.logger { }
@@ -24,10 +35,12 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
             .rateLimited(10, 1, TimeUnit.MINUTES)
             .build()
         realm = "BEARER_AUTH"
-        verifier(jwkProvider, properties.wellKnown.issuer) {
-            withAudience(*properties.acceptedAudience.toTypedArray())
-            properties.requiredClaims.forEach {
-                withClaim(it.key, it.value)
+        verifier { token ->
+            bearerTokenVerifier(jwkProvider, properties.wellKnown.issuer, token) {
+                withAudience(*properties.acceptedAudience.toTypedArray())
+                properties.requiredClaims.forEach {
+                    withClaim(it.key, it.value)
+                }
             }
         }
         validate { credentials ->
@@ -39,4 +52,37 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
             }
         }
     }
+}
+
+internal fun bearerTokenVerifier(
+    jwkProvider: JwkProvider,
+    issuer: String,
+    token: HttpAuthHeader,
+    jwtConfigure: Verification.() -> Unit
+): JWTVerifier {
+    return try {
+        val jwk = token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
+            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
+        val algorithm = jwk.makeAlgorithm()
+        return JWT.require(algorithm).withIssuer(issuer).apply(jwtConfigure).build()
+    } catch (t: Throwable) {
+        log.error("received exception when validating token, message: ${t.message}", t)
+        throw t
+    }
+}
+
+private fun HttpAuthHeader.getBlob(): String? = when {
+    this is HttpAuthHeader.Single && authScheme.toLowerCase() in listOf("bearer") -> blob
+    else -> null
+}
+
+private fun Jwk.makeAlgorithm(): Algorithm = when (algorithm) {
+    "RS256" -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
+    "RS384" -> Algorithm.RSA384(publicKey as RSAPublicKey, null)
+    "RS512" -> Algorithm.RSA512(publicKey as RSAPublicKey, null)
+    "ES256" -> Algorithm.ECDSA256(publicKey as ECPublicKey, null)
+    "ES384" -> Algorithm.ECDSA384(publicKey as ECPublicKey, null)
+    "ES512" -> Algorithm.ECDSA512(publicKey as ECPublicKey, null)
+    null -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
+    else -> throw IllegalArgumentException("Unsupported algorithm $algorithm")
 }
