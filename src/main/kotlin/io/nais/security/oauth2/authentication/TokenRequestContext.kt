@@ -12,7 +12,7 @@ import io.ktor.request.receiveParameters
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
-import io.nais.security.oauth2.token.verifyJwt
+import io.nais.security.oauth2.token.verify
 
 typealias TokenEndpointUrl = String
 
@@ -46,7 +46,10 @@ class TokenRequestContext private constructor(
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also {
-                    verifyJwt(clientAssertionCredential.signedJWT, config.claimsVerifier.invoke(Pair(it, tokenEndpointUrl)), it.jwkSet)
+                    clientAssertionCredential.signedJWT.verify(
+                        config.claimsVerifier.invoke(Pair(it, tokenEndpointUrl)),
+                        it.jwkSet
+                    )
                 } ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_CLIENT.setDescription(
                     "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."

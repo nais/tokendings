@@ -147,7 +147,7 @@ class TokenDingsClient(val config: ClientConfig = ClientConfig()) {
                 body = ClientRegistrationRequest(
                     clientName = softwareStatement.appId,
                     jwks = JsonWebKeys(JWKSet(createJWK())),
-                    softwareStatement = softwareStatement.sign(),
+                    softwareStatementJwt = softwareStatement.sign(),
                     scopes = listOf(),
                     grantTypes = listOf()
                 )

@@ -23,8 +23,6 @@ import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.token.expiresIn
 import mu.KotlinLogging
-import java.time.Duration
-import java.time.Instant
 
 private val log = KotlinLogging.logger { }
 

@@ -4,15 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectWriter
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet
-import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import io.nais.security.oauth2.Jackson
-import io.nais.security.oauth2.token.verifyJwt
+import io.nais.security.oauth2.token.verify
 
 typealias SoftwareStatementJwt = String
 
@@ -23,7 +20,7 @@ data class ClientRegistrationRequest(
     val clientName: String,
     val jwks: JsonWebKeys,
     @JsonProperty("software_statement")
-    val softwareStatement: SoftwareStatementJwt? = null,
+    val softwareStatementJwt: SoftwareStatementJwt? = null,
     val scopes: List<String> = emptyList(),
     @JsonProperty("grant_types")
     val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
@@ -56,13 +53,12 @@ data class SoftwareStatement(
 )
 
 fun ClientRegistrationRequest.verifySoftwareStatement(jwkSet: JWKSet): SoftwareStatement =
-    verifyJwt(
-        SignedJWT.parse(this.softwareStatement),
+    SignedJWT.parse(this.softwareStatementJwt).verify(
         DefaultJWTClaimsVerifier(
             JWTClaimsSet.Builder().build(),
             setOf("appId", "accessPolicyInbound", "accessPolicyOutbound")
         ),
-        JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwkSet))
+        jwkSet
     ).let {
         SoftwareStatement(
             it.getStringClaim("appId"),

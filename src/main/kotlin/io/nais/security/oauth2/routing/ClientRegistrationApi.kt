@@ -44,7 +44,7 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                     HttpStatusCode.Created, ClientRegistration(
                         clientToRegister.clientId,
                         clientToRegister.jwks,
-                        request.softwareStatement,
+                        request.softwareStatementJwt,
                         clientToRegister.allowedGrantTypes,
                         "private_key_jwt"
                     )
