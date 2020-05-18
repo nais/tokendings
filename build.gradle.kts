@@ -21,7 +21,7 @@ val flywayVersion = "6.3.3"
 val h2Version = "1.4.200"
 val testcontainersPostgresVersion = "1.14.0"
 val kotlintestVersion = "3.4.2"
-
+val kotestVersion = "4.0.5"
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
@@ -78,7 +78,9 @@ dependencies {
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     testImplementation("com.squareup.okhttp3:mockwebserver:$mockWebServerVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("io.kotlintest:kotlintest-core:$kotlintestVersion")
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
+    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
+    testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
