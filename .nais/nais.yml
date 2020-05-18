@@ -11,6 +11,7 @@ spec:
     outbound:
       external:
         - host: login.microsoftonline.com
+        - host: ver2.maskinporten.no
       rules: []
   port: 8080
   replicas:
