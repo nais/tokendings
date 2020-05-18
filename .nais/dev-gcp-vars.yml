@@ -4,4 +4,4 @@ team: plattformsikkerhet
 ingresses:
   - https://tokendings.dev-gcp.nais.io
 env:
-  PROFILE: NON_PROD
+  APPLICATION_PROFILE: NON_PROD
