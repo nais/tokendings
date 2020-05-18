@@ -4,8 +4,8 @@ import com.auth0.jwk.Jwk
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.interfaces.JWTVerifier
 import com.auth0.jwt.interfaces.Verification
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.auth.Authentication
@@ -47,7 +47,7 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
             try {
                 JWTPrincipal(credentials.payload)
             } catch (e: Throwable) {
-                log.error ("error in validation when authenticating.", e)
+                log.error("error in validation when authenticating.", e)
                 null
             }
         }
@@ -64,7 +64,9 @@ internal fun bearerTokenVerifier(
         val jwk = token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
             ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
         val algorithm = jwk.makeAlgorithm()
-        return JWT.require(algorithm).withIssuer(issuer).apply(jwtConfigure).build()
+        return DelegatingJWTVerifier(
+            JWT.require(algorithm).withIssuer(issuer).apply(jwtConfigure).build()
+        )
     } catch (t: Throwable) {
         log.error("received exception when validating token, message: ${t.message}", t)
         throw t
