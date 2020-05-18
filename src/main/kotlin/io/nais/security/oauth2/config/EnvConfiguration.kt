@@ -62,7 +62,8 @@ object NonProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer(
                     "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
-                )
+                ),
+                SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
             keyStore = keyStore()
         )

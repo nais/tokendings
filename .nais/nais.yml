@@ -11,6 +11,7 @@ spec:
     outbound:
       external:
         - host: login.microsoftonline.com
+        - host: oidc-ver2.difi.no
       rules: []
   port: 8080
   replicas:
