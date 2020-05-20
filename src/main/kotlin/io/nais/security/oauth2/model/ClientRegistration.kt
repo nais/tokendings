@@ -8,6 +8,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.token.verify
 
@@ -61,8 +62,10 @@ fun ClientRegistrationRequest.verifySoftwareStatement(jwkSet: JWKSet): SoftwareS
         jwkSet
     ).let {
         SoftwareStatement(
-            it.getStringClaim("appId"),
-            it.getStringListClaim("accessPolicyInbound"),
-            it.getStringListClaim("accessPolicyOutbound")
+            it.getStringClaim("appId") ?: throw OAuth2Exception(
+                OAuth2Error.INVALID_REQUEST.setDescription("appId cannot be null")
+            ),
+            it.getStringListClaim("accessPolicyInbound") ?: emptyList(),
+            it.getStringListClaim("accessPolicyOutbound") ?: emptyList()
         )
     }
