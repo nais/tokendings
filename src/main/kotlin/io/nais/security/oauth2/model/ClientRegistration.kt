@@ -17,14 +17,11 @@ typealias SoftwareStatementJwt = String
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ClientRegistrationRequest(
-    @JsonProperty("client_name")
-    val clientName: String,
+    @JsonProperty("client_name") val clientName: String,
     val jwks: JsonWebKeys,
-    @JsonProperty("software_statement")
-    val softwareStatementJwt: SoftwareStatementJwt? = null,
+    @JsonProperty("software_statement") val softwareStatementJwt: SoftwareStatementJwt? = null,
     val scopes: List<String> = emptyList(),
-    @JsonProperty("grant_types")
-    val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
+    @JsonProperty("grant_types") val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
 ) {
     companion object Mapper {
         private val writer: ObjectWriter = Jackson.defaultMapper.writerFor(ClientRegistrationRequest::class.java)
@@ -35,15 +32,11 @@ data class ClientRegistrationRequest(
 }
 
 data class ClientRegistration(
-    @JsonProperty("client_id")
-    val clientId: ClientId,
+    @JsonProperty("client_id") val clientId: ClientId,
     val jwks: JsonWebKeys,
-    @JsonProperty("software_statement")
-    val softwareStatement: SoftwareStatementJwt?,
-    @JsonProperty("grant_types")
-    val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT),
-    @JsonProperty("token_endpoint_auth_method")
-    val tokenEndpointAuthMethod: String = "private_key_jwt",
+    @JsonProperty("software_statement") val softwareStatement: SoftwareStatementJwt?,
+    @JsonProperty("grant_types") val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT),
+    @JsonProperty("token_endpoint_auth_method") val tokenEndpointAuthMethod: String = "private_key_jwt",
     val allowedScopes: List<String> = emptyList()
 )
 
@@ -62,9 +55,7 @@ fun ClientRegistrationRequest.verifySoftwareStatement(jwkSet: JWKSet): SoftwareS
         jwkSet
     ).let {
         SoftwareStatement(
-            it.getStringClaim("appId") ?: throw OAuth2Exception(
-                OAuth2Error.INVALID_REQUEST.setDescription("appId cannot be null")
-            ),
+            it.getStringClaim("appId") ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("appId cannot be null")),
             it.getStringListClaim("accessPolicyInbound") ?: emptyList(),
             it.getStringListClaim("accessPolicyOutbound") ?: emptyList()
         )
