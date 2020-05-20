@@ -13,7 +13,6 @@ import io.nais.security.oauth2.token.sign
 import io.nais.security.oauth2.utils.generateRsaKey
 import org.junit.jupiter.api.Test
 
-
 internal class ClientRegistrationKtTest {
 
     @Test

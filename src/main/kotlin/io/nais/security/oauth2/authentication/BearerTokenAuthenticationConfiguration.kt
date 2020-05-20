@@ -64,7 +64,7 @@ internal fun bearerTokenVerifier(
         val jwk = token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
             ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
         val algorithm = jwk.makeAlgorithm()
-        return DelegatingJWTVerifier(
+        DelegatingJWTVerifier(
             JWT.require(algorithm).withIssuer(issuer).apply(jwtConfigure).build()
         )
     } catch (t: Throwable) {
