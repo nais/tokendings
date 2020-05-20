@@ -15,7 +15,7 @@ open class ClientRegistry(
     fun findClient(clientId: ClientId): OAuth2Client? = clientStore.find(clientId)
 
     fun registerClient(client: OAuth2Client): OAuth2Client {
-        log.debug("registrering client with clientId=${client.clientId}")
+        log.info("register client with clientId=${client.clientId}")
         clientStore.storeClient(client)
         return client
     }
