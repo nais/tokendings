@@ -13,8 +13,11 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.token.verify
+import mu.KotlinLogging
 
 typealias TokenEndpointUrl = String
+
+private val log = KotlinLogging.logger { }
 
 class TokenRequestContext private constructor(
     val oauth2Client: OAuth2Client,
@@ -45,10 +48,16 @@ class TokenRequestContext private constructor(
          */
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
-                ?.also {
+                ?.also { oAuth2Client ->
+                    log.info(
+                        """
+                        verify client_assertion for client_id=${oAuth2Client.clientId} 
+                        with keyIds=${oAuth2Client.jwkSet.keys.map { it.keyID }.toList()}
+                        """.trimIndent()
+                    )
                     clientAssertionCredential.signedJWT.verify(
-                        config.claimsVerifier.invoke(Pair(it, tokenEndpointUrl)),
-                        it.jwkSet
+                        config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
+                        oAuth2Client.jwkSet
                     )
                 } ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_CLIENT.setDescription(
