@@ -21,12 +21,27 @@ class ClientStore(private val dataSource: DataSource) {
     fun storeClient(oAuth2Client: OAuth2Client): Int =
         withTimer("storeClient") {
             using(sessionOf(dataSource)) { session ->
-                when (val rows = session.run(updateQuery(oAuth2Client).asUpdate)) {
-                    0 -> session.run(insertQuery(oAuth2Client).asUpdate)
-                    else -> rows
-                }
+                session.run(upsertQuery(oAuth2Client).asUpdate)
             }
         }
+
+    private fun upsertQuery(oAuth2Client: OAuth2Client): Query {
+        return queryOf(
+            """
+            INSERT INTO $TABLE_NAME(client_id, data) values (:client_id, :data)
+            ON CONFLICT (client_id)
+                DO UPDATE SET
+                data=:data;
+            """.trimMargin(),
+            mapOf(
+                "client_id" to oAuth2Client.clientId,
+                "data" to PGobject().also {
+                    it.type = "jsonb"
+                    it.value = oAuth2Client.toJson()
+                }
+            )
+        )
+    }
 
     private fun insertQuery(oAuth2Client: OAuth2Client): Query {
         val columnMap = oAuth2Client.mapToColumns()

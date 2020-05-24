@@ -1,14 +1,13 @@
 package io.nais.security.oauth2.registration
 
-import io.nais.security.oauth2.config.DatabaseConfig
-import io.nais.security.oauth2.config.dataSourceFrom
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.utils.jwkSet
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class ClientStoreTest {
@@ -17,9 +16,11 @@ internal class ClientStoreTest {
     fun `storeClient should insert record or update if already present`() {
         withMigratedDb {
             with(ClientStore(DataSource.instance)) {
-                val rows = storeClient(oauth2Client("testclient"))
-                assertThat(rows).isEqualTo(1)
-                assertThat(storeClient(oauth2Client("testclient"))).isEqualTo(1)
+                val client1 = oauth2Client("testclient")
+                storeClient(client1) shouldBe 1
+                val client2 = oauth2Client("testclient")
+                storeClient(client2) shouldBe 1
+                find("testclient") shouldBe client2
             }
         }
     }
@@ -29,10 +30,9 @@ internal class ClientStoreTest {
         withMigratedDb {
             with(ClientStore(DataSource.instance)) {
                 storeClient(oauth2Client("testclient"))
-                assertThat(find("testclient")).isNotNull
-                val rows = delete("testclient")
-                assertThat(rows).isEqualTo(1)
-                assertThat(find("testclient")).isNull()
+                find("testclient") shouldNotBe null
+                delete("testclient") shouldBe 1
+                find("testclient") shouldBe null
             }
         }
     }
@@ -43,19 +43,10 @@ internal class ClientStoreTest {
             with(ClientStore(DataSource.instance)) {
                 val testclient = oauth2Client("testclient")
                 storeClient(testclient)
-                val found = find("testclient")
-                assertThat(found).isEqualTo(testclient)
+                find("testclient") shouldBe testclient
             }
         }
     }
 
     private fun oauth2Client(clientId: ClientId) = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
-
-    private fun h2DataSource() = dataSourceFrom(
-        DatabaseConfig(
-            "jdbc:h2:mem:test",
-            "user",
-            "pwd"
-        )
-    )
 }
