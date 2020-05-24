@@ -49,12 +49,8 @@ class TokenRequestContext private constructor(
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->
-                    log.info(
-                        """
-                        verify client_assertion for client_id=${oAuth2Client.clientId} 
-                        with keyIds=${oAuth2Client.jwkSet.keys.map { it.keyID }.toList()}
-                        """.trimIndent()
-                    )
+                    val keyIds = oAuth2Client.jwkSet.keys.map { it.keyID }.toList()
+                    log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=${keyIds}")
                     clientAssertionCredential.signedJWT.verify(
                         config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
                         oAuth2Client.jwkSet
