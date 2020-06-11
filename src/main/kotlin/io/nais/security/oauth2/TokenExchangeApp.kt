@@ -137,10 +137,8 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                         ?: OAuth2Error.SERVER_ERROR
                     call.respond(HttpStatusCode.fromValue(statusCode), errorObject)
                 }
-                // TODO remove cause message when closer to finished product
                 else -> {
-                    call.respond(HttpStatusCode.InternalServerError, cause.message ?: "unknown internal server error")
-                    throw cause
+                    call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
                 }
             }
         }

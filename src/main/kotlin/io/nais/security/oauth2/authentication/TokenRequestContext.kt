@@ -44,7 +44,7 @@ class TokenRequestContext private constructor(
          * Jwt Bearer token for client authentication: https://tools.ietf.org/html/draft-ietf-oauth-jwt-bearer-12
          * Threats: https://tools.ietf.org/html/draft-ietf-oauth-assertions-18#section-8.2
          *
-         * Consider using jti and iat/exp in token to protect against replay attacks
+         * TODO: Consider using jti and iat/exp in token to protect against replay attacks
          */
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)

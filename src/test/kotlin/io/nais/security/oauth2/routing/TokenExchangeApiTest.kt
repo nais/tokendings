@@ -10,8 +10,10 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.PlainJWT
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
+import io.kotest.assertions.fail
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -37,6 +39,7 @@ import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.Date
@@ -46,7 +49,7 @@ internal class TokenExchangeApiTest {
     val mapper = jacksonObjectMapper()
 
     @Test
-    fun `call to well-known should return server metadata`() {
+    fun `call to well-known should successfully return server metadata`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             withTestApplication({
@@ -62,7 +65,7 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
-    fun `call to jwks should return public keyset only`() {
+    fun `call to jwks should only return public keyset`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             withTestApplication({
@@ -153,7 +156,7 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
-    fun `token exchange call with invalid client assertion should fail`() {
+    fun `token exchange call with unknown client should fail`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val unknownClientAssertion = oAuth2Client().createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
@@ -182,14 +185,134 @@ internal class TokenExchangeApiTest {
         }
     }
 
+    // TODO - should return invalid_client instead of invalid_request?
     @Test
-    fun `token exchange call with invalid subjecttoken should fail`() {
+    fun `token exchange call with invalid client assertion keys should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val invalidClientAssertion = client1.createInvalidClientAssertionKeys(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(handleRequest(HttpMethod.Post, "/token") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                    setBody(
+                        listOf(
+                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                            "client_assertion" to invalidClientAssertion,
+                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                            "audience" to "client2",
+                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                            "subject_token" to "sometoken"
+                        ).formUrlEncode()
+                    )
+                }) {
+                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `token exchange call with invalid audience should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val invalidClientAssertion = client1.createClientAssertion("yolo")
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(handleRequest(HttpMethod.Post, "/token") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                    setBody(
+                        listOf(
+                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                            "client_assertion" to invalidClientAssertion,
+                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                            "audience" to "client2",
+                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                            "subject_token" to "sometoken"
+                        ).formUrlEncode()
+                    )
+                }) {
+                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                }
+            }
+        }
+    }
+
+    // TODO
+    @Test
+    @Disabled("implement me")
+    fun `token exchange call with replayed jti should fail`() {
+        fail("")
+    }
+
+    // TODO
+    @Test
+    @Disabled("implement me")
+    fun `token exchange call with client assertion lifetime exceeding max lifetime should fail`() {
+        fail("")
+    }
+
+    @Test
+    fun `token exchange call with unknown issuer in subject token should fail`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
             val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
             val subjectToken = this.issueToken("unknown", "someclient", DefaultOAuth2TokenCallback()).serialize()
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(handleRequest(HttpMethod.Post, "/token") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                    setBody(
+                        listOf(
+                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                            "client_assertion" to clientAssertion,
+                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                            "audience" to client2.clientId,
+                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                            "subject_token" to subjectToken
+                        ).formUrlEncode()
+                    )
+                }) {
+                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    println("error: $errorResponse ")
+                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `token exchange call with unsigned subject token should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+            val subjectToken = PlainJWT(
+                JWTClaimsSet.Builder()
+                    .issuer(this.issuerUrl("mock1").toString())
+                    .subject("oloy")
+                    .audience("yolo")
+                    .issueTime(Date.from(Instant.now()))
+                    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                    .jwtID(UUID.randomUUID().toString())
+                    .build()
+            ).serialize()
 
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
@@ -233,6 +356,18 @@ internal class TokenExchangeApiTest {
             .jwtID(UUID.randomUUID().toString())
             .build()
             .sign(jwkSet.keys.first() as RSAKey)
+            .serialize()
+
+    private fun OAuth2Client.createInvalidClientAssertionKeys(audience: String) =
+        JWTClaimsSet.Builder()
+            .issuer(clientId)
+            .subject(clientId)
+            .audience(audience)
+            .issueTime(Date.from(Instant.now()))
+            .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+            .jwtID(UUID.randomUUID().toString())
+            .build()
+            .sign(jwkSet().keys.first() as RSAKey)
             .serialize()
 }
 
