@@ -1,7 +1,7 @@
 package io.nais.security.oauth2.token
 
 import com.nimbusds.jose.jwk.JWKSet
-import io.kotest.matchers.maps.shouldContain
+import io.kotest.matchers.maps.shouldContainAll
 
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
@@ -21,8 +21,9 @@ import org.junit.jupiter.api.Test
 internal class TokenIssuerTest {
 
     @Test
-    fun `issue token for token exchange request should return token with same claims as subjecttoken`() {
+    fun `issue token for token exchange request should return token containing same claims as subject token and added claims`() {
         withMockOAuth2Server {
+            val subjectTokenIdp: String = this.issuerUrl("issuer1").toString()
             val subjectToken = this.createSubjectToken(
                 "thesubject",
                 mapOf(
@@ -30,14 +31,23 @@ internal class TokenIssuerTest {
                     "claim2" to "claim2value"
                 )
             ).serialize()
+
             with(tokenIssuer(this)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "jollo"
                 val issuedToken = issueTokenFor(
-                    oAuth2Client(),
-                    tokenExchangeRequest(subjectToken, "desired audience for token")
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken, tokenAudience)
                 )
-                issuedToken.jwtClaimsSet.claims shouldContain Pair("sub", "thesubject")
-                issuedToken.jwtClaimsSet.claims shouldContain Pair("claim1", "claim1value")
-                issuedToken.jwtClaimsSet.claims shouldContain Pair("claim2", "claim2value")
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("claim1", "claim1value"),
+                    Pair("claim2", "claim2value"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience))
+                )
             }
         }
     }
@@ -87,7 +97,7 @@ internal class TokenIssuerTest {
         if (mockOAuth2Server != null) {
             TokenIssuer(
                 AuthorizationServerProperties(
-                    "http://localhost/thisissuer",
+                    ISSUER_URL,
                     listOf(
                         SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer1").toString()),
                         SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
@@ -99,11 +109,15 @@ internal class TokenIssuerTest {
         } else {
             TokenIssuer(
                 AuthorizationServerProperties(
-                    "http://localhost/thisissuer",
+                    ISSUER_URL,
                     emptyList(),
                     300,
                     DefaultKeyStore(JWKSet(generateRsaKey()))
                 )
             )
         }
+
+    companion object {
+        private const val ISSUER_URL = "http://localhost/thisissuer"
+    }
 }

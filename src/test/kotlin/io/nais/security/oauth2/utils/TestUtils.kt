@@ -27,6 +27,4 @@ fun jwkSet(): JWKSet =
 fun SignedJWT.verifySignature(jwkSet: JWKSet) =
     DefaultJWTProcessor<SecurityContext?>().apply {
         jwsKeySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwkSet))
-    }.let {
-        it.process(this, null)
-    }
+    }.process(this, null)

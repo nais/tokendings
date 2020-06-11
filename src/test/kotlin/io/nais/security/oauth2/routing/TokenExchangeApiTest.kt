@@ -37,6 +37,7 @@ import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.token.sign
 import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
+import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
@@ -378,8 +379,3 @@ data class ErrorResponse(
     val uri: String?,
     val httpstatusCode: Int
 )
-
-private fun SignedJWT.verifySignature(jwks: JWKSet): JWTClaimsSet =
-    DefaultJWTProcessor<SecurityContext?>().apply {
-        jwsKeySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwks))
-    }.process(this, null)
