@@ -1,27 +1,27 @@
-val ktorVersion = "1.3.2"
-val mockkVersion = "1.9.3"
-val kotlinResultVersion = "1.1.4"
 val assertjVersion = "3.14.0"
-val kotlinLoggingVersion = "1.7.8"
-val logbackVersion = "1.2.3"
-val nimbusSdkVersion = "7.3"
-val mockWebServerVersion = "4.3.1"
+val flywayVersion = "6.3.3"
+val freemarkerVersion = "2.3.29"
+val h2Version = "1.4.200"
+val hikarycpVersion = "3.4.2"
 val jacksonVersion = "2.10.1"
 val junitJupiterVersion = "5.5.2"
 val konfigVersion = "1.6.10.0"
-val kotlinVersion = "1.3.61"
-val freemarkerVersion = "2.3.29"
-val micrometerRegistryPrometheusVersion = "1.3.5"
-val logstashLogbackEncoderVersion = "5.2"
-val mockOAuth2ServerVersion = "0.1.34"
-val kotliqueryVersion = "1.3.1"
-val hikarycpVersion = "3.4.2"
-val postgresqlVersion = "42.2.12"
-val flywayVersion = "6.3.3"
-val h2Version = "1.4.200"
-val testcontainersPostgresVersion = "1.14.0"
-val kotlintestVersion = "3.4.2"
 val kotestVersion = "4.0.5"
+val kotlinLoggingVersion = "1.7.8"
+val kotlinVersion = "1.3.61"
+val kotlintestVersion = "3.4.2"
+val kotliqueryVersion = "1.3.1"
+val ktorVersion = "1.3.2"
+val logbackVersion = "1.2.3"
+val logstashLogbackEncoderVersion = "5.2"
+val micrometerRegistryPrometheusVersion = "1.3.5"
+val mockOAuth2ServerVersion = "0.1.34"
+val mockWebServerVersion = "4.3.1"
+val mockkVersion = "1.9.3"
+val nimbusSdkVersion = "7.3"
+val postgresqlVersion = "42.2.12"
+val testcontainersPostgresVersion = "1.14.0"
+
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
@@ -54,7 +54,6 @@ dependencies {
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-json:$ktorVersion")
     implementation("io.ktor:ktor-client-jackson:$ktorVersion")
@@ -64,7 +63,6 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus:$micrometerRegistryPrometheusVersion")
     implementation("io.ktor:ktor-jackson:$ktorVersion")
     implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
-    implementation("com.michael-bull.kotlin-result:kotlin-result:$kotlinResultVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
     implementation("com.zaxxer:HikariCP:$hikarycpVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
