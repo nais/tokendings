@@ -1,6 +1,7 @@
 package io.nais.security.oauth2
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -136,6 +137,9 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                     val errorObject: ErrorObject = cause.errorObject
                         ?: OAuth2Error.SERVER_ERROR
                     call.respond(HttpStatusCode.fromValue(statusCode), errorObject)
+                }
+                is JsonProcessingException -> {
+                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
                 }
                 else -> {
                     call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")

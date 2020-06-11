@@ -3,16 +3,11 @@ package io.nais.security.oauth2.routing
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet
-import com.nimbusds.jose.proc.JWSVerificationKeySelector
-import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.PlainJWT
 import com.nimbusds.jwt.SignedJWT
-import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import io.kotest.assertions.fail
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -341,9 +336,6 @@ internal class TokenExchangeApiTest {
     }
 
     private fun AppConfiguration.mockClientRegistry() = this.clientRegistry as MockClientRegistry
-
-    private fun MockClientRegistry.register(clientId: ClientId, accessPolicy: AccessPolicy = AccessPolicy()): OAuth2Client =
-        this.registerClientAndGenerateKeys(clientId, accessPolicy)
 
     private fun oAuth2Client(clientId: ClientId = "unknown") = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
 

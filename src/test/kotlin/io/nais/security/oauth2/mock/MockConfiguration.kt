@@ -15,6 +15,7 @@ import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.model.AccessPolicy
+import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
@@ -104,6 +105,8 @@ class MockClientRegistry : ClientRegistry(
                 allowedGrantTypes
             )
         )
+
+    fun register(clientId: ClientId, accessPolicy: AccessPolicy = AccessPolicy()): OAuth2Client = this.registerClientAndGenerateKeys(clientId, accessPolicy)
 }
 
 fun <R> withMockOAuth2Server(

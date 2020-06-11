@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.routing
 
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.http.HttpStatusCode
@@ -17,13 +18,14 @@ import io.nais.security.oauth2.model.ClientRegistration
 import io.nais.security.oauth2.model.ClientRegistrationRequest
 import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.OAuth2Client
+import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.verifySoftwareStatement
 
 internal fun Route.clientRegistrationApi(config: AppConfiguration) {
     authenticate(BearerTokenAuth.CLIENT_REGISTRATION_AUTH) {
         route("/registration/client") {
             post {
-                val request: ClientRegistrationRequest = call.receive(ClientRegistrationRequest::class)
+                val request: ClientRegistrationRequest = call.receive(ClientRegistrationRequest::class).validate()
                 val acceptedSignatureKeys = config.clientRegistrationAuthProperties.softwareStatementJwks
                 val softwareStatement = request.verifySoftwareStatement(acceptedSignatureKeys)
 
@@ -51,8 +53,7 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 )
             }
             delete("/{clientId}") {
-                val clientId = call.parameters["clientId"]
-                if (clientId != null) {
+                call.parameters["clientId"]?.let { clientId ->
                     config.clientRegistry.deleteClient(clientId)
                     call.respond(HttpStatusCode.NoContent)
                 }
@@ -70,4 +71,11 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
             }
         }
     }
+}
+
+private fun ClientRegistrationRequest.validate(): ClientRegistrationRequest {
+    require(this.jwks.keys.isNotEmpty()) {
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("empty JWKS not allowed"))
+    }
+    return this
 }

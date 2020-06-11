@@ -1,8 +1,11 @@
 package io.nais.security.oauth2.routing
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -12,6 +15,7 @@ import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockApp
+import io.nais.security.oauth2.mock.MockClientRegistry
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.ClientRegistrationRequest
@@ -21,9 +25,11 @@ import io.nais.security.oauth2.model.SoftwareStatementJwt
 import io.nais.security.oauth2.token.sign
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
+import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 
 internal class ClientRegistrationApiTest {
+    val mapper = jacksonObjectMapper()
 
     @Test
     fun `401 on unauthorized requests`() {
@@ -113,6 +119,211 @@ internal class ClientRegistrationApiTest {
                 }) {
                     response.status() shouldBe HttpStatusCode.Created
                     config.clientRegistry.findClient("cluster1:ns1:client1")?.clientId shouldBe "cluster1:ns1:client1"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `client registration call with valid bearer token and invalid software statement content should fail`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    this.wellKnownUrl("mockaad").toString(),
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    signingKeySet
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud"
+                )
+            ).serialize()
+
+            @Language("JSON")
+            val invalidSoftwareStatement: String = """
+                {
+                  "appId": "cluster:ns:app1",
+                  "accessPolicyInbound": [
+                    "cluster:ns:app2"
+                  ],
+                  "accessPolicyOutbound": null
+                }
+            """.trimIndent()
+
+            withTestApplication(MockApp(config)) {
+                with(handleRequest(HttpMethod.Post, "registration/client") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(invalidSoftwareStatement)
+                }) {
+                    response.status() shouldBe HttpStatusCode.BadRequest
+                    config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `client registration call with valid bearer token and invalid software statement signature should fail`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    this.wellKnownUrl("mockaad").toString(),
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    signingKeySet
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud"
+                )
+            ).serialize()
+
+            val invalidSoftwareStatement: String = ClientRegistrationRequest(
+                "cluster1:ns1:client1",
+                JsonWebKeys(jwkSet()),
+                softwareStatementJwt(
+                    SoftwareStatement(
+                        "cluster1:ns1:client1",
+                        listOf("cluster1:ns1:client2"),
+                        emptyList()
+                    ),
+                    jwkSet().keys.first() as RSAKey
+                )
+            ).toJson()
+
+            withTestApplication(MockApp(config)) {
+                with(handleRequest(HttpMethod.Post, "registration/client") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(invalidSoftwareStatement)
+                }) {
+                    response.status() shouldBe HttpStatusCode.BadRequest
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    errorResponse.code shouldBe "invalid_request"
+                    config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `client registration call with valid bearer token and empty JWKS should fail`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    this.wellKnownUrl("mockaad").toString(),
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    signingKeySet
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud"
+                )
+            ).serialize()
+
+            val invalidSoftwareStatement: String = ClientRegistrationRequest(
+                "cluster1:ns1:client1",
+                JsonWebKeys(JWKSet(emptyList())),
+                softwareStatementJwt(
+                    SoftwareStatement(
+                        "cluster1:ns1:client1",
+                        listOf("cluster1:ns1:client2"),
+                        emptyList()
+                    ),
+                    signingKeySet.keys.first() as RSAKey
+                )
+            ).toJson()
+
+            withTestApplication(MockApp(config)) {
+                with(handleRequest(HttpMethod.Post, "registration/client") {
+                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(invalidSoftwareStatement)
+                }) {
+                    response.status() shouldBe HttpStatusCode.BadRequest
+                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
+                    errorResponse.code shouldBe "invalid_request"
+                    config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `delete non-existent client should return 204 No Content`() {
+        withMockOAuth2Server {
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    this.wellKnownUrl("mockaad").toString(),
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    jwkSet()
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud"
+                )
+            ).serialize()
+            withTestApplication(MockApp(config)) {
+                handleRequest(HttpMethod.Delete, "registration/client/yolo") {
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                }.apply {
+                    response.status() shouldBe HttpStatusCode.NoContent
+                    config.clientRegistry.findClient("yolo") shouldBe null
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `delete existing client should return 204 No Content`() {
+        withMockOAuth2Server {
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    this.wellKnownUrl("mockaad").toString(),
+                    listOf("correct_aud"),
+                    emptyMap(),
+                    jwkSet()
+                )
+            )
+            val client1 = config.clientRegistry.let { it as MockClientRegistry }.register("client1")
+            config.clientRegistry.findClient(client1.clientId) shouldBe client1
+            val token = this.issueToken(
+                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud"
+                )
+            ).serialize()
+            withTestApplication(MockApp(config)) {
+                handleRequest(HttpMethod.Delete, "registration/client/${client1.clientId}") {
+                    addHeader(HttpHeaders.Authorization, "Bearer $token")
+                }.apply {
+                    response.status() shouldBe HttpStatusCode.NoContent
+                    config.clientRegistry.findClient(client1.clientId) shouldBe null
                 }
             }
         }
