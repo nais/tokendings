@@ -1,10 +1,9 @@
 package io.nais.security.oauth2.routing
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.kotest.matchers.shouldBe
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -23,13 +22,13 @@ import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.SoftwareStatement
 import io.nais.security.oauth2.model.SoftwareStatementJwt
 import io.nais.security.oauth2.token.sign
+import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 
 internal class ClientRegistrationApiTest {
-    val mapper = jacksonObjectMapper()
 
     @Test
     fun `401 on unauthorized requests`() {
@@ -209,9 +208,7 @@ internal class ClientRegistrationApiTest {
                     addHeader(HttpHeaders.Authorization, "Bearer $token")
                     setBody(invalidSoftwareStatement)
                 }) {
-                    response.status() shouldBe HttpStatusCode.BadRequest
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    errorResponse.code shouldBe "invalid_request"
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
             }
@@ -258,9 +255,7 @@ internal class ClientRegistrationApiTest {
                     addHeader(HttpHeaders.Authorization, "Bearer $token")
                     setBody(invalidSoftwareStatement)
                 }) {
-                    response.status() shouldBe HttpStatusCode.BadRequest
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    errorResponse.code shouldBe "invalid_request"
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
             }

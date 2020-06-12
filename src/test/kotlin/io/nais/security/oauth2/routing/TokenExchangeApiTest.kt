@@ -1,13 +1,12 @@
 package io.nais.security.oauth2.routing
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.PlainJWT
 import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.kotest.assertions.fail
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
@@ -17,6 +16,7 @@ import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
+import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
@@ -32,6 +32,7 @@ import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.token.sign
 import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
+import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
@@ -42,7 +43,7 @@ import java.util.Date
 import java.util.UUID
 
 internal class TokenExchangeApiTest {
-    val mapper = jacksonObjectMapper()
+    val mapper = Jackson.defaultMapper
 
     @Test
     fun `call to well-known should successfully return server metadata`() {
@@ -143,9 +144,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -173,9 +172,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.Unauthorized)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    assertThat(errorResponse.code).isEqualTo("invalid_client")
+                    response shouldBe OAuth2Error.INVALID_CLIENT
                 }
             }
         }
@@ -205,9 +202,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -236,9 +231,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -283,10 +276,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    println("error: $errorResponse ")
-                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -326,10 +316,7 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode()
                     )
                 }) {
-                    assertThat(response.status()).isEqualTo(HttpStatusCode.BadRequest)
-                    val errorResponse: ErrorResponse = mapper.readValue(response.content!!)
-                    println("error: $errorResponse ")
-                    assertThat(errorResponse.code).isEqualTo("invalid_request")
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -363,11 +350,3 @@ internal class TokenExchangeApiTest {
             .sign(jwkSet().keys.first() as RSAKey)
             .serialize()
 }
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-data class ErrorResponse(
-    val code: String,
-    val description: String,
-    val uri: String?,
-    val httpstatusCode: Int
-)
