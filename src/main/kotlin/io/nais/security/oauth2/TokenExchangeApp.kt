@@ -79,15 +79,18 @@ fun main() {
 
 @KtorExperimentalAPI
 fun server(): NettyApplicationEngine =
-    embeddedServer(Netty, applicationEngineEnvironment {
-        val config = configByProfile()
-        connector {
-            port = config.serverProperties.port
+    embeddedServer(
+        Netty,
+        applicationEngineEnvironment {
+            val config = configByProfile()
+            connector {
+                port = config.serverProperties.port
+            }
+            module {
+                tokenExchangeApp(config, DefaultRouting(config))
+            }
         }
-        module {
-            tokenExchangeApp(config, DefaultRouting(config))
-        }
-    })
+    )
 
 @KtorExperimentalAPI
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {

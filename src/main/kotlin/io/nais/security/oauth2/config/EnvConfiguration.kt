@@ -92,9 +92,11 @@ internal fun databaseConfig(): DatabaseConfig {
 }
 
 internal fun keyStore(): KeyStore =
-    DefaultKeyStore(konfig[Key(PRIVATE_JWKS, stringType)].let {
-        JWKSet.parse(it)
-    })
+    DefaultKeyStore(
+        konfig[Key(PRIVATE_JWKS, stringType)].let {
+            JWKSet.parse(it)
+        }
+    )
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
@@ -108,7 +110,9 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
 
 internal fun clientRegistry(): ClientRegistry =
     ClientRegistry(
-        ClientRegistryProperties(dataSourceFrom(databaseConfig()).apply {
-            migrate(this)
-        })
+        ClientRegistryProperties(
+            dataSourceFrom(databaseConfig()).apply {
+                migrate(this)
+            }
+        )
     )

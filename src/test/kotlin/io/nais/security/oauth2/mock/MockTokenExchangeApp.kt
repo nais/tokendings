@@ -34,14 +34,17 @@ fun main() {
 
     val config: AppConfiguration = mockConfig(mockOAuth2Server, clientRegistrationAuthProps)
 
-    embeddedServer(Netty, applicationEngineEnvironment {
-        connector {
-            port = config.serverProperties.port
+    embeddedServer(
+        Netty,
+        applicationEngineEnvironment {
+            connector {
+                port = config.serverProperties.port
+            }
+            module {
+                tokenExchangeApp(config, DefaultRouting(config))
+            }
         }
-        module {
-            tokenExchangeApp(config, DefaultRouting(config))
-        }
-    }).start(wait = true)
+    ).start(wait = true)
 }
 
 private fun startMockOAuth2Server(): MockOAuth2Server =

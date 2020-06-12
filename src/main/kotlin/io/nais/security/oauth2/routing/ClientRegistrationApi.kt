@@ -43,7 +43,8 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 )
                 config.clientRegistry.registerClient(clientToRegister)
                 call.respond(
-                    HttpStatusCode.Created, ClientRegistration(
+                    HttpStatusCode.Created,
+                    ClientRegistration(
                         clientToRegister.clientId,
                         clientToRegister.jwks,
                         request.softwareStatementJwt,

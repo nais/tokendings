@@ -93,19 +93,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to clientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to client2.clientId,
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                     val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.content!!)
                     assertThat(accessTokenResponse.accessToken).isNotBlank()
@@ -131,19 +133,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to clientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to client2.clientId,
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
@@ -159,19 +163,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to unknownClientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to "client2",
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to unknownClientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to "client2",
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to "sometoken"
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_CLIENT
                 }
             }
@@ -189,19 +195,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to invalidClientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to "client2",
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to invalidClientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to "client2",
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to "sometoken"
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
@@ -218,19 +226,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to invalidClientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to "client2",
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to invalidClientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to "client2",
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to "sometoken"
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
@@ -263,19 +273,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to clientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to client2.clientId,
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
@@ -303,19 +315,21 @@ internal class TokenExchangeApiTest {
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
             }) {
-                with(handleRequest(HttpMethod.Post, "/token") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to clientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to client2.clientId,
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken
-                        ).formUrlEncode()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }

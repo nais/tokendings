@@ -69,14 +69,17 @@ data class ClientConfig(
 )
 
 fun main() {
-    embeddedServer(Netty, applicationEngineEnvironment {
-        connector {
-            port = 8181
+    embeddedServer(
+        Netty,
+        applicationEngineEnvironment {
+            connector {
+                port = 8181
+            }
+            module {
+                mockJwkerApp()
+            }
         }
-        module {
-            mockJwkerApp()
-        }
-    }).start()
+    ).start()
 }
 
 fun Application.mockJwkerApp() {

@@ -34,7 +34,8 @@ internal class ClientRegistrationApiTest {
     fun `401 on unauthorized requests`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(
-                this, ClientRegistrationAuthProperties(
+                this,
+                ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
                     emptyList(),
                     emptyMap(),
@@ -60,7 +61,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "incorrect_aud"
@@ -90,7 +92,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
@@ -98,24 +101,26 @@ internal class ClientRegistrationApiTest {
             ).serialize()
 
             withTestApplication(MockApp(config)) {
-                with(handleRequest(HttpMethod.Post, "registration/client") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    addHeader(HttpHeaders.Authorization, "Bearer $token")
-                    setBody(
-                        ClientRegistrationRequest(
-                            "cluster1:ns1:client1",
-                            JsonWebKeys(jwkSet()),
-                            softwareStatementJwt(
-                                SoftwareStatement(
-                                    "cluster1:ns1:client1",
-                                    listOf("cluster1:ns1:client2"),
-                                    emptyList()
-                                ),
-                                signingKeySet.keys.first() as RSAKey
-                            )
-                        ).toJson()
-                    )
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(
+                            ClientRegistrationRequest(
+                                "cluster1:ns1:client1",
+                                JsonWebKeys(jwkSet()),
+                                softwareStatementJwt(
+                                    SoftwareStatement(
+                                        "cluster1:ns1:client1",
+                                        listOf("cluster1:ns1:client2"),
+                                        emptyList()
+                                    ),
+                                    signingKeySet.keys.first() as RSAKey
+                                )
+                            ).toJson()
+                        )
+                    }
+                ) {
                     response.status() shouldBe HttpStatusCode.Created
                     config.clientRegistry.findClient("cluster1:ns1:client1")?.clientId shouldBe "cluster1:ns1:client1"
                 }
@@ -137,7 +142,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
@@ -145,7 +151,8 @@ internal class ClientRegistrationApiTest {
             ).serialize()
 
             @Language("JSON")
-            val invalidSoftwareStatement: String = """
+            val invalidSoftwareStatement: String =
+                """
                 {
                   "appId": "cluster:ns:app1",
                   "accessPolicyInbound": [
@@ -153,14 +160,16 @@ internal class ClientRegistrationApiTest {
                   ],
                   "accessPolicyOutbound": null
                 }
-            """.trimIndent()
+                """.trimIndent()
 
             withTestApplication(MockApp(config)) {
-                with(handleRequest(HttpMethod.Post, "registration/client") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    addHeader(HttpHeaders.Authorization, "Bearer $token")
-                    setBody(invalidSoftwareStatement)
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(invalidSoftwareStatement)
+                    }
+                ) {
                     response.status() shouldBe HttpStatusCode.BadRequest
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
@@ -182,7 +191,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
@@ -203,11 +213,13 @@ internal class ClientRegistrationApiTest {
             ).toJson()
 
             withTestApplication(MockApp(config)) {
-                with(handleRequest(HttpMethod.Post, "registration/client") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    addHeader(HttpHeaders.Authorization, "Bearer $token")
-                    setBody(invalidSoftwareStatement)
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(invalidSoftwareStatement)
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
@@ -229,7 +241,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
@@ -250,11 +263,13 @@ internal class ClientRegistrationApiTest {
             ).toJson()
 
             withTestApplication(MockApp(config)) {
-                with(handleRequest(HttpMethod.Post, "registration/client") {
-                    addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                    addHeader(HttpHeaders.Authorization, "Bearer $token")
-                    setBody(invalidSoftwareStatement)
-                }) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(invalidSoftwareStatement)
+                    }
+                ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
@@ -275,7 +290,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
@@ -307,7 +323,8 @@ internal class ClientRegistrationApiTest {
             val client1 = config.clientRegistry.let { it as MockClientRegistry }.register("client1")
             config.clientRegistry.findClient(client1.clientId) shouldBe client1
             val token = this.issueToken(
-                "mockaad", "client1", DefaultOAuth2TokenCallback(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
