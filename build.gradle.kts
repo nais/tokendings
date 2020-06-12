@@ -1,34 +1,35 @@
-val assertjVersion = "3.14.0"
-val flywayVersion = "6.3.3"
+val assertjVersion = "3.16.1"
+val flywayVersion = "6.4.4"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
-val hikarycpVersion = "3.4.2"
+val hikaricpVersion = "3.4.5"
 val jacksonVersion = "2.10.1"
-val junitJupiterVersion = "5.5.2"
+val junitJupiterVersion = "5.6.2"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "4.0.5"
-val kotlinLoggingVersion = "1.7.8"
-val kotlinVersion = "1.3.61"
+val kotlinLoggingVersion = "1.7.10"
+val kotlinVersion = "1.3.72"
 val kotlintestVersion = "3.4.2"
 val kotliqueryVersion = "1.3.1"
 val ktorVersion = "1.3.2"
 val logbackVersion = "1.2.3"
-val logstashLogbackEncoderVersion = "5.2"
-val micrometerRegistryPrometheusVersion = "1.3.5"
+val logstashLogbackEncoderVersion = "6.4"
+val micrometerRegistryPrometheusVersion = "1.3.9"
 val mockOAuth2ServerVersion = "0.1.34"
-val mockWebServerVersion = "4.3.1"
-val mockkVersion = "1.9.3"
-val nimbusSdkVersion = "7.3"
-val postgresqlVersion = "42.2.12"
-val testcontainersPostgresVersion = "1.14.0"
+val mockWebServerVersion = "4.7.2"
+val mockkVersion = "1.10.0"
+val nimbusSdkVersion = "8.9"
+val postgresqlVersion = "42.2.14"
+val testcontainersPostgresVersion = "1.14.3"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.3.61"
-    id("org.jmailen.kotlinter") version "2.2.0"
+    kotlin("jvm") version "1.3.72"
+    id("org.jmailen.kotlinter") version "2.4.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 application {
@@ -64,7 +65,7 @@ dependencies {
     implementation("io.ktor:ktor-jackson:$ktorVersion")
     implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-    implementation("com.zaxxer:HikariCP:$hikarycpVersion")
+    implementation("com.zaxxer:HikariCP:$hikaricpVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
