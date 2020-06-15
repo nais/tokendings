@@ -39,6 +39,7 @@ internal class ClientRegistrationApiTest {
                     this.wellKnownUrl("mockaad").toString(),
                     emptyList(),
                     emptyMap(),
+                    emptyMap(),
                     jwkSet()
                 )
             )
@@ -56,6 +57,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
+                    emptyMap(),
                     emptyMap(),
                     jwkSet()
                 )
@@ -87,7 +89,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = mapOf("roles" to "access_as_application"),
+                    requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
                     softwareStatementJwks = signingKeySet
                 )
             )
@@ -97,7 +99,7 @@ internal class ClientRegistrationApiTest {
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud",
-                    claims = mapOf("roles" to "access_as_application")
+                    claims = mapOf("roles" to listOf("access_as_application"))
                 )
             ).serialize()
 
@@ -138,7 +140,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = mapOf("roles" to "access_as_application"),
+                    requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
                     softwareStatementJwks = signingKeySet
                 )
             )
@@ -178,7 +180,6 @@ internal class ClientRegistrationApiTest {
         }
     }
 
-
     @Test
     fun `client registration call with valid bearer token and invalid software statement content should fail`() {
         withMockOAuth2Server {
@@ -188,6 +189,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
+                    emptyMap(),
                     emptyMap(),
                     signingKeySet
                 )
@@ -237,6 +239,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
+                    emptyMap(),
                     emptyMap(),
                     signingKeySet
                 )
@@ -288,6 +291,7 @@ internal class ClientRegistrationApiTest {
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
                     emptyMap(),
+                    emptyMap(),
                     signingKeySet
                 )
             )
@@ -337,6 +341,7 @@ internal class ClientRegistrationApiTest {
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
                     emptyMap(),
+                    emptyMap(),
                     jwkSet()
                 )
             )
@@ -367,6 +372,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     this.wellKnownUrl("mockaad").toString(),
                     listOf("correct_aud"),
+                    emptyMap(),
                     emptyMap(),
                     jwkSet()
                 )

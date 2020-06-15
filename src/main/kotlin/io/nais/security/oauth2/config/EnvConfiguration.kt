@@ -11,7 +11,6 @@ import com.nimbusds.jose.jwk.JWKSet
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
-import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_SUB
 import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
 import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
@@ -105,7 +104,8 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-        requiredClaims = mapOf("roles" to "access_as_application"),
+        requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
+        requiredClaims = mapOf(),
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
             JWKSet.parse(it)
         }

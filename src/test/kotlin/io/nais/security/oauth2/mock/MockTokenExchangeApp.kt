@@ -29,6 +29,7 @@ fun main() {
         mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
         listOf("tokendings"),
         emptyMap(),
+        emptyMap(),
         jwkerJwks
     )
 

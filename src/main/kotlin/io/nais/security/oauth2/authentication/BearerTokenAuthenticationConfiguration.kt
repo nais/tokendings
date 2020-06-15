@@ -38,8 +38,11 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
         verifier { token ->
             bearerTokenVerifier(jwkProvider, properties.wellKnown.issuer, token) {
                 withAudience(*properties.acceptedAudience.toTypedArray())
-                properties.requiredClaims.forEach {
-                    withClaim(it.key, it.value)
+                properties.requiredClaims.forEach { (key, value) ->
+                    withClaim(key, value)
+                }
+                properties.requiredArrayClaims.forEach { (key, value) ->
+                    withArrayClaim(key, *value.toTypedArray())
                 }
             }
         }

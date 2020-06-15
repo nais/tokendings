@@ -48,6 +48,7 @@ fun mockConfig(
             mockOAuth2Server.wellKnownUrl("aadmock").toString(),
             listOf("tokendings"),
             emptyMap(),
+            emptyMap(),
             jwkSet()
         )
         else -> mockBearerTokenAuthenticationProperties()
