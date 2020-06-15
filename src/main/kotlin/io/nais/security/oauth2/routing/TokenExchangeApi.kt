@@ -53,6 +53,7 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                     authorizers = listOf(
                         TokenExchangeRequestAuthorizer(config.clientRegistry)
                     )
+                    clientAssertionMaxLifetime = config.authorizationServerProperties.clientAssertionMaxExpiry
                 }
             }
             when (val tokenRequest: OAuth2TokenRequest = tokenRequestContext.oauth2TokenRequest) {

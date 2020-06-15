@@ -12,6 +12,7 @@ import io.ktor.request.receiveParameters
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
+import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.verify
 import mu.KotlinLogging
 
@@ -40,12 +41,6 @@ class TokenRequestContext private constructor(
                 parameters.require("client_assertion")
             )
 
-        /**
-         * Jwt Bearer token for client authentication: https://tools.ietf.org/html/draft-ietf-oauth-jwt-bearer-12
-         * Threats: https://tools.ietf.org/html/draft-ietf-oauth-assertions-18#section-8.2
-         *
-         * TODO: Consider using jti and iat/exp in token to protect against replay attacks
-         */
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->
@@ -55,6 +50,13 @@ class TokenRequestContext private constructor(
                         config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
                         oAuth2Client.jwkSet
                     )
+                    if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime))
+                        throw OAuth2Exception(
+                            OAuth2Error.INVALID_CLIENT.setDescription(
+                                "invalid client authentication for client_id=${clientAssertionCredential.clientId}," +
+                                    " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s)."
+                            )
+                        )
                 } ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_CLIENT.setDescription(
                     "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
@@ -76,6 +78,7 @@ class TokenRequestConfig internal constructor(
     internal val clientFinder = configuration.clientFinder
     internal val claimsVerifier = configuration.claimsVerifier
     internal val authorizers = configuration.authorizers
+    internal val clientAssertionMaxLifetime = configuration.clientAssertionMaxLifetime
 
     class Configuration {
         internal var clientFinder: (ClientAssertionCredential) -> OAuth2Client? = {
@@ -93,6 +96,8 @@ class TokenRequestConfig internal constructor(
                 HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti"))
             )
         }
+
+        internal var clientAssertionMaxLifetime: Long = 120
     }
 }
 
@@ -110,6 +115,9 @@ data class ClientAssertionCredential(val clientAssertionType: String, val client
         const val JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
     }
 }
+
+private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean =
+    this.expiresIn().apply { log.debug("expiresin: $this") } <= lifetime
 
 suspend fun ApplicationCall.receiveTokenRequestContext(
     tokenEndpointUrl: TokenEndpointUrl,

@@ -3,6 +3,7 @@ package io.nais.security.oauth2.config
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
+import com.natpryce.konfig.enumType
 import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
@@ -74,11 +75,13 @@ object NonProdConfiguration {
 }
 
 fun configByProfile(): AppConfiguration =
-    when (konfig.getOrNull(Key(APPLICATION_PROFILE, stringType))?.let { Profile.valueOf(it) }) {
+    when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
         Profile.NON_PROD -> NonProdConfiguration.instance
         Profile.PROD -> ProdConfiguration.instance
         else -> ProdConfiguration.instance
     }
+
+fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
     val hostname = konfig[Key(DB_HOST, stringType)]

@@ -45,7 +45,7 @@ data class OAuth2TokenResponse(
     @JsonProperty("token_type")
     val tokenType: String = "Bearer",
     @JsonProperty("expires_in")
-    val expiresIn: Int = 0,
+    val expiresIn: Long = 0,
     @JsonProperty("scope")
     val scope: String? = null,
     @JsonProperty("refresh_token")

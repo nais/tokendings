@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.oauth2.sdk.ErrorObject
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.application.Application
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
@@ -50,6 +51,7 @@ import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
+import io.nais.security.oauth2.config.isNonProd
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
@@ -136,10 +138,8 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
             log.error("received exception.", cause)
             when (cause) {
                 is OAuth2Exception -> {
-                    val statusCode = cause.errorObject?.httpStatusCode ?: 500
-                    val errorObject: ErrorObject = cause.errorObject
-                        ?: OAuth2Error.SERVER_ERROR
-                    call.respond(HttpStatusCode.fromValue(statusCode), errorObject)
+                    val includeErrorDetails = config.isNonProd()
+                    call.respondWithError(cause, includeErrorDetails)
                 }
                 is JsonProcessingException -> {
                     call.respond(HttpStatusCode.BadRequest, "invalid request content")
@@ -163,6 +163,32 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
         routing.apiRouting(this.application)
     }
 }
+
+private suspend fun ApplicationCall.respondWithError(exception: OAuth2Exception, includeErrorDetails: Boolean) {
+    val errorObject = exception.toErrorObject(includeErrorDetails)
+    this.respond(HttpStatusCode.fromValue(errorObject.httpStatusCode), errorObject)
+}
+
+private fun OAuth2Exception.toErrorObject(includeErrorDetails: Boolean): ErrorObject {
+    if (this.errorObject == null) {
+        return OAuth2Error.SERVER_ERROR
+    }
+    return when (includeErrorDetails) {
+        true -> this.errorObject
+        else -> this.errorObject.toGeneric()
+    }
+}
+
+private fun ErrorObject.toGeneric(): ErrorObject =
+    ErrorObject(
+        this.code,
+        when (this.httpStatusCode) {
+            in 400..499 -> "invalid request."
+            else -> "unexpected error"
+        },
+        this.httpStatusCode,
+        this.uri
+    )
 
 internal val defaultHttpClient = HttpClient(CIO) {
     install(JsonFeature) {

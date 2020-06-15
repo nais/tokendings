@@ -35,8 +35,8 @@ fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
         sign(RSASSASigner(rsaKey.toPrivateKey()))
     }
 
-fun SignedJWT.expiresIn(): Int =
-    Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds.toInt()
+fun SignedJWT.expiresIn(): Long =
+    Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
 fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<SecurityContext?>): JWTClaimsSet {

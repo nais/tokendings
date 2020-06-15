@@ -7,7 +7,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.PlainJWT
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.kotest.assertions.fail
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -36,7 +35,6 @@ import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.Date
@@ -247,18 +245,38 @@ internal class TokenExchangeApiTest {
         }
     }
 
-    // TODO
     @Test
-    @Disabled("implement me")
-    fun `token exchange call with replayed jti should fail`() {
-        fail("")
-    }
-
-    // TODO
-    @Test
-    @Disabled("implement me")
     fun `token exchange call with client assertion lifetime exceeding max lifetime should fail`() {
-        fail("")
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl(), 3600)
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
+                    response shouldBe OAuth2Error.INVALID_CLIENT
+                }
+            }
+        }
     }
 
     @Test
@@ -341,12 +359,15 @@ internal class TokenExchangeApiTest {
     private fun oAuth2Client(clientId: ClientId = "unknown") = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
 
     private fun OAuth2Client.createClientAssertion(audience: String) =
+        createClientAssertion(audience, 119)
+
+    private fun OAuth2Client.createClientAssertion(audience: String, lifetime: Long) =
         JWTClaimsSet.Builder()
             .issuer(clientId)
             .subject(clientId)
             .audience(audience)
             .issueTime(Date.from(Instant.now()))
-            .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+            .expirationTime(Date.from(Instant.now().plusSeconds(lifetime.apply { println("lifetime in createclientassertion $this") })))
             .jwtID(UUID.randomUUID().toString())
             .build()
             .sign(jwkSet.keys.first() as RSAKey)

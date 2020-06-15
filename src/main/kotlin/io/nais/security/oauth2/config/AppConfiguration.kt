@@ -52,7 +52,8 @@ class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val keyStore: KeyStore
+    val keyStore: KeyStore,
+    val clientAssertionMaxExpiry: Long = 120
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
