@@ -35,7 +35,7 @@ data class ClientRegistryProperties(
 data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
-    val requiredClaims: Map<String, String> = emptyMap(),
+    val requiredClaims: Map<String, String> = mapOf("roles" to "access_as_application"),
     val softwareStatementJwks: JWKSet
 ) {
     val wellKnown: WellKnown = runBlocking {

@@ -3,6 +3,8 @@ package io.nais.security.oauth2.authentication
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.auth0.jwt.interfaces.DecodedJWT
 import com.auth0.jwt.interfaces.JWTVerifier
+import com.nimbusds.oauth2.sdk.OAuth2Error
+import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger { }
@@ -24,7 +26,9 @@ internal class DelegatingJWTVerifier(private val verifier: JWTVerifier) : JWTVer
             return block()
         } catch (e: JWTVerificationException) {
             log.error("received verfication exception with message: ${e.message}", e)
-            throw e
+            throw OAuth2Exception(
+                OAuth2Error.INVALID_CLIENT.setDescription("token verification failed. ${e.message}")
+            )
         }
     }
 }

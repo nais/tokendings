@@ -85,10 +85,61 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    signingKeySet
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = mapOf("roles" to "access_as_application"),
+                    softwareStatementJwks = signingKeySet
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud",
+                    claims = mapOf("roles" to "access_as_application")
+                )
+            ).serialize()
+
+            withTestApplication(MockApp(config)) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(
+                            ClientRegistrationRequest(
+                                "cluster1:ns1:client1",
+                                JsonWebKeys(jwkSet()),
+                                softwareStatementJwt(
+                                    SoftwareStatement(
+                                        "cluster1:ns1:client1",
+                                        listOf("cluster1:ns1:client2"),
+                                        emptyList()
+                                    ),
+                                    signingKeySet.keys.first() as RSAKey
+                                )
+                            ).toJson()
+                        )
+                    }
+                ) {
+                    response.status() shouldBe HttpStatusCode.Created
+                    config.clientRegistry.findClient("cluster1:ns1:client1")?.clientId shouldBe "cluster1:ns1:client1"
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `client registration call with valid bearer token missing required claim roles should fail`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = mapOf("roles" to "access_as_application"),
+                    softwareStatementJwks = signingKeySet
                 )
             )
             val token = this.issueToken(
@@ -121,12 +172,12 @@ internal class ClientRegistrationApiTest {
                         )
                     }
                 ) {
-                    response.status() shouldBe HttpStatusCode.Created
-                    config.clientRegistry.findClient("cluster1:ns1:client1")?.clientId shouldBe "cluster1:ns1:client1"
+                    response.status() shouldBe HttpStatusCode.Unauthorized
                 }
             }
         }
     }
+
 
     @Test
     fun `client registration call with valid bearer token and invalid software statement content should fail`() {

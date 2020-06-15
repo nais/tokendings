@@ -105,7 +105,7 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-        requiredClaims = mapOf("sub" to konfig[Key(AUTH_JWKER_SUB, stringType)]),
+        requiredClaims = mapOf("roles" to "access_as_application"),
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
             JWKSet.parse(it)
         }
