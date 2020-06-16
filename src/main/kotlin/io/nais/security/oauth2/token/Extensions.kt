@@ -76,3 +76,10 @@ fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?
             throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
         }
     }
+
+@Throws(OAuth2Exception::class)
+internal fun String.toJwt(): SignedJWT = try {
+    SignedJWT.parse(this)
+} catch (e: Exception) {
+    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"))
+}

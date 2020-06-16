@@ -13,6 +13,7 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.token.expiresIn
+import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
 import mu.KotlinLogging
 
@@ -103,9 +104,7 @@ class TokenRequestConfig internal constructor(
 
 data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) : Credential {
     val signedJWT: SignedJWT = when (clientAssertionType) {
-        JWT_BEARER -> {
-            SignedJWT.parse(clientAssertion)
-        }
+        JWT_BEARER -> clientAssertion.toJwt()
         else -> throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": invalid client_assertion_type"))
     }
     val clientId = signedJWT.jwtClaimsSet?.subject

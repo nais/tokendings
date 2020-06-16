@@ -317,6 +317,49 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
+    fun `token exchange call with unsigned client assertion should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
+            val clientAssertion = PlainJWT(
+                JWTClaimsSet.Builder()
+                    .issuer(this.issuerUrl("mock1").toString())
+                    .subject("oloy")
+                    .audience("yolo")
+                    .issueTime(Date.from(Instant.now()))
+                    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                    .jwtID(UUID.randomUUID().toString())
+                    .build()
+            ).serialize()
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
+                    response shouldBe OAuth2Error.INVALID_REQUEST
+                }
+            }
+        }
+    }
+
+    @Test
     fun `token exchange call with unknown issuer in subject token should fail`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)

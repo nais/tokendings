@@ -34,7 +34,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
         // TODO: consider moving subjectToken validation into authnz feature
-        val subjectTokenJwt = tokenExchangeRequest.subjectToken.toSubjectJwt()
+        val subjectTokenJwt = tokenExchangeRequest.subjectToken.toJwt()
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)
 
@@ -61,11 +61,4 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
                     ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
             }
         }
-}
-
-private fun String.toSubjectJwt(): SignedJWT = try {
-    SignedJWT.parse(this)
-} catch (e: Exception) {
-    log.error(e) { "failed to parse subject token" }
-    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse subject token"))
 }
