@@ -36,11 +36,11 @@ internal class ClientRegistrationApiTest {
             val mockConfig = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    emptyList(),
-                    emptyMap(),
-                    emptyMap(),
-                    jwkSet()
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = emptyList(),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = jwkSet()
                 )
             )
             withTestApplication(MockApp(mockConfig)) {
@@ -55,11 +55,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    jwkSet()
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = jwkSet()
                 )
             )
             val token = this.issueToken(
@@ -110,13 +110,13 @@ internal class ClientRegistrationApiTest {
                         addHeader(HttpHeaders.Authorization, "Bearer $token")
                         setBody(
                             ClientRegistrationRequest(
-                                "cluster1:ns1:client1",
-                                JsonWebKeys(jwkSet()),
-                                softwareStatementJwt(
+                                clientName = "cluster1:ns1:client1",
+                                jwks = JsonWebKeys(jwkSet()),
+                                softwareStatementJwt = softwareStatementJwt(
                                     SoftwareStatement(
-                                        "cluster1:ns1:client1",
-                                        listOf("cluster1:ns1:client2"),
-                                        emptyList()
+                                        appId = "cluster1:ns1:client1",
+                                        accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                                        accessPolicyOutbound = emptyList()
                                     ),
                                     signingKeySet.keys.first() as RSAKey
                                 )
@@ -160,13 +160,13 @@ internal class ClientRegistrationApiTest {
                         addHeader(HttpHeaders.Authorization, "Bearer $token")
                         setBody(
                             ClientRegistrationRequest(
-                                "cluster1:ns1:client1",
-                                JsonWebKeys(jwkSet()),
-                                softwareStatementJwt(
+                                clientName = "cluster1:ns1:client1",
+                                jwks = JsonWebKeys(jwkSet()),
+                                softwareStatementJwt = softwareStatementJwt(
                                     SoftwareStatement(
-                                        "cluster1:ns1:client1",
-                                        listOf("cluster1:ns1:client2"),
-                                        emptyList()
+                                        appId = "cluster1:ns1:client1",
+                                        accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                                        accessPolicyOutbound = emptyList()
                                     ),
                                     signingKeySet.keys.first() as RSAKey
                                 )
@@ -187,11 +187,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    signingKeySet
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = signingKeySet
                 )
             )
             val token = this.issueToken(
@@ -237,11 +237,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    signingKeySet
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = signingKeySet
                 )
             )
             val token = this.issueToken(
@@ -258,9 +258,9 @@ internal class ClientRegistrationApiTest {
                 JsonWebKeys(jwkSet()),
                 softwareStatementJwt(
                     SoftwareStatement(
-                        "cluster1:ns1:client1",
-                        listOf("cluster1:ns1:client2"),
-                        emptyList()
+                        appId = "cluster1:ns1:client1",
+                        accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                        accessPolicyOutbound = emptyList()
                     ),
                     jwkSet().keys.first() as RSAKey
                 )
@@ -288,11 +288,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    signingKeySet
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = signingKeySet
                 )
             )
             val token = this.issueToken(
@@ -309,9 +309,9 @@ internal class ClientRegistrationApiTest {
                 JsonWebKeys(JWKSet(emptyList())),
                 softwareStatementJwt(
                     SoftwareStatement(
-                        "cluster1:ns1:client1",
-                        listOf("cluster1:ns1:client2"),
-                        emptyList()
+                        appId = "cluster1:ns1:client1",
+                        accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                        accessPolicyOutbound = emptyList()
                     ),
                     signingKeySet.keys.first() as RSAKey
                 )
@@ -338,11 +338,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    jwkSet()
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = jwkSet()
                 )
             )
             val token = this.issueToken(
@@ -370,11 +370,11 @@ internal class ClientRegistrationApiTest {
             val config = mockConfig(
                 this,
                 ClientRegistrationAuthProperties(
-                    this.wellKnownUrl("mockaad").toString(),
-                    listOf("correct_aud"),
-                    emptyMap(),
-                    emptyMap(),
-                    jwkSet()
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    requiredClaims = emptyMap(),
+                    requiredArrayClaims = emptyMap(),
+                    softwareStatementJwks = jwkSet()
                 )
             )
             val client1 = config.clientRegistry.let { it as MockClientRegistry }.register("client1")
