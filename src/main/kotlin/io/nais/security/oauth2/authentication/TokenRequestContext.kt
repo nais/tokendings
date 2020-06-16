@@ -93,7 +93,7 @@ class TokenRequestConfig internal constructor(
                     .subject(it.first.clientId)
                     .audience(it.second)
                     .build(),
-                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti"))
+                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti", "nbf"))
             )
         }
 
@@ -117,7 +117,7 @@ data class ClientAssertionCredential(val clientAssertionType: String, val client
 }
 
 private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean =
-    this.expiresIn().apply { log.debug("expiresin: $this") } <= lifetime
+    this.expiresIn() <= lifetime
 
 suspend fun ApplicationCall.receiveTokenRequestContext(
     tokenEndpointUrl: TokenEndpointUrl,
