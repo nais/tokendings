@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
 import io.mockk.every
 import io.mockk.mockk
+import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
@@ -47,8 +48,7 @@ fun mockConfig(
         mockOAuth2Server != null -> ClientRegistrationAuthProperties(
             identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
             acceptedAudience = listOf("tokendings"),
-            requiredClaims = emptyMap(),
-            requiredArrayClaims = emptyMap(),
+            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
             softwareStatementJwks = jwkSet()
         )
         else -> mockBearerTokenAuthenticationProperties()

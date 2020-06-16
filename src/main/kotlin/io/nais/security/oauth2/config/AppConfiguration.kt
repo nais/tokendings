@@ -4,6 +4,7 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.client.request.get
+import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
@@ -35,8 +36,7 @@ data class ClientRegistryProperties(
 data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
-    val requiredClaims: Map<String, String> = emptyMap(),
-    val requiredArrayClaims: Map<String, List<String>> = mapOf("roles" to listOf("access_as_application")),
+    val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
     val softwareStatementJwks: JWKSet
 ) {
     val wellKnown: WellKnown = runBlocking {

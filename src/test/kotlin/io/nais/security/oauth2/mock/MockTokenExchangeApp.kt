@@ -6,6 +6,7 @@ import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.util.KtorExperimentalAPI
+import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.routing.DefaultRouting
@@ -28,8 +29,7 @@ fun main() {
     val clientRegistrationAuthProps = ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
         acceptedAudience = listOf("tokendings"),
-        requiredClaims = emptyMap(),
-        requiredArrayClaims = emptyMap(),
+        acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
         softwareStatementJwks = jwkerJwks
     )
 

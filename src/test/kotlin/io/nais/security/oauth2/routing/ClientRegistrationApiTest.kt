@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
+import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockApp
 import io.nais.security.oauth2.mock.MockClientRegistry
@@ -24,6 +25,7 @@ import io.nais.security.oauth2.model.SoftwareStatementJwt
 import io.nais.security.oauth2.token.sign
 import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.jwkSet
+import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
@@ -38,8 +40,6 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = emptyList(),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = jwkSet()
                 )
             )
@@ -57,8 +57,6 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = jwkSet()
                 )
             )
@@ -67,7 +65,8 @@ internal class ClientRegistrationApiTest {
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
-                    audience = "incorrect_aud"
+                    audience = "incorrect_aud",
+                    claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE)
                 )
             ).serialize()
             withTestApplication(MockApp(config)) {
@@ -89,19 +88,10 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
                     softwareStatementJwks = signingKeySet
                 )
             )
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud",
-                    claims = mapOf("roles" to listOf("access_as_application"))
-                )
-            ).serialize()
+            val token = this.issueValidToken("client1")
 
             withTestApplication(MockApp(config)) {
                 with(
@@ -140,7 +130,6 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
                     softwareStatementJwks = signingKeySet
                 )
             )
@@ -150,6 +139,55 @@ internal class ClientRegistrationApiTest {
                     issuerId = "mockaad",
                     subject = "client1",
                     audience = "correct_aud"
+                )
+            ).serialize()
+
+            withTestApplication(MockApp(config)) {
+                with(
+                    handleRequest(HttpMethod.Post, "registration/client") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                        addHeader(HttpHeaders.Authorization, "Bearer $token")
+                        setBody(
+                            ClientRegistrationRequest(
+                                clientName = "cluster1:ns1:client1",
+                                jwks = JsonWebKeys(jwkSet()),
+                                softwareStatementJwt = softwareStatementJwt(
+                                    SoftwareStatement(
+                                        appId = "cluster1:ns1:client1",
+                                        accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                                        accessPolicyOutbound = emptyList()
+                                    ),
+                                    signingKeySet.keys.first() as RSAKey
+                                )
+                            ).toJson()
+                        )
+                    }
+                ) {
+                    response.status() shouldBe HttpStatusCode.Unauthorized
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `client registration call with valid bearer token with incorrect roles claim value should fail`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
+                    acceptedAudience = listOf("correct_aud"),
+                    softwareStatementJwks = signingKeySet
+                )
+            )
+            val token = this.issueToken(
+                "mockaad", "client1",
+                DefaultOAuth2TokenCallback(
+                    issuerId = "mockaad",
+                    subject = "client1",
+                    audience = "correct_aud",
+                    claims = mapOf("roles" to listOf("not_accepted"))
                 )
             ).serialize()
 
@@ -189,19 +227,10 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = signingKeySet
                 )
             )
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud"
-                )
-            ).serialize()
+            val token = this.issueValidToken("client1")
 
             @Language("JSON")
             val invalidSoftwareStatement: String =
@@ -239,19 +268,10 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = signingKeySet
                 )
             )
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud"
-                )
-            ).serialize()
+            val token = this.issueValidToken("client1")
 
             val invalidSoftwareStatement: String = ClientRegistrationRequest(
                 "cluster1:ns1:client1",
@@ -290,20 +310,10 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = signingKeySet
                 )
             )
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud"
-                )
-            ).serialize()
-
+            val token = this.issueValidToken("client1")
             val invalidSoftwareStatement: String = ClientRegistrationRequest(
                 "cluster1:ns1:client1",
                 JsonWebKeys(JWKSet(emptyList())),
@@ -340,19 +350,10 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = jwkSet()
                 )
             )
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud"
-                )
-            ).serialize()
+            val token = this.issueValidToken("client1")
             withTestApplication(MockApp(config)) {
                 handleRequest(HttpMethod.Delete, "registration/client/yolo") {
                     addHeader(HttpHeaders.Authorization, "Bearer $token")
@@ -372,21 +373,12 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    requiredClaims = emptyMap(),
-                    requiredArrayClaims = emptyMap(),
                     softwareStatementJwks = jwkSet()
                 )
             )
             val client1 = config.clientRegistry.let { it as MockClientRegistry }.register("client1")
             config.clientRegistry.findClient(client1.clientId) shouldBe client1
-            val token = this.issueToken(
-                "mockaad", "client1",
-                DefaultOAuth2TokenCallback(
-                    issuerId = "mockaad",
-                    subject = "client1",
-                    audience = "correct_aud"
-                )
-            ).serialize()
+            val token = this.issueValidToken("client1")
             withTestApplication(MockApp(config)) {
                 handleRequest(HttpMethod.Delete, "registration/client/${client1.clientId}") {
                     addHeader(HttpHeaders.Authorization, "Bearer $token")
@@ -406,4 +398,16 @@ internal class ClientRegistrationApiTest {
             .build()
             .sign(rsaKey)
             .serialize()
+
+    private fun MockOAuth2Server.issueValidToken(clientId: String): String =
+        this.issueToken(
+            issuerId = "mockaad",
+            clientId = clientId,
+            OAuth2TokenCallback = DefaultOAuth2TokenCallback(
+                issuerId = "mockaad",
+                subject = clientId,
+                audience = "correct_aud",
+                claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE)
+            )
+        ).serialize()
 }

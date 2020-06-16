@@ -8,6 +8,7 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
+import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
@@ -104,8 +105,7 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-        requiredArrayClaims = mapOf("roles" to listOf("access_as_application")),
-        requiredClaims = mapOf(),
+        acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
             JWKSet.parse(it)
         }

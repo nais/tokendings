@@ -6,7 +6,6 @@ import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
-import com.auth0.jwt.interfaces.Verification
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.auth.Authentication
 import io.ktor.auth.jwt.JWTPrincipal
@@ -14,6 +13,7 @@ import io.ktor.auth.jwt.jwt
 import io.ktor.http.auth.HttpAuthHeader
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 import java.net.URL
@@ -25,6 +25,7 @@ private val log = KotlinLogging.logger { }
 
 object BearerTokenAuth {
     const val CLIENT_REGISTRATION_AUTH = "CLIENT_REGISTRATION_AUTH"
+    val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
 }
 
 fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfiguration) {
@@ -36,18 +37,24 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
             .build()
         realm = "BEARER_AUTH"
         verifier { token ->
-            bearerTokenVerifier(jwkProvider, properties.wellKnown.issuer, token) {
-                withAudience(*properties.acceptedAudience.toTypedArray())
-                properties.requiredClaims.forEach { (key, value) ->
-                    withClaim(key, value)
-                }
-                properties.requiredArrayClaims.forEach { (key, value) ->
-                    withArrayClaim(key, *value.toTypedArray())
-                }
-            }
+            bearerTokenVerifier(jwkProvider, properties, token)
         }
         validate { credentials ->
             try {
+                val payload = credentials.payload
+                require(payload.audience.containsAll(properties.acceptedAudience)) {
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT
+                            .setDescription("audience claim does not contain accepted audience (${properties.acceptedAudience})")
+                    )
+                }
+                require(payload.claims.containsKey("roles")) {
+                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim is not present"))
+                }
+                val roles: List<String> = payload.getClaim("roles").asList(String::class.java)
+                require(roles.containsAll(properties.acceptedRoles)) {
+                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim does not contain accepted roles (${properties.acceptedRoles}"))
+                }
                 JWTPrincipal(credentials.payload)
             } catch (e: Throwable) {
                 log.error("error in validation when authenticating.", e)
@@ -59,16 +66,18 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
 
 internal fun bearerTokenVerifier(
     jwkProvider: JwkProvider,
-    issuer: String,
-    token: HttpAuthHeader,
-    jwtConfigure: Verification.() -> Unit
+    properties: ClientRegistrationAuthProperties,
+    token: HttpAuthHeader
 ): JWTVerifier {
     return try {
         val jwk = token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
             ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
         val algorithm = jwk.makeAlgorithm()
+
         DelegatingJWTVerifier(
-            JWT.require(algorithm).withIssuer(issuer).apply(jwtConfigure).build()
+            JWT.require(algorithm)
+                .withIssuer(properties.wellKnown.issuer)
+                .build()
         )
     } catch (t: Throwable) {
         log.error("received exception when validating token, message: ${t.message}", t)
