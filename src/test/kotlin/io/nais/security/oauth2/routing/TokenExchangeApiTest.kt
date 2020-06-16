@@ -188,7 +188,7 @@ internal class TokenExchangeApiTest {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")
-            val invalidClientAssertion = client1.createInvalidClientAssertionKeys(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+            val invalidClientAssertion = client1.createClientAssertionInvalidKeys(mockConfig.authorizationServerProperties.tokenEndpointUrl())
 
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
@@ -252,7 +252,7 @@ internal class TokenExchangeApiTest {
 
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
-            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl(), 3600)
+            val clientAssertion = client1.createClientAssertion(audience = mockConfig.authorizationServerProperties.tokenEndpointUrl(), lifetime = 3600)
             val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
 
             withTestApplication({
@@ -274,6 +274,43 @@ internal class TokenExchangeApiTest {
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_CLIENT
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `token exchange call with client assertion issued in the future should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
+            val clientAssertion = client1.createClientAssertion(
+                audience = mockConfig.authorizationServerProperties.tokenEndpointUrl(),
+                issueTime = Date.from(Instant.now().plusSeconds(62))
+            )
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
+                    response shouldBe OAuth2Error.INVALID_REQUEST
                 }
             }
         }
@@ -358,30 +395,24 @@ internal class TokenExchangeApiTest {
 
     private fun oAuth2Client(clientId: ClientId = "unknown") = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
 
-    private fun OAuth2Client.createClientAssertion(audience: String) =
-        createClientAssertion(audience, 119)
+    private fun OAuth2Client.createClientAssertionInvalidKeys(audience: String) =
+        createClientAssertion(audience = audience, jwkSet = jwkSet())
 
-    private fun OAuth2Client.createClientAssertion(audience: String, lifetime: Long) =
+    private fun OAuth2Client.createClientAssertion(
+        audience: String,
+        lifetime: Long = 119,
+        jwkSet: JWKSet = this.jwkSet,
+        issueTime: Date = Date.from(Instant.now())
+    ) =
         JWTClaimsSet.Builder()
             .issuer(clientId)
             .subject(clientId)
             .audience(audience)
-            .issueTime(Date.from(Instant.now()))
-            .expirationTime(Date.from(Instant.now().plusSeconds(lifetime.apply { println("lifetime in createclientassertion $this") })))
+            .issueTime(issueTime)
+            .expirationTime(Date.from(Instant.now().plusSeconds(lifetime)))
+            .notBeforeTime(issueTime)
             .jwtID(UUID.randomUUID().toString())
             .build()
             .sign(jwkSet.keys.first() as RSAKey)
-            .serialize()
-
-    private fun OAuth2Client.createInvalidClientAssertionKeys(audience: String) =
-        JWTClaimsSet.Builder()
-            .issuer(clientId)
-            .subject(clientId)
-            .audience(audience)
-            .issueTime(Date.from(Instant.now()))
-            .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-            .jwtID(UUID.randomUUID().toString())
-            .build()
-            .sign(jwkSet().keys.first() as RSAKey)
             .serialize()
 }
