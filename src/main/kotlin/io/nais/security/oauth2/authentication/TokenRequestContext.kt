@@ -16,6 +16,7 @@ import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
 import mu.KotlinLogging
+import org.slf4j.MDC
 
 typealias TokenEndpointUrl = String
 
@@ -40,7 +41,9 @@ class TokenRequestContext private constructor(
             ClientAssertionCredential(
                 parameters.require("client_assertion_type"),
                 parameters.require("client_assertion")
-            )
+            ).also { client ->
+                MDC.put("client_id", client.clientId)
+            }
 
         private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)

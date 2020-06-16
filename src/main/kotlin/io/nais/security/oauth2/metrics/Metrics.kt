@@ -6,20 +6,19 @@ import io.prometheus.client.Histogram
 
 class Metrics {
     companion object {
+        const val NAMESPACE = "tokendings"
+
         val collectorRegistry = CollectorRegistry.defaultRegistry
-        val httpTimer = Histogram.build("request_latency_histogram", "Distribution of response times")
-            .labelNames("path")
-            .register(collectorRegistry)
         val dbTimer = Histogram.build("db_query_latency_histogram", "Distribution of db execution times")
+            .namespace(NAMESPACE)
             .labelNames("query")
             .register(collectorRegistry)
-        val somethingCounter = Counter
+        val oauth2ErrorCounter = Counter
             .build()
-            .name("something_counter")
-            .help("help about something")
-            .labelNames("alabel")
+            .namespace(NAMESPACE)
+            .name("oauth2_errors")
+            .help("Number of OAuth2Exceptions")
+            .labelNames("code")
             .register()
-
-        fun countSomething() = somethingCounter.labels("something_label").inc()
     }
 }

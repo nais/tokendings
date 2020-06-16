@@ -25,6 +25,7 @@ import io.ktor.features.ForwardedHeaderSupport
 import io.ktor.features.StatusPages
 import io.ktor.features.callIdMdc
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.jackson.JacksonConverter
 import io.ktor.metrics.micrometer.MicrometerMetrics
@@ -52,6 +53,7 @@ import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
 import io.nais.security.oauth2.config.isNonProd
+import io.nais.security.oauth2.metrics.Metrics
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
@@ -97,9 +99,9 @@ fun server(): NettyApplicationEngine =
 @KtorExperimentalAPI
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
-        generate {
-            UUID.randomUUID().toString()
-        }
+        header(HttpHeaders.XCorrelationId) // todo: standardize on header name used for correlation IDs
+        generate { UUID.randomUUID().toString() }
+        verify { callId: String -> callId.isNotEmpty() }
     }
 
     install(CallLogging) {
@@ -166,6 +168,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
 
 private suspend fun ApplicationCall.respondWithError(exception: OAuth2Exception, includeErrorDetails: Boolean) {
     val errorObject = exception.toErrorObject(includeErrorDetails)
+    Metrics.oauth2ErrorCounter.labels(errorObject.code).inc()
     this.respond(HttpStatusCode.fromValue(errorObject.httpStatusCode), errorObject)
 }
 
