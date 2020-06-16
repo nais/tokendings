@@ -26,9 +26,6 @@ internal class ClientRegistrationKtTest {
             .claim("accessPolicyOutbound", emptyList<String>())
             .build()
             .sign(signingKey)
-            .apply {
-                println("${this.serialize()}")
-            }
         val request = ClientRegistrationRequest(
             "name",
             JsonWebKeys(JWKSet(generateRsaKey())),
