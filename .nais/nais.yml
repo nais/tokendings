@@ -10,7 +10,7 @@ spec:
   accessPolicy:
     outbound:
       external:
-      {{#each hosts}}
+      {{#each host}}
         - host: "{{this}}"
       {{/each}}
       rules: []
