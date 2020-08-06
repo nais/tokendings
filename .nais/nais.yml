@@ -10,8 +10,9 @@ spec:
   accessPolicy:
     outbound:
       external:
-        - host: login.microsoftonline.com
-        - host: oidc-ver2.difi.no
+      {{#each host}}
+        - host: "{{this}}"
+      {{/each}}
       rules: []
   port: 8080
   replicas:

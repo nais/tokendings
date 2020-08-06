@@ -3,5 +3,8 @@ namespace: plattformsikkerhet
 team: plattformsikkerhet
 ingresses:
   - https://tokendings.dev-gcp.nais.io
+host:
+  - login.microsoftonline.com
+  - oidc-ver2.difi.no
 env:
   APPLICATION_PROFILE: NON_PROD

@@ -47,7 +47,9 @@ object ProdConfiguration {
     val instance by lazy {
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
-            subjectTokenIssuers = listOf(),
+            subjectTokenIssuers = listOf(
+                SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
+            ),
             keyStore = keyStore()
         )
         val clientRegistry = clientRegistry()
