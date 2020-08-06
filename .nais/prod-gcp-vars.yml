@@ -1,0 +1,9 @@
+app: tokendings
+namespace: plattformsikkerhet
+team: plattformsikkerhet
+ingresses:
+  - https://tokendings.prod-gcp.nais.io
+hosts:
+  - oidc.difi.no
+env:
+  APPLICATION_PROFILE: PROD
