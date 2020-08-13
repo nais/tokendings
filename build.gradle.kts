@@ -37,8 +37,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_13
+    targetCompatibility = JavaVersion.VERSION_13
 }
 
 apply(plugin = "org.jmailen.kotlinter")
@@ -104,12 +104,16 @@ tasks {
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "11"
+            jvmTarget = "13"
         }
     }
 
     withType<Test> {
         useJUnitPlatform()
+    }
+
+    withType<Wrapper> {
+        gradleVersion = "6.5.1"
     }
 
     "build" {
