@@ -8,6 +8,7 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
@@ -18,6 +19,7 @@ import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
 import io.nais.security.oauth2.config.EnvKey.PRIVATE_JWKS
+import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.token.DefaultKeyStore
 import io.nais.security.oauth2.token.KeyStore
@@ -100,7 +102,9 @@ internal fun keyStore(): KeyStore =
     DefaultKeyStore(
         konfig[Key(PRIVATE_JWKS, stringType)].let {
             JWKSet.parse(it)
-        }
+        }.takeIf {
+            it.keys.first().isPrivate
+        } ?: throw OAuth2Exception(OAuth2Error.SERVER_ERROR.setDescription("missing private key from token issuer jwks"))
     )
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
