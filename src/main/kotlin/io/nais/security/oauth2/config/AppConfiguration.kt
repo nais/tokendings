@@ -8,7 +8,7 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.token.KeyStore
+import io.nais.security.oauth2.rsakeystore.RSAKeysService
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -53,7 +53,7 @@ class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val keyStore: KeyStore,
+    val keyStore: RSAKeysService,
     val clientAssertionMaxExpiry: Long = 120
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)

@@ -8,28 +8,26 @@ import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
-import mu.KotlinLogging
+import io.nais.security.oauth2.rsakeystore.RSAKeysService
 import java.net.URL
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
-private val log = KotlinLogging.logger { }
-
 class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
 
     private val issuerUrl: String = authorizationServerProperties.issuerUrl
     private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
-    private val keyStore: KeyStore = authorizationServerProperties.keyStore
+    private val keyStore: RSAKeysService = authorizationServerProperties.keyStore
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
             it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
         }
 
-    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, keyStore.publicJwks())
+    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, keyStore.publicJWKSet)
 
-    fun publicJwkSet(): JWKSet = keyStore.publicJwks()
+    fun publicJwkSet(): JWKSet = keyStore.publicJWKSet
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
@@ -50,7 +48,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             .apply {
                 subjectTokenClaims.issuer?.let { claim("idp", it) }
             }
-            .build().sign(keyStore.signingKey())
+            .build().sign(keyStore.currentSigningKey!!)
     }
 
     private fun validator(issuer: String?): TokenValidator =

@@ -8,6 +8,7 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
+import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
@@ -17,10 +18,9 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
-import io.nais.security.oauth2.config.EnvKey.PRIVATE_JWKS
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.token.DefaultKeyStore
-import io.nais.security.oauth2.token.KeyStore
+import io.nais.security.oauth2.rsakeystore.KeyStore
+import io.nais.security.oauth2.rsakeystore.RSAKeysService
 
 val konfig = ConfigurationProperties.systemProperties() overriding
     EnvironmentVariables()
@@ -45,14 +45,15 @@ internal object EnvKey {
 
 object ProdConfiguration {
     val instance by lazy {
+        val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = keyStore()
+            keyStore = initRsaKeyStorage(databaseConfig = databaseConfig)
         )
-        val clientRegistry = clientRegistry()
+        val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
@@ -60,6 +61,7 @@ object ProdConfiguration {
 
 object NonProdConfiguration {
     val instance by lazy {
+        val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.dev-gcp.nais.io",
             subjectTokenIssuers = listOf(
@@ -68,9 +70,9 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = keyStore()
+            keyStore = initRsaKeyStorage(databaseConfig = databaseConfig)
         )
-        val clientRegistry = clientRegistry()
+        val clientRegistry = clientRegistry(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
@@ -96,13 +98,6 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
-internal fun keyStore(): KeyStore =
-    DefaultKeyStore(
-        konfig[Key(PRIVATE_JWKS, stringType)].let {
-            JWKSet.parse(it)
-        }
-    )
-
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
@@ -113,11 +108,16 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
         }
     )
 
-internal fun clientRegistry(): ClientRegistry =
+internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
     ClientRegistry(
         ClientRegistryProperties(
-            dataSourceFrom(databaseConfig()).apply {
-                migrate(this)
-            }
+            dataSource
         )
     )
+
+internal fun migrate(databaseConfig: DatabaseConfig) =
+    dataSourceFrom(databaseConfig).apply {
+        migrate(this)
+    }
+
+internal fun initRsaKeyStorage(databaseConfig: HikariDataSource) = RSAKeysService(KeyStore(dataSource = databaseConfig))
