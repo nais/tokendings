@@ -8,3 +8,4 @@ host:
   - oidc-ver2.difi.no
 env:
   APPLICATION_PROFILE: NON_PROD
+slack_alert_channel: "plattformsikkerhet-alerts-dev"
