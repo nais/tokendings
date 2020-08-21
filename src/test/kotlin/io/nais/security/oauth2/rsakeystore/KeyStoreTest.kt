@@ -14,12 +14,12 @@ class KeyStoreTest {
     fun `keyStore should insert new record when db is empty`() {
         withMigratedDb {
             with(KeyStore(DataSource.instance)) {
-                val createdRsaKeys = initKeys()
+                val createdRsaKeys = initKeyStorage()
                 val readKeys = read()
                 readKeys shouldNotBe null
-                createdRsaKeys.currentKey shouldBe readKeys?.currentKey
-                createdRsaKeys.previousKey shouldBe readKeys?.previousKey
-                createdRsaKeys.nextKey shouldBe readKeys?.nextKey
+                createdRsaKeys.currentKey shouldBe readKeys.currentKey
+                createdRsaKeys.previousKey shouldBe readKeys.previousKey
+                createdRsaKeys.nextKey shouldBe readKeys.nextKey
             }
         }
     }
@@ -38,9 +38,9 @@ class KeyStoreTest {
                 rsaKeysRotated.expired(LocalDateTime.now()) shouldBe false
                 rsaKeysInitial.nextKey shouldBe rsaKeysRotated.currentKey
                 rsaKeysInitial.currentKey shouldBe rsaKeysRotated.previousKey
-                rsaKeysInitial.currentKey?.toRSAKey()?.isPrivate shouldBe true
-                rsaKeysInitial.nextKey?.toRSAKey()?.isPrivate shouldBe true
-                rsaKeysInitial.previousKey?.toRSAKey()?.isPrivate shouldBe true
+                rsaKeysInitial.currentKey.toRSAKey()?.isPrivate shouldBe true
+                rsaKeysInitial.nextKey.toRSAKey()?.isPrivate shouldBe true
+                rsaKeysInitial.previousKey.toRSAKey()?.isPrivate shouldBe true
             }
         }
     }

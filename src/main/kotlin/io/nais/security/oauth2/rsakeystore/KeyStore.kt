@@ -19,6 +19,7 @@ class KeyStore(
     private val dataSource: DataSource
 ) {
 
+    // Could be an ENV?
     var TTL = 24 * 60 * 60.toLong()
 
     companion object {
@@ -46,7 +47,7 @@ class KeyStore(
                 }.asSingle
         )
         // Only if database is empty..
-    } ?: initKeys()
+    } ?: initKeyStorage()
 
     private fun Row.mapToRsaKeys(): RSAKeys {
         return RSAKeys(
@@ -57,11 +58,18 @@ class KeyStore(
         ).toKey()
     }
 
-    fun initKeys() = RSAKeys().initKeys(TTL).apply {
+    fun initKeyStorage() = initRSAKeys().apply {
         save(this)
-        log.info("RSA KEY initialised, next expiry: ${this.expiry!!}")
+        log.info("RSA KEY initialised, next expiry: ${this.expiry}")
         return this
     }
+
+    private fun initRSAKeys() = RSAKeys(
+        currentKey = generateRsaKey(),
+        previousKey = generateRsaKey(),
+        nextKey = generateRsaKey(),
+        expiry = LocalDateTime.now().plusSeconds(TTL)
+    )
 
     private fun save(rsaKeys: RSAKeys) =
         using(sessionOf(dataSource)) { session ->
@@ -82,9 +90,9 @@ class KeyStore(
             """.trimMargin(),
             mapOf(
                 "id" to ID,
-                "current_key" to rsaKeys.currentKey?.toJSON(),
-                "previous_key" to rsaKeys.previousKey?.toJSON(),
-                "next_key" to rsaKeys.nextKey?.toJSON(),
+                "current_key" to rsaKeys.currentKey.toJSON(),
+                "previous_key" to rsaKeys.previousKey.toJSON(),
+                "next_key" to rsaKeys.nextKey.toJSON(),
                 "expiry" to rsaKeys.expiry
             )
         )
