@@ -5,7 +5,6 @@ import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
 import org.junit.jupiter.api.Test
-import java.lang.Thread.sleep
 import java.time.LocalDateTime
 
 class KeyStoreTest {
@@ -28,13 +27,11 @@ class KeyStoreTest {
     fun `keystore should add new initial record on empty db or update existing record on expired keys`() {
         withMigratedDb {
             with(KeyStore(DataSource.instance)) {
-                setExpires(1)
-                val rsaKeysInitial = keys
+                TTL = 1
+                val rsaKeysInitial = keys()
                 rsaKeysInitial.expired(LocalDateTime.now()) shouldBe false
-                // Go past expiry date
-                sleepy(2)
-                rsaKeysInitial.expired(LocalDateTime.now()) shouldBe true
-                val rsaKeysRotated = keys
+                rsaKeysInitial.expired(LocalDateTime.now().plusSeconds(2)) shouldBe true
+                val rsaKeysRotated = keys()
                 rsaKeysRotated.expired(LocalDateTime.now()) shouldBe false
                 rsaKeysInitial.nextKey shouldBe rsaKeysRotated.currentKey
                 rsaKeysInitial.currentKey shouldBe rsaKeysRotated.previousKey
@@ -43,12 +40,5 @@ class KeyStoreTest {
                 rsaKeysInitial.previousKey?.toRSAKey()?.isPrivate shouldBe true
             }
         }
-    }
-}
-
-internal fun sleepy(seconds: Int) {
-    try {
-        sleep(seconds * 1000.toLong())
-    } catch (e: InterruptedException) {
     }
 }

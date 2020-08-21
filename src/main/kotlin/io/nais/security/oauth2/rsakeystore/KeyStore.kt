@@ -18,27 +18,27 @@ class KeyStore(
     private val dataSource: DataSource
 ) {
 
+    var TTL = 24 * 60 * 60.toLong()
+
     companion object {
         private const val TABLE_NAME = "rsakeys"
-        var DEFAULT_KEY_ROTATION = 24 * 60 * 60.toLong()
         const val ID = 1L
     }
 
-    val keys: RSAKeys
-        get() {
-            val rsaKeys = read()
-            rsaKeys?.let {
-                if (rsaKeys.expired(LocalDateTime.now())) {
-                    val newKey = generateRsaKey()
-                    val expiry = LocalDateTime.now().plusSeconds(DEFAULT_KEY_ROTATION)
-                    save(rsaKeys.rotate(newKey, expiry))
-                    log.info("RSA KEY rotated, next expiry: $expiry")
-                }
-                log.debug("RSA KEY fetched from cache")
-                return rsaKeys
+    fun keys(): RSAKeys {
+        val rsaKeys = read()
+        rsaKeys?.let {
+            if (it.expired(LocalDateTime.now())) {
+                val newKey = generateRsaKey()
+                val expiry = LocalDateTime.now().plusSeconds(TTL)
+                save(it.rotate(newKey, expiry))
+                log.info("RSA KEY rotated, next expiry: $expiry")
             }
-            return initKeys()
+            log.debug("RSA KEY fetched from cache")
+            return rsaKeys
         }
+        return initKeys()
+    }
 
     fun read() = using(sessionOf(dataSource)) { session ->
         session.run(
@@ -58,7 +58,7 @@ class KeyStore(
         ).toKey()
     }
 
-    fun initKeys() = RSAKeys().initKeys(DEFAULT_KEY_ROTATION).apply {
+    fun initKeys() = RSAKeys().initKeys(TTL).apply {
         save(this)
         log.info("RSA KEY initialised, next expiry: ${this.expiry!!}")
         return this
@@ -89,10 +89,5 @@ class KeyStore(
                 "expiry" to rsaKeys.expiry
             )
         )
-    }
-
-    // TODO Better solution, only used for testing
-    fun setExpires(seconds: Long) {
-        DEFAULT_KEY_ROTATION = seconds
     }
 }

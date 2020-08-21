@@ -13,7 +13,7 @@ class RSAKeysServiceTest {
             with(KeyStore(DataSource.instance)) {
                 val keystoreService = RSAKeysService(keyStore = this)
                 val currentKey = keystoreService.currentSigningKey
-                currentKey shouldBe this.keys.currentKey
+                currentKey shouldBe this.keys().currentKey
             }
         }
     }
@@ -27,9 +27,9 @@ class RSAKeysServiceTest {
                 val currentPublicKey = keystoreService.publicJWKSet.keys[0]
                 val previousPublicKey = keystoreService.publicJWKSet.keys[1]
                 keystoreService.publicJWKSet.keys.size shouldBe 2
-                currentPublicKey shouldBe keys.currentKey?.toPublicJWK()
+                currentPublicKey shouldBe keys().currentKey?.toPublicJWK()
                 currentPublicKey.isPrivate shouldBe false
-                previousPublicKey shouldBe keys.previousKey?.toPublicJWK()
+                previousPublicKey shouldBe keys().previousKey?.toPublicJWK()
                 previousPublicKey.isPrivate shouldBe false
             }
         }

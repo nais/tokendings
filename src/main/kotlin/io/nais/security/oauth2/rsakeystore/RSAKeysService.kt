@@ -13,22 +13,19 @@ class RSAKeysService(
 ) {
     private var rsaKeys: RSAKeys? = null
 
-    private val keys: RSAKeys
-        get() {
-            when {
-                rsaKeys == null || rsaKeys!!.expired(LocalDateTime.now()) -> {
-                    log.debug("Update local cache from rsakey storage")
-                    rsaKeys = keyStore.keys
-                }
-            }
-            return rsaKeys!!
+    private fun keys(): RSAKeys {
+        if (rsaKeys == null || rsaKeys!!.expired(LocalDateTime.now())) {
+            log.debug("Update local cache from rsakey storage")
+            rsaKeys = keyStore.keys()
         }
+        return rsaKeys!!
+    }
 
-    val currentSigningKey = keys.currentKey
+    val currentSigningKey = keys().currentKey
 
     val publicJWKSet: JWKSet
         get() {
-            val keys = keys
+            val keys = keys()
             val jwkList: MutableList<JWK> = ArrayList()
             jwkList.add(keys.currentKey!!)
             jwkList.add(keys.previousKey!!)

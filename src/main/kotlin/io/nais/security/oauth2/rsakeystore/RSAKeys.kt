@@ -15,11 +15,11 @@ class RSAKeys(
 
         fun toKey(rsaKeys: RSAKeys) = rsaKeys
 
-        fun initKey(rsaKeys: RSAKeys, keyRotationTime: Long) = rsaKeys.apply {
+        fun initKey(rsaKeys: RSAKeys, ttl: Long) = rsaKeys.apply {
             this.currentKey = generateRsaKey()
             this.previousKey = generateRsaKey()
             this.nextKey = generateRsaKey()
-            this.expiry = LocalDateTime.now().plusSeconds(keyRotationTime)
+            this.expiry = LocalDateTime.now().plusSeconds(ttl)
         }
 
         private fun rotateKeys(rsaKeys: RSAKeys, newKey: RSAKey, expiry: LocalDateTime) = rsaKeys.apply {
@@ -32,7 +32,7 @@ class RSAKeys(
 
     fun rotate(newKey: RSAKey, expiry: LocalDateTime) = rotateKeys(this, newKey, expiry)
 
-    fun initKeys(keyRotationTime: Long) = initKey(this, keyRotationTime)
+    fun initKeys(ttl: Long) = initKey(this, ttl)
 
     fun toKey() = toKey(this)
 
