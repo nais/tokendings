@@ -27,7 +27,7 @@ class KeyStore(
 
     fun keys(): RSAKeys {
         val rsaKeys = read()
-        rsaKeys?.let {
+        return rsaKeys?.let {
             if (it.expired(LocalDateTime.now())) {
                 val newKey = generateRsaKey()
                 val expiry = LocalDateTime.now().plusSeconds(TTL)
@@ -36,8 +36,7 @@ class KeyStore(
             }
             log.debug("RSA KEY fetched from cache")
             return rsaKeys
-        }
-        return initKeys()
+        } ?: initKeys()
     }
 
     fun read() = using(sessionOf(dataSource)) { session ->
