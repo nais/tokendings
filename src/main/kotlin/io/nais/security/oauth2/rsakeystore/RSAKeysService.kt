@@ -27,8 +27,8 @@ class RSAKeysService(
         get() {
             val keys = keys()
             val jwkList: MutableList<JWK> = ArrayList()
-            jwkList.add(keys.currentKey!!)
-            jwkList.add(keys.previousKey!!)
+            jwkList.add(keys.currentKey)
+            jwkList.add(keys.previousKey)
             return JWKSet(jwkList).toPublicJWKSet()
         }
 
