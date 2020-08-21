@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.rsakeystore
 
+import io.nais.security.oauth2.token.toJSON
 import io.nais.security.oauth2.token.toRSAKey
 import io.nais.security.oauth2.utils.generateRsaKey
 import kotliquery.Query
@@ -27,16 +28,14 @@ class KeyStore(
 
     fun keys(): RSAKeys {
         val rsaKeys = read()
-        return rsaKeys?.let {
-            if (it.expired(LocalDateTime.now())) {
-                val newKey = generateRsaKey()
-                val expiry = LocalDateTime.now().plusSeconds(TTL)
-                save(it.rotate(newKey, expiry))
-                log.info("RSA KEY rotated, next expiry: $expiry")
-            }
-            log.debug("RSA KEY fetched from cache")
-            return rsaKeys
-        } ?: initKeys()
+        if (rsaKeys.expired(LocalDateTime.now())) {
+            val newKey = generateRsaKey()
+            val expiry = LocalDateTime.now().plusSeconds(TTL)
+            save(rsaKeys.rotate(newKey, expiry))
+            log.info("RSA KEY rotated, next expiry: $expiry")
+        }
+        log.debug("RSA KEY fetched from cache")
+        return rsaKeys
     }
 
     fun read() = using(sessionOf(dataSource)) { session ->
@@ -46,7 +45,8 @@ class KeyStore(
                     it.mapToRsaKeys()
                 }.asSingle
         )
-    }
+        // Only if database is empty..
+    } ?: initKeys()
 
     private fun Row.mapToRsaKeys(): RSAKeys {
         return RSAKeys(
@@ -82,9 +82,9 @@ class KeyStore(
             """.trimMargin(),
             mapOf(
                 "id" to ID,
-                "current_key" to rsaKeys.currentKey?.toJSONString(),
-                "previous_key" to rsaKeys.previousKey?.toJSONString(),
-                "next_key" to rsaKeys.nextKey?.toJSONString(),
+                "current_key" to rsaKeys.currentKey?.toJSON(),
+                "previous_key" to rsaKeys.previousKey?.toJSON(),
+                "next_key" to rsaKeys.nextKey?.toJSON(),
                 "expiry" to rsaKeys.expiry
             )
         )

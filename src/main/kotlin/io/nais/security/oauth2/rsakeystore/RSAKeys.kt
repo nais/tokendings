@@ -4,7 +4,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import io.nais.security.oauth2.utils.generateRsaKey
 import java.time.LocalDateTime
 
-class RSAKeys(
+data class RSAKeys(
     var currentKey: RSAKey? = null,
     var previousKey: RSAKey? = null,
     var nextKey: RSAKey? = null,

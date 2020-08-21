@@ -87,3 +87,5 @@ internal fun String.toJwt(): SignedJWT = try {
 
 @Throws(ParseException::class)
 internal fun String.toRSAKey() = RSAKey.parse(this)
+
+internal fun RSAKey.toJSON() = this.toJSONString()
