@@ -27,7 +27,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "1.3.72"
-    id("org.jmailen.kotlinter") version "2.4.0"
+    id("org.jmailen.kotlinter") version "2.4.1"
     id("com.github.johnrengelman.shadow") version "6.0.0"
     id("com.github.ben-manes.versions") version "0.29.0"
 }
