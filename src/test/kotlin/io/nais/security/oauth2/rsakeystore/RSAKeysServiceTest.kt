@@ -3,7 +3,9 @@ package io.nais.security.oauth2.rsakeystore
 import io.kotest.matchers.shouldBe
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
+import org.awaitility.Awaitility
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
 class RSAKeysServiceTest {
 
@@ -12,8 +14,10 @@ class RSAKeysServiceTest {
         withMigratedDb {
             with(KeyStore(DataSource.instance)) {
                 val keystoreService = RSAKeysService(keyStore = this)
-                val currentKey = keystoreService.currentSigningKey
-                currentKey shouldBe this.keys().currentKey
+                val keys = this.keys()
+                Awaitility.await().atMost(1, TimeUnit.SECONDS).until {
+                    keystoreService.currentSigningKey == keys.currentKey
+                }
             }
         }
     }
