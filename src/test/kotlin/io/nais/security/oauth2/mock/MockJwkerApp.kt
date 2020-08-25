@@ -94,13 +94,13 @@ fun Application.mockJwkerApp() {
             log.debug("received exception:", error)
             when (error) {
                 is ClientRequestException -> {
-                    val statusCode: HttpStatusCode? = error.response?.status
-                    val body: Any? = if (statusCode != HttpStatusCode.NoContent)
-                        error.response?.readText()
+                    val statusCode: HttpStatusCode = error.response.status
+                    val body: Any = if (statusCode != HttpStatusCode.NoContent)
+                        error.response.readText()
                     else
                         EmptyContent
 
-                    call.respond(statusCode!!, body!!)
+                    call.respond(statusCode, body)
                 }
                 else -> {
                     call.respond(HttpStatusCode.InternalServerError, error.message ?: "unknown internal server error")

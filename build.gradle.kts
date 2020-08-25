@@ -53,6 +53,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
@@ -115,7 +116,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.5.1"
+        gradleVersion = "6.6"
     }
 
     "build" {
