@@ -8,10 +8,10 @@ val junitJupiterVersion = "5.6.2"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "4.2.0"
 val kotlinLoggingVersion = "1.8.3"
-val kotlinVersion = "1.4.0"
+val kotlinVersion = "1.3.72"
 val kotlintestVersion = "3.4.2"
 val kotliqueryVersion = "1.3.1"
-val ktorVersion = "1.4.0"
+val ktorVersion = "1.3.2"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "6.4"
 // Micrometer need to be investigated further before update to 1.5.4
@@ -28,10 +28,10 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.0"
+    kotlin("jvm") version "1.3.72"
     id("org.jmailen.kotlinter") version "2.4.0"
-    id("com.github.johnrengelman.shadow") version "5.2.0"
-    id("com.github.ben-manes.versions") version "0.28.0"
+    id("com.github.johnrengelman.shadow") version "6.0.0"
+    id("com.github.ben-manes.versions") version "0.29.0"
 }
 
 application {
