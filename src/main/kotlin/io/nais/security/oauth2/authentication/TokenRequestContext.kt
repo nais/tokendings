@@ -61,11 +61,12 @@ class TokenRequestContext private constructor(
                                     " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s)."
                             )
                         )
-                } ?: throw OAuth2Exception(
-                OAuth2Error.INVALID_CLIENT.setDescription(
-                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
+                }
+                ?: throw OAuth2Exception(
+                    OAuth2Error.INVALID_CLIENT.setDescription(
+                        "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
+                    )
                 )
-            )
 
         private fun authorizeTokenRequest(config: TokenRequestConfig, client: OAuth2Client): OAuth2TokenRequest =
             config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }
