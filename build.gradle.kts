@@ -1,4 +1,4 @@
-val assertjVersion = "3.17.0"
+val assertjVersion = "3.17.1"
 val flywayVersion = "6.5.5"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
@@ -6,7 +6,7 @@ val hikaricpVersion = "3.4.5"
 val jacksonVersion = "2.10.1"
 val junitJupiterVersion = "5.6.2"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "4.2.0"
+val kotestVersion = "4.2.2"
 val kotlinLoggingVersion = "1.8.3"
 val kotlinVersion = "1.4.0"
 val kotlintestVersion = "3.4.2"
@@ -29,7 +29,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "1.4.0"
-    id("org.jmailen.kotlinter") version "3.0.0"
+    id("org.jmailen.kotlinter") version "3.0.2"
     id("com.github.johnrengelman.shadow") version "6.0.0"
     id("com.github.ben-manes.versions") version "0.29.0"
 }
