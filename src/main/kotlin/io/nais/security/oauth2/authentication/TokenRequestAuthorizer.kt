@@ -36,7 +36,7 @@ class TokenExchangeRequestAuthorizer(
             parameters["scope"]
         )
         val targetClient: OAuth2Client = clientRegistry.findClient(tokenRequest.audience)
-            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("audience ${tokenRequest.audience} is invalid"))
+            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token exchange audience ${tokenRequest.audience} is invalid"))
         log.debug("principal: $oauth2Client")
         val authenticatedClient: OAuth2Client = oauth2Client
             ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"))

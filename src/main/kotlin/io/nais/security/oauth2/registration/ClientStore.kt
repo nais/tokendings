@@ -48,7 +48,8 @@ class ClientStore(private val dataSource: DataSource) {
         val columnNames = columnMap.keys.joinToString(", ")
         val placeholders = columnMap.keys.joinToString(", ") { ":$it" }
         return queryOf(
-            """INSERT INTO $TABLE_NAME($columnNames) values ($placeholders)""".trimMargin(), columnMap
+            """INSERT INTO $TABLE_NAME($columnNames) values ($placeholders)""".trimMargin(),
+            columnMap
         )
     }
 
@@ -59,7 +60,8 @@ class ClientStore(private val dataSource: DataSource) {
             .map { "$it=:$it" }
             .toList().joinToString(", ")
         return queryOf(
-            """UPDATE $TABLE_NAME SET $keyValues WHERE client_id=:client_id""".trimMargin(), columnMap
+            """UPDATE $TABLE_NAME SET $keyValues WHERE client_id=:client_id""".trimMargin(),
+            columnMap
         )
     }
 

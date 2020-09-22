@@ -61,7 +61,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1",
+                "mockaad",
+                "client1",
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
@@ -134,7 +135,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1",
+                "mockaad",
+                "client1",
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
@@ -182,7 +184,8 @@ internal class ClientRegistrationApiTest {
                 )
             )
             val token = this.issueToken(
-                "mockaad", "client1",
+                "mockaad",
+                "client1",
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
