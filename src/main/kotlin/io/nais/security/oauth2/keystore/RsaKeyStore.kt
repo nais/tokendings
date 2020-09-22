@@ -1,5 +1,6 @@
-package io.nais.security.oauth2.rsakeystore
+package io.nais.security.oauth2.keystore
 
+import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.token.toJSON
 import io.nais.security.oauth2.token.toRSAKey
 import io.nais.security.oauth2.utils.generateRsaKey
@@ -15,23 +16,21 @@ import javax.sql.DataSource
 
 private val log: Logger = KotlinLogging.logger { }
 
-class KeyStore(
-    private val dataSource: DataSource
+class RsaKeyStore(
+    private val rsaKeyStoreProperties: RsaKeyStoreProperties
 ) {
-
-    // Could be an ENV?
-    var TTL = 24 * 60 * 60.toLong()
+    private val dataSource = rsaKeyStoreProperties.dataSource
 
     companion object {
         private const val TABLE_NAME = "rsakeys"
         const val ID = 1L
     }
 
-    fun keys(): RSAKeys {
+    fun activeKeys(): RsaKeys {
         val rsaKeys = read()
         if (rsaKeys.expired(LocalDateTime.now())) {
             val newKey = generateRsaKey()
-            val expiry = LocalDateTime.now().plusSeconds(TTL)
+            val expiry = LocalDateTime.now().plusSeconds(rsaKeyStoreProperties.rotationInterval)
             save(rsaKeys.rotate(newKey, expiry))
             log.info("RSA KEY rotated, next expiry: $expiry")
         }
@@ -49,8 +48,8 @@ class KeyStore(
         // Only if database is empty..
     } ?: initKeyStorage()
 
-    private fun Row.mapToRsaKeys(): RSAKeys {
-        return RSAKeys(
+    private fun Row.mapToRsaKeys(): RsaKeys {
+        return RsaKeys(
             currentKey = this.string("current_key").toRSAKey(),
             previousKey = this.string("previous_key").toRSAKey(),
             nextKey = this.string("next_key").toRSAKey(),
@@ -64,14 +63,14 @@ class KeyStore(
         return this
     }
 
-    private fun initRSAKeys() = RSAKeys(
+    private fun initRSAKeys() = RsaKeys(
         currentKey = generateRsaKey(),
         previousKey = generateRsaKey(),
         nextKey = generateRsaKey(),
-        expiry = LocalDateTime.now().plusSeconds(TTL)
+        expiry = LocalDateTime.now().plusSeconds(rsaKeyStoreProperties.rotationInterval)
     )
 
-    private fun save(rsaKeys: RSAKeys) =
+    fun save(rsaKeys: RsaKeys) =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 modify(
@@ -80,7 +79,7 @@ class KeyStore(
             )
         }
 
-    private fun modify(rsaKeys: RSAKeys): Query {
+    private fun modify(rsaKeys: RsaKeys): Query {
         return queryOf(
             """
             INSERT INTO $TABLE_NAME(id, current_key, previous_key, next_key, expiry) VALUES (:id, :current_key, :previous_key, :next_key, :expiry)

@@ -1,9 +1,9 @@
-package io.nais.security.oauth2.rsakeystore
+package io.nais.security.oauth2.keystore
 
 import com.nimbusds.jose.jwk.RSAKey
 import java.time.LocalDateTime
 
-data class RSAKeys(
+data class RsaKeys(
     var currentKey: RSAKey,
     var previousKey: RSAKey,
     var nextKey: RSAKey,
@@ -12,9 +12,9 @@ data class RSAKeys(
 
     companion object {
 
-        fun toKey(rsaKeys: RSAKeys) = rsaKeys
+        fun toKey(rsaKeys: RsaKeys) = rsaKeys
 
-        private fun rotateKeys(rsaKeys: RSAKeys, newKey: RSAKey, expiry: LocalDateTime) = rsaKeys.apply {
+        private fun rotateKeys(rsaKeys: RsaKeys, newKey: RSAKey, expiry: LocalDateTime) = rsaKeys.apply {
             previousKey = currentKey
             currentKey = this.nextKey
             this.nextKey = newKey

@@ -12,8 +12,8 @@ import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.SubjectTokenType
-import io.nais.security.oauth2.rsakeystore.KeyStore
-import io.nais.security.oauth2.rsakeystore.RSAKeysService
+import io.nais.security.oauth2.keystore.RsaKeyStore
+import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -125,4 +125,4 @@ internal class TokenIssuerTest {
     }
 }
 
-internal fun initRSAKeyStorage() = RSAKeysService(KeyStore(dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) }))
+internal fun initRSAKeyStorage() = RsaKeyService(RsaKeyStore(dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) }))

@@ -18,12 +18,13 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.rsakeystore.KeyStore
-import io.nais.security.oauth2.rsakeystore.RSAKeysService
 
 val konfig = ConfigurationProperties.systemProperties() overriding
     EnvironmentVariables()
+
+const val KEY_ROTATION_INTERVAL = 24 * 60 * 60.toLong()
 
 enum class Profile {
     NON_PROD,
@@ -51,7 +52,12 @@ object ProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = initRsaKeyStorage(databaseConfig = databaseConfig)
+            keyStoreService = RsaKeyService(
+                RsaKeyStoreProperties(
+                    dataSource = databaseConfig,
+                    rotationInterval = KEY_ROTATION_INTERVAL
+                )
+            )
         )
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
@@ -70,7 +76,12 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = initRsaKeyStorage(databaseConfig = databaseConfig)
+            keyStoreService = RsaKeyService(
+                RsaKeyStoreProperties(
+                    dataSource = databaseConfig,
+                    rotationInterval = KEY_ROTATION_INTERVAL
+                )
+            )
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
@@ -119,5 +130,3 @@ internal fun migrate(databaseConfig: DatabaseConfig) =
     dataSourceFrom(databaseConfig).apply {
         migrate(this)
     }
-
-internal fun initRsaKeyStorage(databaseConfig: HikariDataSource) = RSAKeysService(KeyStore(dataSource = databaseConfig))

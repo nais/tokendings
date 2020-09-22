@@ -10,6 +10,8 @@ import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
+import io.nais.security.oauth2.config.KEY_ROTATION_INTERVAL
+import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
@@ -21,8 +23,7 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
-import io.nais.security.oauth2.rsakeystore.KeyStore
-import io.nais.security.oauth2.rsakeystore.RSAKeysService
+import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -40,8 +41,7 @@ fun mockConfig(
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList(),
-        keyStore = RSAKeysService(KeyStore(dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) }))
-        // DefaultKeyStore(JWKSet(generateRsaKey()))
+        keyStoreService = rsaKeyStoreService(KEY_ROTATION_INTERVAL)
     )
     val clientRegAuthProperties = when {
         clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
@@ -77,6 +77,14 @@ fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: J
         every { it.wellKnown } returns wellKnown
         every { it.jwkProvider } returns jwkProvider
     }
+
+fun rsaKeyStoreService(rotationInterval: Long): RsaKeyService =
+    RsaKeyService(
+        RsaKeyStoreProperties(
+            DataSource.instance,
+            rotationInterval
+        )
+    )
 
 fun MockApp(
     config: AppConfiguration = mockConfig()

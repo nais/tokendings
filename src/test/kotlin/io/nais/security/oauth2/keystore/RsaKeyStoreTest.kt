@@ -1,7 +1,8 @@
-package io.nais.security.oauth2.rsakeystore
+package io.nais.security.oauth2.keystore
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
 import org.awaitility.Awaitility
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
-class KeyStoreTest {
+class RsaKeyStoreTest {
 
     @Before
     fun setup() {
@@ -20,7 +21,7 @@ class KeyStoreTest {
     @Test
     fun `keyStore should insert new record when databse is empty`() {
         withMigratedDb {
-            with(KeyStore(DataSource.instance)) {
+            with(RsaKeyStore(RsaKeyStoreProperties(DataSource.instance, 2))) {
                 val createdRsaKeys = initKeyStorage()
                 val readKeys = read()
                 readKeys shouldNotBe null
@@ -34,9 +35,9 @@ class KeyStoreTest {
     @Test
     fun `keystore should add new initial record on empty database or update existing record on expired keys`() {
         withMigratedDb {
-            with(KeyStore(DataSource.instance)) {
-                TTL = 1
-                val rsaKeysInitial = keys()
+            with(RsaKeyStore(RsaKeyStoreProperties(DataSource.instance, 1))) {
+
+                val rsaKeysInitial = activeKeys()
                 val now = LocalDateTime.now()
                 rsaKeysInitial.expired(now) shouldBe false
                 rsaKeysInitial.expired(now.plusSeconds(2)) shouldBe true
@@ -45,7 +46,7 @@ class KeyStoreTest {
                     .with().pollDelay(1, TimeUnit.SECONDS)
                     .then().await().atMost(2, TimeUnit.SECONDS)
                     .until {
-                        val rsaKeysRotated = keys()
+                        val rsaKeysRotated = activeKeys()
                         rsaKeysRotated.expired(LocalDateTime.now()) shouldBe false
                         rsaKeysInitial.nextKey shouldBe rsaKeysRotated.currentKey
                         rsaKeysInitial.currentKey shouldBe rsaKeysRotated.previousKey
