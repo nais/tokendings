@@ -3,6 +3,7 @@ package io.nais.security.oauth2.mock
 import com.auth0.jwk.JwkProvider
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
+import io.ktor.util.KtorExperimentalAPI
 import io.mockk.every
 import io.mockk.mockk
 import io.nais.security.oauth2.authentication.BearerTokenAuth
@@ -30,6 +31,7 @@ import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
 
 // TODO do not init database for every test
+@KtorExperimentalAPI
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
     clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null
@@ -63,6 +65,7 @@ fun mockConfig(
     )
 }
 
+@KtorExperimentalAPI
 fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties =
     mockBearerTokenAuthenticationProperties(
         mockk<WellKnown>().also {
@@ -72,6 +75,7 @@ fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties 
         mockk()
     )
 
+@KtorExperimentalAPI
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
     mockk<ClientRegistrationAuthProperties>().also {
         every { it.wellKnown } returns wellKnown
@@ -86,6 +90,7 @@ fun rsaKeyStoreService(rotationInterval: Long): RsaKeyService =
         )
     )
 
+@KtorExperimentalAPI
 fun MockApp(
     config: AppConfiguration = mockConfig()
 ): Application.() -> Unit {

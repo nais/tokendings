@@ -9,6 +9,7 @@ import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
@@ -44,6 +45,7 @@ internal object EnvKey {
     const val PRIVATE_JWKS = "PRIVATE_JWKS"
 }
 
+@KtorExperimentalAPI
 object ProdConfiguration {
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
@@ -65,6 +67,7 @@ object ProdConfiguration {
     }
 }
 
+@KtorExperimentalAPI
 object NonProdConfiguration {
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
@@ -89,6 +92,7 @@ object NonProdConfiguration {
     }
 }
 
+@KtorExperimentalAPI
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
         Profile.NON_PROD -> NonProdConfiguration.instance
@@ -96,6 +100,7 @@ fun configByProfile(): AppConfiguration =
         else -> ProdConfiguration.instance
     }
 
+@KtorExperimentalAPI
 fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
@@ -109,6 +114,7 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
+@KtorExperimentalAPI
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",

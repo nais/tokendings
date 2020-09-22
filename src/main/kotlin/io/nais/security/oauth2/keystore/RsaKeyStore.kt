@@ -12,7 +12,6 @@ import kotliquery.using
 import mu.KotlinLogging
 import org.slf4j.Logger
 import java.time.LocalDateTime
-import javax.sql.DataSource
 
 private val log: Logger = KotlinLogging.logger { }
 

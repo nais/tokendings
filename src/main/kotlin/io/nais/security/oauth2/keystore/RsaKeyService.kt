@@ -16,9 +16,9 @@ class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties) {
     private val rotationInterval = rsaKeyStoreProperties.rotationInterval
 
     val currentSigningKey: RSAKey
-    get() {
-        return getAndRotateKeys(rotationInterval).currentKey
-    }
+        get() {
+            return getAndRotateKeys(rotationInterval).currentKey
+        }
 
     val publicJWKSet: JWKSet
         get() {

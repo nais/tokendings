@@ -1,8 +1,10 @@
 package io.nais.security.oauth2.token
 
 import io.kotest.matchers.maps.shouldContainAll
+import io.ktor.util.KtorExperimentalAPI
 
 import io.nais.security.oauth2.config.AuthorizationServerProperties
+import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
@@ -12,15 +14,14 @@ import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.SubjectTokenType
-import io.nais.security.oauth2.keystore.RsaKeyStore
 import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
+@KtorExperimentalAPI
 internal class TokenIssuerTest {
 
     @Test
@@ -55,7 +56,6 @@ internal class TokenIssuerTest {
         }
     }
 
-    @Disabled("add back in when key rotation is implemented")
     @Test
     fun `token can be verified even though keys have rotated`() {
         withMockOAuth2Server {
@@ -125,4 +125,9 @@ internal class TokenIssuerTest {
     }
 }
 
-internal fun initRSAKeyStorage() = RsaKeyService(RsaKeyStore(dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) }))
+internal fun initRSAKeyStorage() = RsaKeyService(
+    RsaKeyStoreProperties(
+        dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) },
+        rotationInterval = 2
+    )
+)

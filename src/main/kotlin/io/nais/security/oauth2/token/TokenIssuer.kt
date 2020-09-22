@@ -4,6 +4,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
@@ -14,6 +15,7 @@ import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
+@KtorExperimentalAPI
 class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
 
     private val issuerUrl: String = authorizationServerProperties.issuerUrl

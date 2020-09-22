@@ -35,7 +35,6 @@ class RsaKeysServiceTest {
 
     @Test
     fun `currentSigningKey should check for expiry, read from keystore and rotate if neccessary`() {
-
         withMigratedDb {
             val rsaKeyService = rsaKeyStoreService(2)
             val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey
@@ -47,7 +46,6 @@ class RsaKeysServiceTest {
             }
         }
     }
-
 
     @Test
     fun `jwks endpoint should return current and previous key in public format`() {
