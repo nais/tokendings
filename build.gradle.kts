@@ -27,9 +27,9 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "1.3.72"
-    id("org.jmailen.kotlinter") version "2.4.1"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
-    id("com.github.ben-manes.versions") version "0.29.0"
+    id("org.jmailen.kotlinter") version "2.4.0"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 application {
@@ -115,7 +115,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.6"
+        gradleVersion = "6.5.1"
     }
 
     "build" {
