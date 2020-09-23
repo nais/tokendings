@@ -30,7 +30,7 @@ class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties) {
             return JWKSet(jwkList).toPublicJWKSet()
         }
 
-    private fun getAndRotateKeys(rotationInterval: Duration): RsaKeys {
+    internal fun getAndRotateKeys(rotationInterval: Duration): RsaKeys {
         val rsaKeys = rsaKeyStore.read()
         if (rsaKeys.expired(LocalDateTime.now())) {
             val newKey = generateRsaKey()
