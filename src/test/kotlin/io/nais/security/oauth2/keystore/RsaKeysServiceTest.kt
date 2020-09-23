@@ -5,17 +5,16 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.rsaKeyStoreService
 import io.nais.security.oauth2.mock.withMigratedDb
-import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.awaitility.Awaitility
 import org.junit.Before
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-
+import kotlin.collections.ArrayList
 
 class RsaKeysServiceTest {
 
@@ -55,39 +54,41 @@ class RsaKeysServiceTest {
     @Test
     @Throws(InterruptedException::class)
     fun `rotation of keys executed with concurrency`() {
+        val rotationInterval: Long = 2
         withMigratedDb {
-            val rsaKeyService = rsaKeyStoreService(2)
-            val numberOfThreads = 4
-            val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
-            val service = Executors.newFixedThreadPool(10)
-            try {
-                val afterInitBlocker = CountDownLatch(1)
-                val latch = CountDownLatch(numberOfThreads)
+            with(rsaKeyStoreService(rotationInterval)) {
+                val numberOfThreads = 4
+                val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
+                val service = Executors.newFixedThreadPool(10)
+                try {
+                    val afterInitBlocker = CountDownLatch(1)
+                    val latch = CountDownLatch(numberOfThreads)
 
-                val initialKey: RSAKey = rsaKeyService.currentSigningKey
-                runBlocking { delay(timeMillis = 2000) }
-                val afterInitialKey: RSAKey = rsaKeyService.currentSigningKey
+                    val initialKeys: RsaKeys = getAndRotateKeys(rotationInterval)
+                    runBlocking { delay(timeMillis = 2000) }
 
-                for (i in 0 until numberOfThreads) {
-                    service.submit {
-                        try {
-                            afterInitBlocker.await()
-                            rsaKeyService.currentSigningKey
-                        } catch (e: InterruptedException) {
-                            exceptions.add(e)
-                        } finally {
-                            latch.countDown()
+                    for (i in 0 until numberOfThreads) {
+                        service.submit {
+                            try {
+                                afterInitBlocker.await()
+                                getAndRotateKeys(rotationInterval)
+                            } catch (e: InterruptedException) {
+                                exceptions.add(e)
+                            } finally {
+                                latch.countDown()
+                            }
                         }
                     }
+                    afterInitBlocker.countDown()
+                    val afterInitialKeys = getAndRotateKeys(rotationInterval)
+                    initialKeys.currentKey shouldBe afterInitialKeys.previousKey
+                    initialKeys.nextKey shouldBe afterInitialKeys.currentKey
+                    initialKeys.nextKey shouldNotBe afterInitialKeys.nextKey
+                } finally {
+                    service.shutdownNow()
                 }
-                afterInitBlocker.countDown()
-                println(initialKey)
-                println(afterInitialKey)
-                println(rsaKeyService.currentSigningKey)
-            } finally {
-                service.shutdownNow();
+                assert(exceptions.isEmpty()) { "failed with exception(s)$exceptions" }
             }
-            assertTrue("failed with exception(s)$exceptions", exceptions.isEmpty())
         }
     }
 
