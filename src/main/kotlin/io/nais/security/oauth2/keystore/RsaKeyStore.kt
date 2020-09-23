@@ -32,7 +32,14 @@ class RsaKeyStore(
                     it.mapToRsaKeys()
                 }.asSingle
         )
-        // Only if database is empty..
+        /*
+        *  TODO This is a bit of "code smell"...
+        * This will work for a clean empty DB - But ff their is some problems with the db,
+        * we really just want to throw an runtime exception, not overwrite the existing keys
+        * making everything out of sync.
+        * ?: initKeyStorage() should be replaced with: } ?: throw RuntimeException("No keys found in the database")
+        * That leaves us with the problem of populating the empty db of rsakeys the first time..
+        * */
     } ?: initKeyStorage()
 
     private fun Row.mapToRsaKeys(): RsaKeys {
