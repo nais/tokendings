@@ -60,19 +60,19 @@ class RsaKeysServiceTest {
             val numberOfThreads = 4
             val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
             val service = Executors.newFixedThreadPool(10)
-            runBlocking { delay(timeMillis = 2000) }
             try {
-                val afterInitBlocker = CountDownLatch(1);
+                val afterInitBlocker = CountDownLatch(1)
                 val latch = CountDownLatch(numberOfThreads)
-                val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey
-                // runBlocking { delay(timeMillis = 2000) }
-                var secondSigningKey: RSAKey
+
+                val initialKey: RSAKey = rsaKeyService.currentSigningKey
+                runBlocking { delay(timeMillis = 2000) }
+                val afterInitialKey: RSAKey = rsaKeyService.currentSigningKey
 
                 for (i in 0 until numberOfThreads) {
                     service.submit {
                         try {
                             afterInitBlocker.await()
-                            secondSigningKey = rsaKeyService.currentSigningKey
+                            rsaKeyService.currentSigningKey
                         } catch (e: InterruptedException) {
                             exceptions.add(e)
                         } finally {
@@ -81,11 +81,13 @@ class RsaKeysServiceTest {
                     }
                 }
                 afterInitBlocker.countDown()
-                firstSigningKey shouldBe rsaKeyService.currentSigningKey
+                println(initialKey)
+                println(afterInitialKey)
+                println(rsaKeyService.currentSigningKey)
             } finally {
                 service.shutdownNow();
             }
-            assertTrue("failed with exception(s)$exceptions", exceptions.isEmpty());
+            assertTrue("failed with exception(s)$exceptions", exceptions.isEmpty())
         }
     }
 
