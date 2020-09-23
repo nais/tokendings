@@ -25,18 +25,6 @@ class RsaKeyStore(
         const val ID = 1L
     }
 
-    fun activeKeys(): RsaKeys {
-        val rsaKeys = read()
-        if (rsaKeys.expired(LocalDateTime.now())) {
-            val newKey = generateRsaKey()
-            val expiry = LocalDateTime.now().plusSeconds(rsaKeyStoreProperties.rotationInterval)
-            save(rsaKeys.rotate(newKey, expiry))
-            log.info("RSA KEY rotated, next expiry: $expiry")
-        }
-        log.debug("RSA KEY fetched from cache")
-        return rsaKeys
-    }
-
     fun read() = using(sessionOf(dataSource)) { session ->
         session.run(
             queryOf("""SELECT * FROM $TABLE_NAME""")
@@ -56,7 +44,7 @@ class RsaKeyStore(
         ).toKey()
     }
 
-    fun initKeyStorage() = initRSAKeys().apply {
+    private fun initKeyStorage() = initRSAKeys().apply {
         save(this)
         log.info("RSA KEY initialised, next expiry: ${this.expiry}")
         return this

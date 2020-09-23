@@ -5,12 +5,17 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.rsaKeyStoreService
 import io.nais.security.oauth2.mock.withMigratedDb
+import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.awaitility.Awaitility
 import org.junit.Before
 import org.junit.jupiter.api.Test
+import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
 
 class RsaKeysServiceTest {
 
@@ -44,6 +49,42 @@ class RsaKeysServiceTest {
                 val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey
                 firstSigningKey shouldNotBe secondSigningKey
             }
+        }
+    }
+
+    @Test
+    @Throws(InterruptedException::class)
+    fun testSummationWithConcurrency() {
+        withMigratedDb {
+            val rsaKeyService = rsaKeyStoreService(2)
+            val numberOfThreads = 4
+            val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
+            val service = Executors.newFixedThreadPool(10)
+            try {
+                val afterInitBlocker = CountDownLatch(1);
+                val latch = CountDownLatch(numberOfThreads)
+                val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey
+                // runBlocking { delay(timeMillis = 2000) }
+                var secondSigningKey: RSAKey
+
+                for (i in 0 until numberOfThreads) {
+                    service.submit {
+                        try {
+                            afterInitBlocker.await()
+                            secondSigningKey = rsaKeyService.currentSigningKey
+                        } catch (e: InterruptedException) {
+                            exceptions.add(e)
+                        } finally {
+                            latch.countDown()
+                        }
+                    }
+                }
+                afterInitBlocker.countDown()
+                firstSigningKey shouldBe rsaKeyService.currentSigningKey
+            } finally {
+                service.shutdownNow();
+            }
+            assertTrue("failed with exception(s)$exceptions", exceptions.isEmpty());
         }
     }
 

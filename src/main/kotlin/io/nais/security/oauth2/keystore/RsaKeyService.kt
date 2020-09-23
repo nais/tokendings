@@ -38,7 +38,7 @@ class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties) {
             log.info("RSA KEY rotated, next expiry: $expiry")
             return rsaKeyStore.read()
         }
-        log.debug("RSA KEY fetched from cache")
+        log.debug("RSA KEY fetched from cache ${LocalDateTime.now()}")
         return rsaKeys
     }
 }
