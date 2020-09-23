@@ -8,8 +8,7 @@ import io.nais.security.oauth2.mock.withMigratedDb
 import org.awaitility.Awaitility
 import org.junit.Before
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.concurrent.TimeUnit
+import java.time.Duration
 
 class RsaKeyStoreTest {
 
@@ -19,9 +18,9 @@ class RsaKeyStoreTest {
     }
 
     @Test
-    fun `keyStore should insert new record when databse is empty`() {
+    fun `keyStore should insert new record when database is empty`() {
         withMigratedDb {
-            with(RsaKeyStore(RsaKeyStoreProperties(DataSource.instance, 2))) {
+            with(rsaKeyStore()) {
                 val createdRsaKeys = initKeyStorage()
                 val readKeys = read()
                 readKeys shouldNotBe null
@@ -32,29 +31,11 @@ class RsaKeyStoreTest {
         }
     }
 
-    @Test
-    fun `keystore should add new initial record on empty database or update existing record on expired keys`() {
-        withMigratedDb {
-            with(RsaKeyStore(RsaKeyStoreProperties(DataSource.instance, 1))) {
-
-                val rsaKeysInitial = activeKeys()
-                val now = LocalDateTime.now()
-                rsaKeysInitial.expired(now) shouldBe false
-                rsaKeysInitial.expired(now.plusSeconds(2)) shouldBe true
-
-                Awaitility
-                    .with().pollDelay(1, TimeUnit.SECONDS)
-                    .then().await().atMost(2, TimeUnit.SECONDS)
-                    .until {
-                        val rsaKeysRotated = activeKeys()
-                        rsaKeysRotated.expired(LocalDateTime.now()) shouldBe false
-                        rsaKeysInitial.nextKey shouldBe rsaKeysRotated.currentKey
-                        rsaKeysInitial.currentKey shouldBe rsaKeysRotated.previousKey
-                        rsaKeysInitial.currentKey.toRSAKey()?.isPrivate shouldBe true
-                        rsaKeysInitial.nextKey.toRSAKey()?.isPrivate shouldBe true
-                        rsaKeysInitial.previousKey.toRSAKey()?.isPrivate == true
-                    }
-            }
-        }
-    }
+    // TODO: maybe remove rotation interval from RsaKeyStore, only send in DataSource
+    private fun rsaKeyStore(): RsaKeyStore = RsaKeyStore(
+        RsaKeyStoreProperties(
+            DataSource.instance,
+            Duration.ofDays(1)
+        )
+    )
 }

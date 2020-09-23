@@ -3,6 +3,7 @@ package io.nais.security.oauth2.config
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.request.get
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
@@ -14,6 +15,7 @@ import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.net.URL
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
@@ -57,7 +59,7 @@ class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val keyStoreService: RsaKeyService,
+    val rsaKeyService: RsaKeyService,
     val clientAssertionMaxExpiry: Long = 120
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
@@ -83,7 +85,27 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
 
 data class RsaKeyStoreProperties(
     val dataSource: DataSource,
-    val rotationInterval: Long
+    val rotationInterval: Duration
 )
 
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
+
+internal fun rsaKeyService(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RsaKeyService =
+    RsaKeyService(
+        RsaKeyStoreProperties(
+            dataSource = dataSource,
+            rotationInterval = rotationInterval
+        )
+    )
+
+internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
+    ClientRegistry(
+        ClientRegistryProperties(
+            dataSource
+        )
+    )
+
+internal fun migrate(databaseConfig: DatabaseConfig) =
+    dataSourceFrom(databaseConfig).apply {
+        migrate(this)
+    }

@@ -4,17 +4,13 @@ import io.kotest.matchers.maps.shouldContainAll
 import io.ktor.util.KtorExperimentalAPI
 
 import io.nais.security.oauth2.config.AuthorizationServerProperties
-import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
-import io.nais.security.oauth2.config.clean
-import io.nais.security.oauth2.config.migrate
-import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.SubjectTokenType
-import io.nais.security.oauth2.keystore.RsaKeyService
+import io.nais.security.oauth2.mock.rsaKeyService
 import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -106,7 +102,7 @@ internal class TokenIssuerTest {
                         SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
                     ),
                     300,
-                    initRSAKeyStorage()
+                    rsaKeyService()
                 )
             )
         } else {
@@ -115,7 +111,7 @@ internal class TokenIssuerTest {
                     ISSUER_URL,
                     emptyList(),
                     300,
-                    initRSAKeyStorage()
+                    rsaKeyService()
                 )
             )
         }
@@ -124,10 +120,3 @@ internal class TokenIssuerTest {
         private const val ISSUER_URL = "http://localhost/thisissuer"
     }
 }
-
-internal fun initRSAKeyStorage() = RsaKeyService(
-    RsaKeyStoreProperties(
-        dataSource = DataSource.instance.also { clean(it) }.also { migrate(it) },
-        rotationInterval = 2
-    )
-)

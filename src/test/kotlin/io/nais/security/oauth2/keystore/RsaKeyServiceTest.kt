@@ -3,54 +3,43 @@ package io.nais.security.oauth2.keystore
 import com.nimbusds.jose.jwk.RSAKey
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.nais.security.oauth2.mock.rsaKeyStoreService
+import io.nais.security.oauth2.mock.rsaKeyService
 import io.nais.security.oauth2.mock.withMigratedDb
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import org.awaitility.Awaitility
-import org.junit.Before
+import io.nais.security.oauth2.utils.mockkFuture
 import org.junit.jupiter.api.Test
-import java.util.concurrent.TimeUnit
+import java.time.Duration
 
 class RsaKeyServiceTest {
 
-    @Before
-    fun setup() {
-        Awaitility.reset()
-    }
-
     @Test
-    fun `signing key from local cache should be equal to database keystore`() {
+    fun `signing key should not be rotated`() {
         withMigratedDb {
-            with(rsaKeyStoreService(2)) {
+            with(rsaKeyService()) {
                 val currentKey = this.currentSigningKey
-                Awaitility
-                    .await().atMost(1, TimeUnit.SECONDS)
-                    .until {
-                        this.currentSigningKey == currentKey
-                    }
+                mockkFuture(Duration.ofHours(23))
+                this.currentSigningKey shouldBe currentKey
             }
         }
     }
 
     @Test
-    fun `currentSigningKey should check for expiry, read from keystore and rotate if neccessary`() {
+    fun `invoking currentSigningKey should check for expiry, read from keystore and rotate if accessed after one day`() {
         withMigratedDb {
-            val rsaKeyService = rsaKeyStoreService(2)
+            val rsaKeyService = rsaKeyService(Duration.ofDays(1))
             val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey
-            runBlocking {
-                rsaKeyService.currentSigningKey shouldBe firstSigningKey
-                delay(timeMillis = 2000)
-                val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey
-                firstSigningKey shouldNotBe secondSigningKey
-            }
+            rsaKeyService.currentSigningKey shouldBe firstSigningKey
+
+            mockkFuture(Duration.ofDays(1))
+
+            val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey
+            firstSigningKey shouldNotBe secondSigningKey
         }
     }
 
     @Test
     fun `jwks endpoint should return current and previous key in public format`() {
         withMigratedDb {
-            with(rsaKeyStoreService(2)) {
+            with(rsaKeyService()) {
                 val currentPublicKey = this.publicJWKSet.keys[0]
                 val previousPublicKey = this.publicJWKSet.keys[1]
                 currentPublicKey.isPrivate shouldBe false

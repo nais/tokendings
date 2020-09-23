@@ -20,7 +20,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     private val issuerUrl: String = authorizationServerProperties.issuerUrl
     private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
-    private val keyStoreService: RsaKeyService = authorizationServerProperties.keyStoreService
+    private val keyStoreService: RsaKeyService = authorizationServerProperties.rsaKeyService
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {

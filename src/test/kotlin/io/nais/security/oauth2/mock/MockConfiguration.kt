@@ -9,14 +9,14 @@ import io.mockk.mockk
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
-import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
-import io.nais.security.oauth2.config.KEY_ROTATION_INTERVAL
-import io.nais.security.oauth2.config.RsaKeyStoreProperties
+import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
+import io.nais.security.oauth2.config.rsaKeyService
+import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
@@ -24,11 +24,11 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
-import io.nais.security.oauth2.keystore.RsaKeyService
 import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Duration
 
 // TODO do not init database for every test
 @KtorExperimentalAPI
@@ -43,7 +43,7 @@ fun mockConfig(
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList(),
-        keyStoreService = rsaKeyStoreService(KEY_ROTATION_INTERVAL)
+        rsaKeyService = rsaKeyService()
     )
     val clientRegAuthProperties = when {
         clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
@@ -82,13 +82,11 @@ fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: J
         every { it.jwkProvider } returns jwkProvider
     }
 
-fun rsaKeyStoreService(rotationInterval: Long): RsaKeyService =
-    RsaKeyService(
-        RsaKeyStoreProperties(
-            DataSource.instance,
-            rotationInterval
-        )
-    )
+fun rsaKeyService(): RsaKeyService = rsaKeyService(DataSource.instance)
+
+fun rsaKeyService(dataSource: HikariDataSource, rotationInterval: Duration) = rsaKeyService(dataSource, rotationInterval)
+
+fun rsaKeyService(rotationInterval: Duration): RsaKeyService = rsaKeyService(DataSource.instance, rotationInterval)
 
 @KtorExperimentalAPI
 fun MockApp(

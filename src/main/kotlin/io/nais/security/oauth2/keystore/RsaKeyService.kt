@@ -7,6 +7,7 @@ import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.utils.generateRsaKey
 import mu.KotlinLogging
 import org.slf4j.Logger
+import java.time.Duration
 import java.time.LocalDateTime
 
 private val log: Logger = KotlinLogging.logger { }
@@ -29,11 +30,11 @@ class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties) {
             return JWKSet(jwkList).toPublicJWKSet()
         }
 
-    private fun getAndRotateKeys(rotationInterval: Long): RsaKeys {
+    private fun getAndRotateKeys(rotationInterval: Duration): RsaKeys {
         val rsaKeys = rsaKeyStore.read()
         if (rsaKeys.expired(LocalDateTime.now())) {
             val newKey = generateRsaKey()
-            val expiry = LocalDateTime.now().plusSeconds(rotationInterval)
+            val expiry = LocalDateTime.now().plus(rotationInterval)
             rsaKeyStore.save(rsaKeys.rotate(newKey, expiry))
             log.info("RSA KEY rotated, next expiry: $expiry")
             return rsaKeyStore.read()

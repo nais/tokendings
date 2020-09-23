@@ -8,7 +8,6 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
-import com.zaxxer.hikari.HikariDataSource
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
@@ -19,13 +18,10 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
-import io.nais.security.oauth2.keystore.RsaKeyService
-import io.nais.security.oauth2.registration.ClientRegistry
+import java.time.Duration
 
 val konfig = ConfigurationProperties.systemProperties() overriding
     EnvironmentVariables()
-
-const val KEY_ROTATION_INTERVAL = 24 * 60 * 60.toLong()
 
 enum class Profile {
     NON_PROD,
@@ -54,11 +50,9 @@ object ProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStoreService = RsaKeyService(
-                RsaKeyStoreProperties(
-                    dataSource = databaseConfig,
-                    rotationInterval = KEY_ROTATION_INTERVAL
-                )
+            rsaKeyService = rsaKeyService(
+                dataSource = databaseConfig,
+                rotationInterval = Duration.ofDays(1)
             )
         )
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
@@ -79,11 +73,9 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStoreService = RsaKeyService(
-                RsaKeyStoreProperties(
-                    dataSource = databaseConfig,
-                    rotationInterval = KEY_ROTATION_INTERVAL
-                )
+            rsaKeyService = rsaKeyService(
+                dataSource = databaseConfig,
+                rotationInterval = Duration.ofDays(1)
             )
         )
         val clientRegistry = clientRegistry(databaseConfig)
@@ -124,15 +116,3 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
             JWKSet.parse(it)
         }
     )
-
-internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
-    ClientRegistry(
-        ClientRegistryProperties(
-            dataSource
-        )
-    )
-
-internal fun migrate(databaseConfig: DatabaseConfig) =
-    dataSourceFrom(databaseConfig).apply {
-        migrate(this)
-    }
