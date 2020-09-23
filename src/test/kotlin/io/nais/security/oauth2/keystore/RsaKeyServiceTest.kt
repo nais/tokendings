@@ -8,6 +8,9 @@ import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.utils.mockkFuture
 import org.junit.jupiter.api.Test
 import java.time.Duration
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 class RsaKeyServiceTest {
 
@@ -47,6 +50,48 @@ class RsaKeyServiceTest {
                 this.publicJWKSet.keys.size shouldBe 2
                 this.publicJWKSet.keys[0] shouldBe currentPublicKey
                 this.publicJWKSet.keys[1] shouldBe previousPublicKey
+            }
+        }
+    }
+
+    @Test
+    @Throws(InterruptedException::class)
+    fun `rotation of keys executed with concurrency`() {
+        val rotationInterval = Duration.ofSeconds(2)
+        withMigratedDb {
+            with(rsaKeyService(rotationInterval)) {
+                val numberOfThreads = 4
+                val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
+                val service = Executors.newFixedThreadPool(10)
+                try {
+                    val afterInitBlocker = CountDownLatch(1)
+                    val latch = CountDownLatch(numberOfThreads)
+
+                    val initialKeys: RsaKeys = getAndRotateKeys(rotationInterval)
+
+                    mockkFuture(rotationInterval)
+
+                    for (i in 0 until numberOfThreads) {
+                        service.submit {
+                            try {
+                                afterInitBlocker.await()
+                                getAndRotateKeys(rotationInterval)
+                            } catch (e: InterruptedException) {
+                                exceptions.add(e)
+                            } finally {
+                                latch.countDown()
+                            }
+                        }
+                    }
+                    afterInitBlocker.countDown()
+                    val afterInitialKeys = getAndRotateKeys(rotationInterval)
+                    initialKeys.currentKey shouldBe afterInitialKeys.previousKey
+                    initialKeys.nextKey shouldBe afterInitialKeys.currentKey
+                    initialKeys.nextKey shouldNotBe afterInitialKeys.nextKey
+                } finally {
+                    service.shutdownNow()
+                }
+                assert(exceptions.isEmpty()) { "failed with exception(s)$exceptions" }
             }
         }
     }
