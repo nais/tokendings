@@ -5,17 +5,10 @@ import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.config.RsaKeyStoreProperties
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
-import org.awaitility.Awaitility
-import org.junit.Before
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
 class RsaKeyStoreTest {
-
-    @Before
-    fun setup() {
-        Awaitility.reset()
-    }
 
     @Test
     fun `keyStore should insert new record when database is empty`() {

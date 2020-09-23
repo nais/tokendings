@@ -86,7 +86,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
-    testImplementation("org.awaitility:awaitility:4.0.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 
 }
