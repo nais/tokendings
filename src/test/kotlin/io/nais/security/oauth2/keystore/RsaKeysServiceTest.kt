@@ -54,12 +54,13 @@ class RsaKeysServiceTest {
 
     @Test
     @Throws(InterruptedException::class)
-    fun testSummationWithConcurrency() {
+    fun `rotation of keys executed with concurrency`() {
         withMigratedDb {
             val rsaKeyService = rsaKeyStoreService(2)
             val numberOfThreads = 4
             val exceptions = Collections.synchronizedList(ArrayList<Throwable>())
             val service = Executors.newFixedThreadPool(10)
+            runBlocking { delay(timeMillis = 2000) }
             try {
                 val afterInitBlocker = CountDownLatch(1);
                 val latch = CountDownLatch(numberOfThreads)
