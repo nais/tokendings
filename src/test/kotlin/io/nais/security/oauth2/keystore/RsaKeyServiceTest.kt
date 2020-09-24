@@ -17,9 +17,9 @@ class RsaKeyServiceTest {
     fun `signing key should not be rotated`() {
         withMigratedDb {
             with(rsaKeyService()) {
-                val currentKey = this.currentSigningKey
+                val currentKey = this.currentSigningKey()
                 mockkFuture(Duration.ofHours(23))
-                this.currentSigningKey shouldBe currentKey
+                this.currentSigningKey() shouldBe currentKey
             }
         }
     }
@@ -28,12 +28,12 @@ class RsaKeyServiceTest {
     fun `invoking currentSigningKey should check for expiry, read from keystore and rotate if accessed after one day`() {
         withMigratedDb {
             val rsaKeyService = rsaKeyService(Duration.ofDays(1))
-            val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey
-            rsaKeyService.currentSigningKey shouldBe firstSigningKey
+            val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey()
+            rsaKeyService.currentSigningKey() shouldBe firstSigningKey
 
             mockkFuture(Duration.ofDays(1))
 
-            val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey
+            val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey()
             firstSigningKey shouldNotBe secondSigningKey
         }
     }
@@ -62,19 +62,19 @@ class RsaKeyServiceTest {
                 val numberOfThreads = 4
                 val service = Executors.newFixedThreadPool(10)
                 val latch = CountDownLatch(numberOfThreads)
-                val initialKeys: RsaKeys = getAndRotateKeys(rotationInterval)
+                val initialKeys: RsaKeys = rotateKeys(rotationInterval)
                 mockkFuture(rotationInterval)
                 repeat(numberOfThreads) {
                     service.submit {
                         try {
-                            getAndRotateKeys(rotationInterval)
+                            rotateKeys(rotationInterval)
                         } finally {
                             latch.countDown()
                         }
                     }
                 }
                 latch.await()
-                val afterInitialKeys = getAndRotateKeys(rotationInterval)
+                val afterInitialKeys = rotateKeys(rotationInterval)
                 initialKeys.currentKey shouldBe afterInitialKeys.previousKey
                 initialKeys.nextKey shouldBe afterInitialKeys.currentKey
                 initialKeys.nextKey shouldNotBe afterInitialKeys.nextKey

@@ -13,10 +13,12 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.SubjectTokenType
 import io.nais.security.oauth2.utils.jwkSet
+import io.nais.security.oauth2.utils.mockkFuture
 import io.nais.security.oauth2.utils.verifySignature
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.Test
+import java.time.Duration
 
 @KtorExperimentalAPI
 internal class TokenIssuerTest {
@@ -63,12 +65,19 @@ internal class TokenIssuerTest {
                     "thesubject"
                 ).serialize()
                 val tokenIssuer = tokenIssuer(this)
-                val tokenIssuerRestarted = tokenIssuer(this)
-                val issuedToken = tokenIssuer.issueTokenFor(
+                var issuedToken = tokenIssuer.issueTokenFor(
                     oAuth2Client(),
-                    tokenExchangeRequest(subjectToken, "desired audience for token")
+                    tokenExchangeRequest(subjectToken, "aud1")
                 )
-                issuedToken.verifySignature(tokenIssuerRestarted.publicJwkSet())
+                //simulate 3 key rotations
+                repeat(3){
+                    mockkFuture(Duration.ofDays(1).plusMinutes(1))
+                    issuedToken = tokenIssuer.issueTokenFor(
+                        oAuth2Client(),
+                        tokenExchangeRequest(issuedToken.serialize(), "aud${it}")
+                    )
+                    issuedToken.verifySignature(tokenIssuer.publicJwkSet())
+                }
             }
         }
     }

@@ -27,7 +27,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
         }
 
-    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, keyStoreService.publicJWKSet)
+    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, keyStoreService)
 
     fun publicJwkSet(): JWKSet = keyStoreService.publicJWKSet
 
@@ -50,7 +50,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             .apply {
                 subjectTokenClaims.issuer?.let { claim("idp", it) }
             }
-            .build().sign(keyStoreService.currentSigningKey)
+            .build().sign(keyStoreService.currentSigningKey())
     }
 
     private fun validator(issuer: String?): TokenValidator =
