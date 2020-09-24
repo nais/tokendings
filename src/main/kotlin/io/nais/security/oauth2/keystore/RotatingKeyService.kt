@@ -6,7 +6,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
-import io.nais.security.oauth2.config.RsaKeyStoreProperties
+import io.nais.security.oauth2.config.KeyStoreProperties
 import io.nais.security.oauth2.utils.generateRsaKey
 import mu.KotlinLogging
 import org.slf4j.Logger
@@ -15,33 +15,31 @@ import java.time.LocalDateTime
 
 private val log: Logger = KotlinLogging.logger { }
 
-class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties): JWKSource<SecurityContext?> {
-    private val rsaKeyStore: RsaKeyStore = RsaKeyStore(rsaKeyStoreProperties)
-    private val rotationInterval = rsaKeyStoreProperties.rotationInterval
+class RotatingKeyService(keyStoreProperties: KeyStoreProperties) : JWKSource<SecurityContext?> {
+    private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
+    private val rotationInterval = keyStoreProperties.rotationInterval
 
     fun currentSigningKey(): RSAKey {
-        return rotateKeys(rotationInterval).currentKey
+        return getAndRotateKeys(rotationInterval).currentKey
     }
 
     val publicJWKSet: JWKSet
         get() {
-            val keys = rotateKeys(rotationInterval)
+            val keys = getAndRotateKeys(rotationInterval)
             val jwkList: MutableList<JWK> = ArrayList()
             jwkList.add(keys.currentKey)
             jwkList.add(keys.previousKey)
             return JWKSet(jwkList).toPublicJWKSet()
         }
 
-    internal fun rotateKeys(rotationInterval: Duration): RsaKeys {
-        val rsaKeys = rsaKeyStore.read()
+    internal fun getAndRotateKeys(rotationInterval: Duration): RotatableKeys {
+        val rsaKeys = keyStore.read() ?: saveGeneratedRsaKeys()
         if (rsaKeys.expired(LocalDateTime.now())) {
-            val newKey = generateRsaKey()
             val expiry = LocalDateTime.now().plus(rotationInterval)
-            return rsaKeys.rotate(newKey, expiry).also {
-                rsaKeyStore.save(it)
+            return rsaKeys.rotate(expiry).also {
+                keyStore.save(it)
                 log.info("RSA KEY rotated, next expiry: $expiry")
             }
-
         }
         log.debug("RSA KEY fetched from keystore")
         return rsaKeys
@@ -50,4 +48,15 @@ class RsaKeyService(rsaKeyStoreProperties: RsaKeyStoreProperties): JWKSource<Sec
     override fun get(jwkSelector: JWKSelector?, context: SecurityContext?): List<JWK> {
         return publicJWKSet.keys
     }
+
+    private fun saveGeneratedRsaKeys(): RotatableKeys =
+        RotatableKeys(
+            currentKey = generateRsaKey(),
+            previousKey = generateRsaKey(),
+            nextKey = generateRsaKey(),
+            expiry = LocalDateTime.now().plus(rotationInterval)
+        ).also {
+            keyStore.save(it)
+            log.info("RSA KEY initialised, next expiry: ${it.expiry}")
+        }
 }

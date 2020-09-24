@@ -4,7 +4,7 @@ import io.kotest.matchers.maps.shouldContainAll
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
-import io.nais.security.oauth2.keystore.RsaKeyService
+import io.nais.security.oauth2.keystore.RotatingKeyService
 import io.nais.security.oauth2.mock.rsaKeyService
 import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.mock.withMockOAuth2Server
@@ -69,12 +69,12 @@ internal class TokenIssuerTest {
                     oAuth2Client(),
                     tokenExchangeRequest(subjectToken, "aud1")
                 )
-                //simulate 3 key rotations
-                repeat(3){
+                // simulate 3 key rotations
+                repeat(3) {
                     mockkFuture(Duration.ofDays(1).plusMinutes(1))
                     issuedToken = tokenIssuer.issueTokenFor(
                         oAuth2Client(),
-                        tokenExchangeRequest(issuedToken.serialize(), "aud${it}")
+                        tokenExchangeRequest(issuedToken.serialize(), "aud$it")
                     )
                     issuedToken.verifySignature(tokenIssuer.publicJwkSet())
                 }
@@ -106,7 +106,7 @@ internal class TokenIssuerTest {
             JsonWebKeys(jwkSet())
         )
 
-    private fun tokenIssuer(mockOAuth2Server: MockOAuth2Server? = null, rsaKeyService: RsaKeyService? = null) =
+    private fun tokenIssuer(mockOAuth2Server: MockOAuth2Server? = null, rotatingKeyService: RotatingKeyService? = null) =
         if (mockOAuth2Server != null) {
             TokenIssuer(
                 AuthorizationServerProperties(
@@ -116,7 +116,7 @@ internal class TokenIssuerTest {
                         SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
                     ),
                     300,
-                    rsaKeyService ?: rsaKeyService()
+                    rotatingKeyService ?: rsaKeyService()
                 )
             )
         } else {
@@ -125,7 +125,7 @@ internal class TokenIssuerTest {
                     ISSUER_URL,
                     emptyList(),
                     300,
-                    rsaKeyService ?: rsaKeyService()
+                    rotatingKeyService ?: rsaKeyService()
                 )
             )
         }

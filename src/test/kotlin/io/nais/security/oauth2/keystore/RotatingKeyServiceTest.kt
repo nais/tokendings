@@ -11,7 +11,7 @@ import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
-class RsaKeyServiceTest {
+class RotatingKeyServiceTest {
 
     @Test
     fun `signing key should not be rotated`() {
@@ -31,10 +31,10 @@ class RsaKeyServiceTest {
             val firstSigningKey: RSAKey = rsaKeyService.currentSigningKey()
             rsaKeyService.currentSigningKey() shouldBe firstSigningKey
 
-            mockkFuture(Duration.ofDays(1))
+            mockkFuture(Duration.ofDays(1).plusMinutes(1))
 
-            val secondSigningKey: RSAKey = rsaKeyService.currentSigningKey()
-            firstSigningKey shouldNotBe secondSigningKey
+            val rotatedSigningKey: RSAKey = rsaKeyService.currentSigningKey()
+            rotatedSigningKey shouldNotBe firstSigningKey
         }
     }
 
@@ -62,22 +62,21 @@ class RsaKeyServiceTest {
                 val numberOfThreads = 4
                 val service = Executors.newFixedThreadPool(10)
                 val latch = CountDownLatch(numberOfThreads)
-                val initialKeys: RsaKeys = rotateKeys(rotationInterval)
+                val initialKey: RSAKey = currentSigningKey()
                 mockkFuture(rotationInterval)
+
                 repeat(numberOfThreads) {
                     service.submit {
                         try {
-                            rotateKeys(rotationInterval)
+                            val rotatedKey = currentSigningKey()
+                            publicJWKSet.containsJWK(rotatedKey) shouldBe true
+                            publicJWKSet.containsJWK(initialKey) shouldBe true
                         } finally {
                             latch.countDown()
                         }
                     }
                 }
                 latch.await()
-                val afterInitialKeys = rotateKeys(rotationInterval)
-                initialKeys.currentKey shouldBe afterInitialKeys.previousKey
-                initialKeys.nextKey shouldBe afterInitialKeys.currentKey
-                initialKeys.nextKey shouldNotBe afterInitialKeys.nextKey
                 service.shutdownNow()
             }
         }

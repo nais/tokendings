@@ -50,7 +50,7 @@ object ProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            rsaKeyService = rsaKeyService(
+            rotatingKeyService = rsaKeyService(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
             )
@@ -73,7 +73,7 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            rsaKeyService = rsaKeyService(
+            rotatingKeyService = rsaKeyService(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
             )
@@ -92,6 +92,7 @@ fun configByProfile(): AppConfiguration =
         else -> ProdConfiguration.instance
     }
 
+@Suppress("unused")
 @KtorExperimentalAPI
 fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 

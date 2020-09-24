@@ -10,7 +10,7 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.keystore.RsaKeyService
+import io.nais.security.oauth2.keystore.RotatingKeyService
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -59,7 +59,7 @@ class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val rsaKeyService: RsaKeyService,
+    val rotatingKeyService: RotatingKeyService,
     val clientAssertionMaxExpiry: Long = 120
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
@@ -83,16 +83,16 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val issuer = wellKnown.issuer
 }
 
-data class RsaKeyStoreProperties(
+data class KeyStoreProperties(
     val dataSource: DataSource,
     val rotationInterval: Duration
 )
 
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
 
-internal fun rsaKeyService(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RsaKeyService =
-    RsaKeyService(
-        RsaKeyStoreProperties(
+internal fun rsaKeyService(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyService =
+    RotatingKeyService(
+        KeyStoreProperties(
             dataSource = dataSource,
             rotationInterval = rotationInterval
         )

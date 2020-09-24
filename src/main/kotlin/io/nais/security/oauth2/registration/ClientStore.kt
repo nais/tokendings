@@ -2,7 +2,7 @@ package io.nais.security.oauth2.registration
 
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.OAuth2Client
-import io.nais.security.oauth2.metrics.Metrics
+import io.nais.security.oauth2.utils.withTimer
 import kotliquery.Query
 import kotliquery.Row
 import kotliquery.queryOf
@@ -108,13 +108,4 @@ class ClientStore(private val dataSource: DataSource) {
                 it.value = this.toJson()
             }
         )
-
-    private inline fun <reified R : Any?> withTimer(timerLabel: String, block: () -> R): R {
-        val timer = Metrics.dbTimer.labels(timerLabel).startTimer()
-        try {
-            return block()
-        } finally {
-            timer.observeDuration()
-        }
-    }
 }

@@ -16,7 +16,7 @@ import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.config.rsaKeyService
-import io.nais.security.oauth2.keystore.RsaKeyService
+import io.nais.security.oauth2.keystore.RotatingKeyService
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
@@ -43,7 +43,7 @@ fun mockConfig(
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList(),
-        rsaKeyService = rsaKeyService()
+        rotatingKeyService = rsaKeyService()
     )
     val clientRegAuthProperties = when {
         clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
@@ -82,11 +82,11 @@ fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: J
         every { it.jwkProvider } returns jwkProvider
     }
 
-fun rsaKeyService(): RsaKeyService = rsaKeyService(DataSource.instance)
+fun rsaKeyService(): RotatingKeyService = rsaKeyService(DataSource.instance)
 
 fun rsaKeyService(dataSource: HikariDataSource, rotationInterval: Duration) = rsaKeyService(dataSource, rotationInterval)
 
-fun rsaKeyService(rotationInterval: Duration): RsaKeyService = rsaKeyService(DataSource.instance, rotationInterval)
+fun rsaKeyService(rotationInterval: Duration): RotatingKeyService = rsaKeyService(DataSource.instance, rotationInterval)
 
 @KtorExperimentalAPI
 fun MockApp(
