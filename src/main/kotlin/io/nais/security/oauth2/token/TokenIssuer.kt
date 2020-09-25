@@ -5,7 +5,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.config.AuthorizationServerProperties
-import io.nais.security.oauth2.model.JwkSetCacheProperties
+import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
@@ -30,7 +30,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             it.issuer to TokenValidator(
                 it.issuer,
                 URL(it.wellKnown.jwksUri),
-                JwkSetCacheProperties(lifeSpan, refreshTime)
+                CacheProperties(lifeSpan, refreshTime)
             )
         }
 

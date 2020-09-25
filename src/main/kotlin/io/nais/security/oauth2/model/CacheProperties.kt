@@ -8,7 +8,7 @@ import com.nimbusds.jose.util.DefaultResourceRetriever
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 
-data class JwkSetCacheProperties(
+data class CacheProperties(
     val lifeSpan: Long,
     val refreshTime: Long,
     val timeUnit: TimeUnit = SECONDS,
@@ -16,13 +16,13 @@ data class JwkSetCacheProperties(
     val readTimeOut: Int = DEFAULT_HTTP_READ_TIMEOUT,
     val sizeLimit: Int = DEFAULT_HTTP_SIZE_LIMIT
 ) {
-    val getConfigurableJWKSetCache = DefaultJWKSetCache(
+    val configurableJWKSetCache = DefaultJWKSetCache(
         this.lifeSpan,
         this.refreshTime,
         this.timeUnit
     )
 
-    val getConfigurableResourceRetriever = DefaultResourceRetriever(
+    val configurableResourceRetriever = DefaultResourceRetriever(
         this.connectionTimeout,
         this.readTimeOut,
         this.sizeLimit

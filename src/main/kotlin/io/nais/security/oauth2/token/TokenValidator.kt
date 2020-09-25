@@ -9,7 +9,7 @@ import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import io.nais.security.oauth2.model.JwkSetCacheProperties
+import io.nais.security.oauth2.model.CacheProperties
 import java.net.URL
 
 // TODO remove blocking calls from i.e. RemoteJWKSet
@@ -18,12 +18,12 @@ class TokenValidator(
     jwkSource: JWKSource<SecurityContext?>
 ) {
 
-    constructor(issuer: String, jwkSetUri: URL, configCacheProperties: JwkSetCacheProperties) : this(
+    constructor(issuer: String, jwkSetUri: URL, cacheProperties: CacheProperties) : this(
         issuer,
         RemoteJWKSet(
             jwkSetUri,
-            configCacheProperties.getConfigurableResourceRetriever,
-            configCacheProperties.getConfigurableJWKSetCache
+            cacheProperties.configurableResourceRetriever,
+            cacheProperties.configurableJWKSetCache
         )
     )
 
