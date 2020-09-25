@@ -32,7 +32,7 @@ class RotatingKeyService(keyStoreProperties: KeyStoreProperties) : JWKSource<Sec
             return JWKSet(jwkList).toPublicJWKSet()
         }
 
-    internal fun getAndRotateKeys(rotationInterval: Duration): RotatableKeys {
+    private fun getAndRotateKeys(rotationInterval: Duration): RotatableKeys {
         val rsaKeys = keyStore.read() ?: saveGeneratedRsaKeys()
         if (rsaKeys.expired(LocalDateTime.now())) {
             val expiry = LocalDateTime.now().plus(rotationInterval)
