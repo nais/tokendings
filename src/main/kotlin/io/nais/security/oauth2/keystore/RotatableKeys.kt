@@ -20,5 +20,5 @@ data class RotatableKeys(
         )
     }
 
-    fun expired(now: LocalDateTime) = now.isAfter(this.expiry)
+    fun expired(now: LocalDateTime = LocalDateTime.now()) = now.isAfter(this.expiry)
 }
