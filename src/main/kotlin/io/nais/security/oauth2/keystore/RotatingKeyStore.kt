@@ -17,7 +17,8 @@ private val log: Logger = KotlinLogging.logger { }
 
 class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<SecurityContext?> {
     private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
-    private val rotationInterval = keyStoreProperties.rotationInterval
+    private val rotationInterval: Duration = keyStoreProperties.rotationInterval
+    private var rotatableKeys: RotatableKeys = keyStore.read() ?: saveGeneratedRsaKeys()
 
     fun currentSigningKey(): RSAKey {
         return getAndRotateKeys(rotationInterval).currentKey
@@ -33,16 +34,15 @@ class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<Secur
         }
 
     private fun getAndRotateKeys(rotationInterval: Duration): RotatableKeys {
-        val rsaKeys = keyStore.read() ?: saveGeneratedRsaKeys()
-        if (rsaKeys.expired(LocalDateTime.now())) {
+        log.debug("check keys for expiry and rotate if neccessary")
+        if (rotatableKeys.expired()) {
             val expiry = LocalDateTime.now().plus(rotationInterval)
-            return rsaKeys.rotate(expiry).also {
+            rotatableKeys = rotatableKeys.rotate(expiry).also {
                 keyStore.save(it)
-                log.info("RSA KEY rotated, next expiry: $expiry")
+                log.info("Keys rotated, next expiry: $expiry")
             }
         }
-        log.debug("RSA KEY fetched from keystore")
-        return rsaKeys
+        return rotatableKeys
     }
 
     override fun get(jwkSelector: JWKSelector?, context: SecurityContext?): List<JWK> {
