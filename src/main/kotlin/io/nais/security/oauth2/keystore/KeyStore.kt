@@ -18,7 +18,7 @@ class KeyStore(private val dataSource: DataSource) {
         const val ID = 1L
     }
 
-    fun read() = withTimer("readKeys") {
+    fun read(): RotatableKeys? = withTimer("readKeys") {
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf("""SELECT * FROM $TABLE_NAME""")
@@ -34,7 +34,7 @@ class KeyStore(private val dataSource: DataSource) {
             currentKey = this.string("current_key").toRSAKey(),
             previousKey = this.string("previous_key").toRSAKey(),
             nextKey = this.string("next_key").toRSAKey(),
-            expiry = LocalDateTime.parse(this.string("expiry").also { println("exp: $it") })
+            expiry = LocalDateTime.parse(this.string("expiry"))
         )
     }
 
