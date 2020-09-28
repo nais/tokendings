@@ -4,8 +4,8 @@ import io.kotest.matchers.maps.shouldContainAll
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
-import io.nais.security.oauth2.keystore.RotatingKeyService
-import io.nais.security.oauth2.mock.rsaKeyService
+import io.nais.security.oauth2.keystore.RotatingKeyStore
+import io.nais.security.oauth2.mock.rotatingKeyStore
 import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.JsonWebKeys
@@ -106,7 +106,7 @@ internal class TokenIssuerTest {
             JsonWebKeys(jwkSet())
         )
 
-    private fun tokenIssuer(mockOAuth2Server: MockOAuth2Server? = null, rotatingKeyService: RotatingKeyService? = null) =
+    private fun tokenIssuer(mockOAuth2Server: MockOAuth2Server? = null, rotatingKeyStore: RotatingKeyStore? = null) =
         if (mockOAuth2Server != null) {
             TokenIssuer(
                 AuthorizationServerProperties(
@@ -116,7 +116,7 @@ internal class TokenIssuerTest {
                         SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
                     ),
                     300,
-                    rotatingKeyService ?: rsaKeyService()
+                    rotatingKeyStore ?: rotatingKeyStore()
                 )
             )
         } else {
@@ -125,7 +125,7 @@ internal class TokenIssuerTest {
                     ISSUER_URL,
                     emptyList(),
                     300,
-                    rotatingKeyService ?: rsaKeyService()
+                    rotatingKeyStore ?: rotatingKeyStore()
                 )
             )
         }

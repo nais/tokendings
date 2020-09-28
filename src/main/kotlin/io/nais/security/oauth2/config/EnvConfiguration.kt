@@ -50,7 +50,7 @@ object ProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            rotatingKeyService = rsaKeyService(
+            rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
             )
@@ -73,7 +73,7 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            rotatingKeyService = rsaKeyService(
+            rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
             )

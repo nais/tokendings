@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 private val log: Logger = KotlinLogging.logger { }
 
-class RotatingKeyService(keyStoreProperties: KeyStoreProperties) : JWKSource<SecurityContext?> {
+class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<SecurityContext?> {
     private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
     private val rotationInterval = keyStoreProperties.rotationInterval
 
