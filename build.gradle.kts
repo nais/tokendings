@@ -16,7 +16,7 @@ val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "6.4"
 // Micrometer need to be investigated further before update to 1.5.4
 // Failing test for a Micrometercollector
-val micrometerRegistryPrometheusVersion = "1.3.9"
+val micrometerRegistryPrometheusVersion = "1.5.5"
 val mockOAuth2ServerVersion = "0.1.34"
 val mockWebServerVersion = "4.8.1"
 val mockkVersion = "1.10.0"
