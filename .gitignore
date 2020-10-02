@@ -26,3 +26,6 @@ dist/
 /.nais/k8s.private_jwks.secrets.yml
 /.nais/jwker-jwks.json
 /src/test/kotlin/io/nais/security/oauth2/integration/SimulateOAuth2Client.kt
+/.nais/prod.k8s.private_jwks.secrets.yml
+/.nais/prod.k8s.secrets.yml
+/src/test/kotlin/io/nais/security/oauth2/config/EnvConfigurationTest.kt

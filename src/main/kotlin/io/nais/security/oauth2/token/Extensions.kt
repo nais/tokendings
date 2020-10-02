@@ -19,6 +19,7 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
+import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
 import java.lang.Exception
 import java.time.Duration
@@ -83,3 +84,8 @@ internal fun String.toJwt(): SignedJWT = try {
 } catch (e: Exception) {
     throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"))
 }
+
+@Throws(ParseException::class)
+internal fun String.toRSAKey() = RSAKey.parse(this)
+
+internal fun RSAKey.toJSON() = this.toJSONString()

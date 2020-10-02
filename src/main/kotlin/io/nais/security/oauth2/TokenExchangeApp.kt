@@ -193,6 +193,7 @@ private fun ErrorObject.toGeneric(): ErrorObject =
         this.uri
     )
 
+@KtorExperimentalAPI
 internal val defaultHttpClient = HttpClient(CIO) {
     install(JsonFeature) {
         serializer = JacksonSerializer {

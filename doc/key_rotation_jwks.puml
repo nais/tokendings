@@ -1,0 +1,22 @@
+@startuml component
+app -> tokendings: get /jwks
+participant tokendings as "tokendings"
+database rsakeystore
+
+==TokenDings Key Rotation==
+
+tokendings -> tokendings: check expiry
+group Expiry is valid
+tokendings -> app: Jwks[currentKey, previousKey]
+end
+group Expiry is outdated
+tokendings -> rsakeystore: read db-record
+note right: db-record: (currentKey, previousKey, nextKey, expiry)
+tokendings -> tokendings: modify record
+note left: previousKey = currentKey\ncurrentKey = nextKey\nnextKey = newGeneratedKey\nexpiry = newExpiry
+note right: N pods writes at the same time, only nextKey and expiry gets overwritten.
+tokendings -> rsakeystore: update db-record
+tokendings -> tokendings: new currentKey(signing key)
+tokendings -> app: Jwks[currentKey, previousKey]
+end
+@enduml

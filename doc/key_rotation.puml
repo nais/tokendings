@@ -1,8 +1,0 @@
-@startuml component
-participant app
-participant tokendings as "tokendings"
-database rsakeystore
-
-==TokenDings Key Rotation==
-
-@enduml

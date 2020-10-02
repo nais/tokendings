@@ -9,6 +9,7 @@ import com.nimbusds.jose.crypto.DirectDecrypter
 import com.nimbusds.jose.crypto.DirectEncrypter
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.RSAKey
+import io.nais.security.oauth2.metrics.Metrics
 import io.prometheus.client.Histogram
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
@@ -55,5 +56,14 @@ inline fun <reified R : Any?> withTimer(timer: Histogram.Child, block: () -> R):
         return block()
     } finally {
         t.observeDuration()
+    }
+}
+
+inline fun <reified R : Any?> withTimer(timerLabel: String, block: () -> R): R {
+    val timer = Metrics.dbTimer.labels(timerLabel).startTimer()
+    try {
+        return block()
+    } finally {
+        timer.observeDuration()
     }
 }

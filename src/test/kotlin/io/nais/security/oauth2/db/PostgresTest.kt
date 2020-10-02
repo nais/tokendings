@@ -12,7 +12,7 @@ internal class PostgresTest {
     fun `Migration scripts are applied successfully`() {
         withCleanDb {
             val migrations = migrate(DataSource.instance)
-            assertEquals(1, migrations, "Wrong number of migrations")
+            assertEquals(2, migrations, "Wrong number of migrations")
         }
     }
 
@@ -25,11 +25,4 @@ internal class PostgresTest {
             assertEquals(0, migrations, "Wrong number of migrations")
         }
     }
-
-    /*@Test
-    fun `JDBC url is set correctly from  config values `() {
-        with(hikariConfigFrom(Configuration())) {
-            assertEquals("jdbc:postgresql://localhost:5432/dp-regel-api", jdbcUrl)
-        }
-    }*/
 }

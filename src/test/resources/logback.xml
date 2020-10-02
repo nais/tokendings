@@ -14,7 +14,7 @@
     <logger name="ktor.application" level="TRACE"/>
     <logger name="io.ktor" level="TRACE"/>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
