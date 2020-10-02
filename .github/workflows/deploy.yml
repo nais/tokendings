@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "doc/**"
-      - "**/*.md"
 
 env:
   IMAGE: docker.pkg.github.com/${{ github.repository }}/tokendings:${{ github.sha }}
