@@ -43,7 +43,7 @@ import java.util.UUID
 
 @KtorExperimentalAPI
 internal class TokenExchangeApiTest {
-    val mapper = Jackson.defaultMapper
+    private val mapper = Jackson.defaultMapper
 
     @Test
     fun `call to well-known should successfully return server metadata`() {
@@ -110,7 +110,7 @@ internal class TokenExchangeApiTest {
                 ) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                     val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.content!!)
-                    assertThat(accessTokenResponse.accessToken).isNotBlank()
+                    assertThat(accessTokenResponse.accessToken).isNotBlank
                     val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
                     val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
                     assertThat(claims.subject).isEqualTo(subjectToken.jwtClaimsSet.subject)
@@ -184,9 +184,9 @@ internal class TokenExchangeApiTest {
         }
     }
 
-    // TODO - should return invalid_client instead of invalid_request?
     @Test
     fun `token exchange call with invalid client assertion keys should fail`() {
+
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")

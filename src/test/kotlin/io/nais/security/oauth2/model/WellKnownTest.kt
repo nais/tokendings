@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 internal class WellKnownTest {
 
-    val mapper = Jackson.defaultMapper
+    private val mapper = Jackson.defaultMapper
 
     @Test
     fun `WellKnown data class should parse as valid OAuth2 Authorization Server metadata`() {

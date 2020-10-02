@@ -43,28 +43,6 @@ class ClientStore(private val dataSource: DataSource) {
         )
     }
 
-    private fun insertQuery(oAuth2Client: OAuth2Client): Query {
-        val columnMap = oAuth2Client.mapToColumns()
-        val columnNames = columnMap.keys.joinToString(", ")
-        val placeholders = columnMap.keys.joinToString(", ") { ":$it" }
-        return queryOf(
-            """INSERT INTO $TABLE_NAME($columnNames) values ($placeholders)""".trimMargin(),
-            columnMap
-        )
-    }
-
-    private fun updateQuery(oAuth2Client: OAuth2Client): Query {
-        val columnMap = oAuth2Client.mapToColumns()
-        val keyValues = columnMap.keys
-            .filter { it == PRIMARY_KEY }
-            .map { "$it=:$it" }
-            .toList().joinToString(", ")
-        return queryOf(
-            """UPDATE $TABLE_NAME SET $keyValues WHERE client_id=:client_id""".trimMargin(),
-            columnMap
-        )
-    }
-
     fun delete(clientId: ClientId) =
         withTimer("delete") {
             using(sessionOf(dataSource)) { session ->

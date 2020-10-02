@@ -36,9 +36,7 @@ internal object EnvKey {
     const val DB_USERNAME = "DB_USERNAME"
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
-    const val AUTH_JWKER_SUB = "AUTH_JWKER_SUB"
     const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
-    const val PRIVATE_JWKS = "PRIVATE_JWKS"
 }
 
 @KtorExperimentalAPI
