@@ -1,37 +1,35 @@
-val assertjVersion = "3.17.1"
+val assertjVersion = "3.17.2"
 val flywayVersion = "6.5.5"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
 val hikaricpVersion = "3.4.5"
 val jacksonVersion = "2.10.1"
-val junitJupiterVersion = "5.6.2"
+val junitJupiterVersion = "5.7.0"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "4.2.2"
-val kotlinLoggingVersion = "1.8.3"
-val kotlinVersion = "1.4.0"
+val kotestVersion = "4.2.5"
+val kotlinLoggingVersion = "2.0.3"
+val kotlinVersion = "1.4.10"
 val kotlintestVersion = "3.4.2"
 val kotliqueryVersion = "1.3.1"
-val ktorVersion = "1.4.0"
+val ktorVersion = "1.4.1"
 val logbackVersion = "1.2.3"
 val logstashLogbackEncoderVersion = "6.4"
-// Micrometer need to be investigated further before update to 1.5.4
-// Failing test for a Micrometercollector
 val micrometerRegistryPrometheusVersion = "1.3.9"
-val mockOAuth2ServerVersion = "0.1.34"
-val mockWebServerVersion = "4.8.1"
-val mockkVersion = "1.10.0"
-val nimbusSdkVersion = "8.19"
+val mockOAuth2ServerVersion = "0.1.35"
+val mockWebServerVersion = "4.9.0"
+val mockkVersion = "1.10.2"
+val nimbusSdkVersion = "8.22"
 val postgresqlVersion = "42.2.16"
-val testcontainersPostgresVersion = "1.14.3"
+val testcontainersPostgresVersion = "1.15.0-rc2"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.0"
-    id("org.jmailen.kotlinter") version "3.0.2"
+    kotlin("jvm") version "1.4.10"
+    id("org.jmailen.kotlinter") version "3.2.0"
     id("com.github.johnrengelman.shadow") version "6.0.0"
-    id("com.github.ben-manes.versions") version "0.29.0"
+    id("com.github.ben-manes.versions") version "0.33.0"
 }
 
 application {
