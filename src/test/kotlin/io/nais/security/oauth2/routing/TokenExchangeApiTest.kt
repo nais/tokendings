@@ -34,8 +34,10 @@ import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.verifySignature
+import io.prometheus.client.CollectorRegistry
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.Date
@@ -44,6 +46,11 @@ import java.util.UUID
 @KtorExperimentalAPI
 internal class TokenExchangeApiTest {
     private val mapper = Jackson.defaultMapper
+
+    @AfterEach
+    fun tearDown() {
+        CollectorRegistry.defaultRegistry.clear()
+    }
 
     @Test
     fun `call to well-known should successfully return server metadata`() {

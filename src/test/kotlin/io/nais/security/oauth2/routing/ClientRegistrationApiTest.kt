@@ -24,15 +24,22 @@ import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.SoftwareStatement
 import io.nais.security.oauth2.model.SoftwareStatementJwt
 import io.nais.security.oauth2.token.sign
-import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.jwkSet
+import io.nais.security.oauth2.utils.shouldBe
+import io.prometheus.client.CollectorRegistry
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 @KtorExperimentalAPI
 internal class ClientRegistrationApiTest {
+
+    @AfterEach
+    fun tearDown() {
+        CollectorRegistry.defaultRegistry.clear()
+    }
 
     @Test
     fun `401 on unauthorized requests`() {
