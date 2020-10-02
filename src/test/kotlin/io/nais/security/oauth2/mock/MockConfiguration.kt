@@ -30,7 +30,6 @@ import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Duration
 
-// TODO do not init database for every test
 @KtorExperimentalAPI
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
@@ -99,7 +98,7 @@ class MockClientRegistry : ClientRegistry(
     ClientRegistryProperties(DataSource.instance.apply { clean(this) }.apply { migrate(this) })
 ) {
 
-    fun registerClientAndGenerateKeys(
+    private fun registerClientAndGenerateKeys(
         clientId: String,
         accessPolicy: AccessPolicy = AccessPolicy(),
         allowedScopes: List<String> = emptyList(),

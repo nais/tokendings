@@ -46,7 +46,7 @@ data class ClientRegistrationAuthProperties(
 ) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OpenID Connect server metadata from well-known url=$identityProviderWellKnownUrl")
-        defaultHttpClient.get<WellKnown>(identityProviderWellKnownUrl)
+        defaultHttpClient.get(identityProviderWellKnownUrl)
     }
     val jwkProvider: JwkProvider = JwkProviderBuilder(URL(wellKnown.jwksUri))
         .cached(10, 24, TimeUnit.HOURS)
@@ -78,7 +78,7 @@ class AuthorizationServerProperties(
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
-        defaultHttpClient.get<WellKnown>(wellKnownUrl)
+        defaultHttpClient.get(wellKnownUrl)
     }
     val issuer = wellKnown.issuer
 }
