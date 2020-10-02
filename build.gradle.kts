@@ -1,5 +1,5 @@
 val assertjVersion = "3.17.2"
-val flywayVersion = "6.5.5"
+val flywayVersion = "7.0.0"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
 val hikaricpVersion = "3.4.5"

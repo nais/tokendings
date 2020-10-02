@@ -3,6 +3,7 @@ package io.nais.security.oauth2.config
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.output.MigrateResult
 
 data class DatabaseConfig(
     val url: String,
@@ -14,7 +15,7 @@ fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource {
     return HikariDataSource(hikariConfig(databaseConfig))
 }
 
-internal fun migrate(dataSource: HikariDataSource, initSql: String = ""): Int =
+internal fun migrate(dataSource: HikariDataSource, initSql: String = ""): MigrateResult? =
     Flyway.configure().dataSource(dataSource).initSql(initSql).load().migrate()
 
 internal fun clean(dataSource: HikariDataSource) = Flyway.configure().dataSource(dataSource).load().clean()
