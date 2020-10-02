@@ -4,26 +4,26 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
-import mu.KotlinLogging
+import io.nais.security.oauth2.keystore.RotatingKeyStore
 import java.net.URL
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
-private val log = KotlinLogging.logger { }
-
+@KtorExperimentalAPI
 class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
 
     private val issuerUrl: String = authorizationServerProperties.issuerUrl
     private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
-    private val keyStore: KeyStore = authorizationServerProperties.keyStore
     private val lifeSpan: Long = authorizationServerProperties.jwkSetCacheLifeSpan
     private val refreshTime: Long = authorizationServerProperties.jwksSetCacheRefreshTime
+    private val rotatingKeyStore: RotatingKeyStore = authorizationServerProperties.rotatingKeyStore
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
@@ -34,9 +34,9 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             )
         }
 
-    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, keyStore.publicJwks())
+    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
 
-    fun publicJwkSet(): JWKSet = keyStore.publicJwks()
+    fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
@@ -57,7 +57,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             .apply {
                 subjectTokenClaims.issuer?.let { claim("idp", it) }
             }
-            .build().sign(keyStore.signingKey())
+            .build().sign(rotatingKeyStore.currentSigningKey())
     }
 
     private fun validator(issuer: String?): TokenValidator =

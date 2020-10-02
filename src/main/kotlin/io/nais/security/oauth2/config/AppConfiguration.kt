@@ -3,21 +3,25 @@ package io.nais.security.oauth2.config
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.request.get
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.token.KeyStore
+import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.net.URL
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
 
+@KtorExperimentalAPI
 data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
@@ -33,6 +37,7 @@ data class ClientRegistryProperties(
     val dataSource: DataSource
 )
 
+@KtorExperimentalAPI
 data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
@@ -49,11 +54,12 @@ data class ClientRegistrationAuthProperties(
         .build()
 }
 
+@KtorExperimentalAPI
 class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
-    val keyStore: KeyStore,
+    val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
     val jwkSetCacheLifeSpan: Long = 15,
     val jwksSetCacheRefreshTime: Long = 5
@@ -70,6 +76,7 @@ class AuthorizationServerProperties(
     }
 }
 
+@KtorExperimentalAPI
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
@@ -78,4 +85,29 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val issuer = wellKnown.issuer
 }
 
+data class KeyStoreProperties(
+    val dataSource: DataSource,
+    val rotationInterval: Duration
+)
+
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
+
+fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStore =
+    RotatingKeyStore(
+        KeyStoreProperties(
+            dataSource = dataSource,
+            rotationInterval = rotationInterval
+        )
+    )
+
+internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
+    ClientRegistry(
+        ClientRegistryProperties(
+            dataSource
+        )
+    )
+
+internal fun migrate(databaseConfig: DatabaseConfig) =
+    dataSourceFrom(databaseConfig).apply {
+        migrate(this)
+    }

@@ -22,7 +22,7 @@ val mockWebServerVersion = "4.8.1"
 val mockkVersion = "1.10.0"
 val nimbusSdkVersion = "8.19"
 val postgresqlVersion = "42.2.16"
-val testcontainersPostgresVersion = "1.14.3"
+val testcontainersPostgresVersion = "1.15.0-rc2"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -87,6 +87,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+
 }
 
 tasks {

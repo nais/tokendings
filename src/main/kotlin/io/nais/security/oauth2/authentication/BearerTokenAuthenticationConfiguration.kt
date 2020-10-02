@@ -11,6 +11,7 @@ import io.ktor.auth.Authentication
 import io.ktor.auth.jwt.JWTPrincipal
 import io.ktor.auth.jwt.jwt
 import io.ktor.http.auth.HttpAuthHeader
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
@@ -28,6 +29,7 @@ object BearerTokenAuth {
     val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
 }
 
+@KtorExperimentalAPI
 fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
@@ -64,6 +66,7 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
     }
 }
 
+@KtorExperimentalAPI
 internal fun bearerTokenVerifier(
     jwkProvider: JwkProvider,
     properties: ClientRegistrationAuthProperties,

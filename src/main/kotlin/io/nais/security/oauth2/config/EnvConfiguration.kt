@@ -8,7 +8,7 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.oauth2.sdk.OAuth2Error
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
@@ -18,11 +18,7 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
-import io.nais.security.oauth2.config.EnvKey.PRIVATE_JWKS
-import io.nais.security.oauth2.model.OAuth2Exception
-import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.token.DefaultKeyStore
-import io.nais.security.oauth2.token.KeyStore
+import java.time.Duration
 
 val konfig = ConfigurationProperties.systemProperties() overriding
     EnvironmentVariables()
@@ -45,23 +41,30 @@ internal object EnvKey {
     const val PRIVATE_JWKS = "PRIVATE_JWKS"
 }
 
+@KtorExperimentalAPI
 object ProdConfiguration {
     val instance by lazy {
+        val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = keyStore()
+            rotatingKeyStore = rotatingKeyStore(
+                dataSource = databaseConfig,
+                rotationInterval = Duration.ofDays(1)
+            )
         )
-        val clientRegistry = clientRegistry()
+        val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
 }
 
+@KtorExperimentalAPI
 object NonProdConfiguration {
     val instance by lazy {
+        val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.dev-gcp.nais.io",
             subjectTokenIssuers = listOf(
@@ -70,14 +73,18 @@ object NonProdConfiguration {
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
-            keyStore = keyStore()
+            rotatingKeyStore = rotatingKeyStore(
+                dataSource = databaseConfig,
+                rotationInterval = Duration.ofDays(1)
+            )
         )
-        val clientRegistry = clientRegistry()
+        val clientRegistry = clientRegistry(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
     }
 }
 
+@KtorExperimentalAPI
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
         Profile.NON_PROD -> NonProdConfiguration.instance
@@ -85,6 +92,8 @@ fun configByProfile(): AppConfiguration =
         else -> ProdConfiguration.instance
     }
 
+@Suppress("unused")
+@KtorExperimentalAPI
 fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
@@ -98,15 +107,7 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
-internal fun keyStore(): KeyStore =
-    DefaultKeyStore(
-        konfig[Key(PRIVATE_JWKS, stringType)].let {
-            JWKSet.parse(it)
-        }.takeIf {
-            it.keys.first().isPrivate
-        } ?: throw OAuth2Exception(OAuth2Error.SERVER_ERROR.setDescription("missing private key from token issuer jwks"))
-    )
-
+@KtorExperimentalAPI
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
@@ -115,13 +116,4 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
             JWKSet.parse(it)
         }
-    )
-
-internal fun clientRegistry(): ClientRegistry =
-    ClientRegistry(
-        ClientRegistryProperties(
-            dataSourceFrom(databaseConfig()).apply {
-                migrate(this)
-            }
-        )
     )

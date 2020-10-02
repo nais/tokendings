@@ -1,20 +1,22 @@
 package io.nais.security.oauth2.mock
 
 import com.auth0.jwk.JwkProvider
-import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
+import io.ktor.util.KtorExperimentalAPI
 import io.mockk.every
 import io.mockk.mockk
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
-import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
+import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
+import io.nais.security.oauth2.config.rotatingKeyStore
+import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
@@ -22,14 +24,14 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
-import io.nais.security.oauth2.token.DefaultKeyStore
 import io.nais.security.oauth2.tokenExchangeApp
-import io.nais.security.oauth2.utils.generateRsaKey
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Duration
 
 // TODO do not init database for every test
+@KtorExperimentalAPI
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
     clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null
@@ -41,7 +43,7 @@ fun mockConfig(
         subjectTokenIssuers = mockOAuth2Server?.let {
             listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
         } ?: emptyList(),
-        keyStore = DefaultKeyStore(JWKSet(generateRsaKey()))
+        rotatingKeyStore = rotatingKeyStore()
     )
     val clientRegAuthProperties = when {
         clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
@@ -63,6 +65,7 @@ fun mockConfig(
     )
 }
 
+@KtorExperimentalAPI
 fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties =
     mockBearerTokenAuthenticationProperties(
         mockk<WellKnown>().also {
@@ -72,12 +75,18 @@ fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties 
         mockk()
     )
 
+@KtorExperimentalAPI
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
     mockk<ClientRegistrationAuthProperties>().also {
         every { it.wellKnown } returns wellKnown
         every { it.jwkProvider } returns jwkProvider
     }
 
+fun rotatingKeyStore(): RotatingKeyStore = rotatingKeyStore(DataSource.instance)
+
+fun rotatingKeyStore(rotationInterval: Duration): RotatingKeyStore = rotatingKeyStore(DataSource.instance, rotationInterval)
+
+@KtorExperimentalAPI
 fun MockApp(
     config: AppConfiguration = mockConfig()
 ): Application.() -> Unit {

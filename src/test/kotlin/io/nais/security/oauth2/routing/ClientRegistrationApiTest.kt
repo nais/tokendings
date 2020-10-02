@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockApp
@@ -30,6 +31,7 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Test
 
+@KtorExperimentalAPI
 internal class ClientRegistrationApiTest {
 
     @Test

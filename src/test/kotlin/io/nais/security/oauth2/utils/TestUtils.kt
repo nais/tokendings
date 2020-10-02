@@ -15,10 +15,14 @@ import com.nimbusds.oauth2.sdk.ErrorObject
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.ktor.server.testing.TestApplicationResponse
+import io.mockk.every
+import io.mockk.mockkStatic
 import io.nais.security.oauth2.Jackson
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
+import java.time.Duration
+import java.time.LocalDateTime
 import java.util.UUID
 
 fun jwkSet(): JWKSet =
@@ -49,4 +53,11 @@ infix fun TestApplicationResponse.shouldBe(error: ErrorObject) {
     content shouldNotBe null
     val errorResponse: ErrorResponse = Jackson.defaultMapper.readValue(content!!)
     errorResponse.code shouldBe error.code
+}
+
+fun mockkFuture(duration: Duration) {
+    LocalDateTime.now().also {
+        mockkStatic(LocalDateTime::class)
+        every { LocalDateTime.now() } returns it.plus(duration)
+    }
 }
