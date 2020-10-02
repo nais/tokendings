@@ -97,9 +97,9 @@ fun Application.mockJwkerApp() {
             log.debug("received exception:", error)
             when (error) {
                 is ClientRequestException -> {
-                    val statusCode: HttpStatusCode? = error.response?.status
+                    val statusCode: HttpStatusCode? = error.response.status
                     val body: Any? = if (statusCode != HttpStatusCode.NoContent)
-                        error.response?.readText()
+                        error.response.readText()
                     else
                         EmptyContent
 
