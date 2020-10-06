@@ -46,7 +46,8 @@ object ProdConfiguration {
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
             subjectTokenIssuers = listOf(
-                SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
+                SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration"),
+                SubjectTokenIssuer("https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten")
             ),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
