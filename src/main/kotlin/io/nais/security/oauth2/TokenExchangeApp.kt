@@ -137,7 +137,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
 
     install(StatusPages) {
         exception<Throwable> { cause ->
-            log.error("received exception.", cause)
+            log.error("request failed: $cause", cause)
             when (cause) {
                 is OAuth2Exception -> {
                     val includeErrorDetails = config.isNonProd()
