@@ -36,11 +36,16 @@ class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<Secur
     private fun getAndRotateKeys(rotationInterval: Duration): RotatableKeys {
         log.debug("check keys for expiry and rotate if neccessary")
         if (rotatableKeys.expired()) {
-            val expiry = LocalDateTime.now().plus(rotationInterval)
-            rotatableKeys = rotatableKeys.rotate(expiry).also {
-                keyStore.save(it)
-                log.info("Keys rotated, next expiry: $expiry")
-            }
+            keyStore.read()?.let { current ->
+                rotatableKeys = current
+                if (current.expired()) {
+                    val expiry = LocalDateTime.now().plus(rotationInterval)
+                    rotatableKeys = current.rotate(expiry).also {
+                        keyStore.save(it)
+                        log.info("Keys rotated, next expiry: $expiry")
+                    }
+                }
+            } ?: throw RuntimeException("Could not get current keys from storage")
         }
         return rotatableKeys
     }
