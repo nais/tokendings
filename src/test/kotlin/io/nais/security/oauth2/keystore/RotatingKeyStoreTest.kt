@@ -42,13 +42,13 @@ class RotatingKeyStoreTest {
     fun `jwks endpoint should return current and previous key in public format`() {
         withMigratedDb {
             with(rotatingKeyStore()) {
-                val currentPublicKey = this.publicJWKSet.keys[0]
-                val previousPublicKey = this.publicJWKSet.keys[1]
+                val currentPublicKey = this.publicJWKSet().keys[0]
+                val previousPublicKey = this.publicJWKSet().keys[1]
                 currentPublicKey.isPrivate shouldBe false
                 previousPublicKey.isPrivate shouldBe false
-                this.publicJWKSet.keys.size shouldBe 2
-                this.publicJWKSet.keys[0] shouldBe currentPublicKey
-                this.publicJWKSet.keys[1] shouldBe previousPublicKey
+                this.publicJWKSet().keys.size shouldBe 2
+                this.publicJWKSet().keys[0] shouldBe currentPublicKey
+                this.publicJWKSet().keys[1] shouldBe previousPublicKey
             }
         }
     }
@@ -69,8 +69,8 @@ class RotatingKeyStoreTest {
                     service.submit {
                         try {
                             val rotatedKey = currentSigningKey()
-                            publicJWKSet.containsJWK(rotatedKey) shouldBe true
-                            publicJWKSet.containsJWK(initialKey) shouldBe true
+                            publicJWKSet().containsJWK(rotatedKey) shouldBe true
+                            publicJWKSet().containsJWK(initialKey) shouldBe true
                         } finally {
                             latch.countDown()
                         }

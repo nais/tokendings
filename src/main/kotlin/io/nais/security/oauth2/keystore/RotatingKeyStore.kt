@@ -16,36 +16,25 @@ private val log: Logger = KotlinLogging.logger { }
 class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<SecurityContext?> {
     private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
     private val rotationInterval: Duration = keyStoreProperties.rotationInterval
-    private var rotatableKeys: RotatableKeys = getOrGenerateKeys()
+    private val rotatableKeys: RotatableKeys = getOrGenerateKeys()
 
     fun currentSigningKey(): RSAKey {
         return getAndRotateKeysIfExpired().currentKey
     }
 
-    val publicJWKSet: JWKSet
-        get() {
-            val keys: RotatableKeys = getAndRotateKeysIfExpired()
-            val jwkList: MutableList<JWK> = ArrayList()
-            jwkList.add(keys.currentKey)
-            jwkList.add(keys.previousKey)
-            return JWKSet(jwkList).toPublicJWKSet()
-        }
+    fun publicJWKSet(): JWKSet = getAndRotateKeysIfExpired().let { keys ->
+        return JWKSet(listOf(keys.currentKey, keys.previousKey)).toPublicJWKSet()
+    }
 
     private fun getAndRotateKeysIfExpired(): RotatableKeys {
         log.debug("checking keys for expiry and rotating if necessary")
-        if (rotatableKeys.expired()) {
-            rotatableKeys = getOrGenerateKeys()
-        }
-        return rotatableKeys
+        return if (rotatableKeys.expired()) getOrGenerateKeys() else rotatableKeys
     }
 
-    private fun getOrGenerateKeys(): RotatableKeys {
-        val keys: RotatableKeys = keyStore.read() ?: generateKeysAndSave()
-        if (keys.notExpired()) {
-            return keys
+    private fun getOrGenerateKeys(): RotatableKeys =
+        with(keyStore.read() ?: generateKeysAndSave()) {
+            return if (notExpired()) this else rotateKeysAndSave(this)
         }
-        return rotateKeysAndSave(keys)
-    }
 
     private fun generateKeysAndSave(): RotatableKeys =
         RotatableKeys
@@ -70,6 +59,6 @@ class RotatingKeyStore(keyStoreProperties: KeyStoreProperties) : JWKSource<Secur
     }
 
     override fun get(jwkSelector: JWKSelector?, context: SecurityContext?): List<JWK> {
-        return publicJWKSet.keys
+        return publicJWKSet().keys
     }
 }

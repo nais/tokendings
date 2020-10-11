@@ -29,7 +29,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
 
-    fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet
+    fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet()
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
