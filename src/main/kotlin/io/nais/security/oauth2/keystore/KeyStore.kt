@@ -29,6 +29,14 @@ class KeyStore(private val dataSource: DataSource) {
         }
     }
 
+    fun save(rotatableKeys: RotatableKeys) =
+        using(sessionOf(dataSource)) { session ->
+            session.run(queryOf("""SET TRANSACTION ISOLATION LEVEL REPEATABLE READ""").asExecute)
+            session.transaction { tx ->
+                tx.run(modify(rotatableKeys).asUpdate)
+            }
+        }
+
     private fun Row.mapToRsaKeys(): RotatableKeys {
         return RotatableKeys(
             currentKey = this.string("current_key").toRSAKey(),
@@ -37,15 +45,6 @@ class KeyStore(private val dataSource: DataSource) {
             expiry = LocalDateTime.parse(this.string("expiry"))
         )
     }
-
-    fun save(rotatableKeys: RotatableKeys) =
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                modify(
-                    rotatableKeys
-                ).asUpdate
-            )
-        }
 
     private fun modify(rotatableKeys: RotatableKeys): Query {
         return queryOf(
