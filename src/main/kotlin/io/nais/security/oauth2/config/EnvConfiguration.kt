@@ -47,7 +47,8 @@ object ProdConfiguration {
             issuerUrl = "https://tokendings.prod-gcp.nais.io",
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration"),
-                SubjectTokenIssuer("https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten")
+                SubjectTokenIssuer("https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten"),
+                SubjectTokenIssuer("https://navnob2c.b2clogin.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten")
             ),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
@@ -69,6 +70,9 @@ object NonProdConfiguration {
             subjectTokenIssuers = listOf(
                 SubjectTokenIssuer(
                     "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
+                ),
+                SubjectTokenIssuer(
+                    "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
                 ),
                 SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
             ),
