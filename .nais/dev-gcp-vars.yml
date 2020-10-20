@@ -5,6 +5,7 @@ ingresses:
   - https://tokendings.dev-gcp.nais.io
 host:
   - login.microsoftonline.com
+  - navtestb2c.b2clogin.com
   - oidc-ver2.difi.no
 env:
   APPLICATION_PROFILE: NON_PROD
