@@ -53,7 +53,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             }
             .build().sign(rotatingKeyStore.currentSigningKey())
             .also {
-                issuedTokensCounter.inc()
+                issuedTokensCounter.labels(targetAudience).inc()
             }
     }
 
