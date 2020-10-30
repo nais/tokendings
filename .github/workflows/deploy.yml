@@ -69,16 +69,16 @@ jobs:
           RESOURCE: .nais/nais.yml,.nais/alerts.yml
           VARS: .nais/dev-gcp-vars.yml
 
-  #deploy-prod-gcp:
-  #  name: Deploy to prod-gcp
-  #  needs: deploy-dev-gcp
-  #  if: "github.ref == 'refs/heads/master'"
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v1
-  #    - uses: nais/deploy/actions/deploy@v1
-  #      env:
-  #        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-  #        CLUSTER: prod-gcp
-  #        RESOURCE: .nais/nais.yml,.nais/alerts.yml
-  #        VARS: .nais/prod-gcp-vars.yml
+  deploy-prod-gcp:
+    name: Deploy to prod-gcp
+    needs: deploy-dev-gcp
+    if: "github.ref == 'refs/heads/master'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais.yml,.nais/alerts.yml
+          VARS: .nais/prod-gcp-vars.yml

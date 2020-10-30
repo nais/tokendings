@@ -10,3 +10,4 @@ host:
 env:
   APPLICATION_PROFILE: NON_PROD
 slack_alert_channel: "plattformsikkerhet-alerts-dev"
+sqlinstance_name: tokendings-postgres-11

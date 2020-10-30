@@ -42,7 +42,7 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_11
-        name: tokendings-postgres-11
+        name: {{sqlinstance_name}}
         diskAutoresize: true
         highAvailability: true
         databases:
