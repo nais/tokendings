@@ -41,8 +41,8 @@ spec:
       memory: 256Mi
   gcp:
     sqlInstances:
-      - type: POSTGRES_12
-        name: tokendings-postgres-1
+      - type: POSTGRES_11
+        name: tokendings-postgres-11
         diskAutoresize: true
         highAvailability: true
         databases:
