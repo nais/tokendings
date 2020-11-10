@@ -161,7 +161,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     install(ForwardedHeaderSupport)
 
     routing {
-        observability()
+        observability(config.databaseHealthCheck)
         routing.apiRouting(this.application)
     }
 }

@@ -2,22 +2,29 @@ package io.nais.security.oauth2.routing
 
 import io.ktor.application.call
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.response.respondText
 import io.ktor.response.respondTextWriter
+import io.ktor.response.respond
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.route
+import io.nais.security.oauth2.health.HealthCheck
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
+import kotlinx.coroutines.withTimeout
 
-internal fun Routing.observability() {
+internal fun Routing.observability(databaseHealthCheck: HealthCheck) {
     route("/internal") {
         get("/isalive") {
             call.respondText("ALIVE", ContentType.Text.Plain)
         }
 
         get("/isready") {
-            call.respondText("READY", ContentType.Text.Plain)
+            withTimeout(5000) {
+                databaseHealthCheck.ping()
+                call.respond(OK)
+            }
         }
 
         get("/metrics") {
