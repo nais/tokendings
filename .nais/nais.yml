@@ -48,6 +48,9 @@ spec:
         databases:
           - name: tokendings
             envVarPrefix: DB
+  azure:
+    application:
+      enabled: true
 
   ingresses:
   {{#each ingresses as |url|}}

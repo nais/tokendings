@@ -7,6 +7,7 @@ import io.ktor.util.KtorExperimentalAPI
 import io.mockk.every
 import io.mockk.mockk
 import io.nais.security.oauth2.authentication.BearerTokenAuth
+import io.nais.security.oauth2.config.AdminApiAuthProperties
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
@@ -56,11 +57,13 @@ fun mockConfig(
     }
 
     val clientRegistry = MockClientRegistry()
+    val adminApiAuthProperties = adminApiAuthProps()
     return AppConfiguration(
         ServerProperties(8080),
         clientRegistry,
         authorizationServerProperties,
-        clientRegAuthProperties
+        clientRegAuthProperties,
+        adminApiAuthProperties
     )
 }
 
@@ -80,6 +83,8 @@ fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: J
         every { it.wellKnown } returns wellKnown
         every { it.jwkProvider } returns jwkProvider
     }
+
+fun adminApiAuthProps() = AdminApiAuthProperties(acceptedAudience = listOf("someone"), acceptedIssuer = "da issuah", jwksUrl = "http://localhost")
 
 fun rotatingKeyStore(): RotatingKeyStore = rotatingKeyStore(DataSource.instance)
 

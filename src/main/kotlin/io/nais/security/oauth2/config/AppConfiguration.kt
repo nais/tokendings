@@ -26,7 +26,8 @@ data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
-    val clientRegistrationAuthProperties: ClientRegistrationAuthProperties
+    val clientRegistrationAuthProperties: ClientRegistrationAuthProperties,
+    val adminApiAuthProperties: AdminApiAuthProperties
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
@@ -53,6 +54,12 @@ data class ClientRegistrationAuthProperties(
         .rateLimited(10, 1, TimeUnit.MINUTES)
         .build()
 }
+
+data class AdminApiAuthProperties(
+    val acceptedIssuer: String,
+    val acceptedAudience: List<String>,
+    val jwksUrl: String
+)
 
 @KtorExperimentalAPI
 class AuthorizationServerProperties(

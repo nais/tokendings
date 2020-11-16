@@ -49,6 +49,8 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.nais.security.oauth2.admin.adminApi
+import io.nais.security.oauth2.authentication.adminAuth
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
@@ -155,6 +157,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
 
     install(Authentication) {
         clientRegistrationAuth(config)
+        adminAuth(config.adminApiAuthProperties)
     }
 
     install(DoubleReceive)
@@ -163,6 +166,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     routing {
         observability()
         routing.apiRouting(this.application)
+        adminApi(config.clientRegistry)
     }
 }
 

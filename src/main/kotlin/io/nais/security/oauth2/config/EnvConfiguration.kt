@@ -13,6 +13,8 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
+import io.nais.security.oauth2.config.EnvKey.AZURE_APP_CLIENT_ID
+import io.nais.security.oauth2.config.EnvKey.AZURE_APP_TENANT_ID
 import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
 import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
@@ -37,6 +39,8 @@ internal object EnvKey {
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
+    const val AZURE_APP_TENANT_ID = "AZURE_APP_TENANT_ID"
+    const val AZURE_APP_CLIENT_ID = "AZURE_APP_CLIENT_ID"
 }
 
 @KtorExperimentalAPI
@@ -57,7 +61,7 @@ object ProdConfiguration {
         )
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, adminApiAuthConfig())
     }
 }
 
@@ -83,8 +87,18 @@ object NonProdConfiguration {
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, adminApiAuthConfig())
     }
+}
+
+fun adminApiAuthConfig(): AdminApiAuthProperties {
+    val tenant = konfig[Key(AZURE_APP_TENANT_ID, stringType)]
+    val clientId = konfig[Key(AZURE_APP_CLIENT_ID, stringType)]
+    return AdminApiAuthProperties(
+        acceptedIssuer = "https://login.microsoftonline.com/$tenant/v2.0",
+        acceptedAudience = listOf(clientId),
+        jwksUrl = "https://login.microsoftonline.com/$tenant/discovery/v2.0/keys"
+    )
 }
 
 @KtorExperimentalAPI
