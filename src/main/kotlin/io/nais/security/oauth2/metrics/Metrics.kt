@@ -6,19 +6,29 @@ import io.prometheus.client.Histogram
 
 class Metrics {
     companion object {
-        const val NAMESPACE = "tokendings"
+        private const val NAMESPACE = "tokendings"
 
-        val collectorRegistry = CollectorRegistry.defaultRegistry
-        val dbTimer = Histogram.build("db_query_latency_histogram", "Distribution of db execution times")
+        private val collectorRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry
+
+        val dbTimer: Histogram = Histogram.build("db_query_latency_histogram", "Distribution of db execution times")
             .namespace(NAMESPACE)
             .labelNames("query")
             .register(collectorRegistry)
-        val oauth2ErrorCounter = Counter
+
+        val oauth2ErrorCounter: Counter = Counter
             .build()
             .namespace(NAMESPACE)
             .name("oauth2_errors")
             .help("Number of OAuth2Exceptions")
             .labelNames("code")
+            .register()
+
+        val issuedTokensCounter: Counter = Counter
+            .build()
+            .namespace(NAMESPACE)
+            .name("tokens_issued")
+            .help("Number of tokens we have issued")
+            .labelNames("audience")
             .register()
     }
 }

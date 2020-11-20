@@ -97,9 +97,9 @@ fun Application.mockJwkerApp() {
             log.debug("received exception:", error)
             when (error) {
                 is ClientRequestException -> {
-                    val statusCode: HttpStatusCode? = error.response?.status
+                    val statusCode: HttpStatusCode? = error.response.status
                     val body: Any? = if (statusCode != HttpStatusCode.NoContent)
-                        error.response?.readText()
+                        error.response.readText()
                     else
                         EmptyContent
 
@@ -141,14 +141,14 @@ fun Application.mockJwkerApp() {
 }
 
 @KtorExperimentalAPI
-class TokenDingsClient(val config: ClientConfig = ClientConfig()) {
+class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
 
     suspend fun registerClient(
         softwareStatement: SoftwareStatement
     ): ClientRegistration =
         requestBearerToken().let {
             log.debug("using bearer token ${it.accessToken}")
-            httpClient.post<ClientRegistration>(config.registrationEndpoint) {
+            httpClient.post(config.registrationEndpoint) {
                 header("Authorization", "Bearer ${it.accessToken}")
                 contentType(ContentType.Application.Json)
                 body = ClientRegistrationRequest(
@@ -161,7 +161,6 @@ class TokenDingsClient(val config: ClientConfig = ClientConfig()) {
             }
         }
 
-    // TODO remove and move to test
     suspend fun deleteWithoutId() =
         requestBearerToken().let {
             httpClient.delete<Any>("${config.registrationEndpoint}") {
@@ -207,7 +206,7 @@ class TokenDingsClient(val config: ClientConfig = ClientConfig()) {
                 config.identityProviderTokenEndpoint,
                 config.signingKey
             )
-            httpClient.submitForm<OAuth2TokenResponse>(
+            httpClient.submitForm(
                 url = config.identityProviderTokenEndpoint,
                 formParameters = parametersOf(
                     "client_assertion_type" to listOf("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),

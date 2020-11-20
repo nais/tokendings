@@ -29,6 +29,9 @@ spec:
     initialDelay: 5
     periodSeconds: 5
     failureThreshold: 30
+  prometheus:
+    enabled: true
+    path: /internal/metrics
   resources:
     limits:
       cpu: 500m
@@ -39,7 +42,9 @@ spec:
   gcp:
     sqlInstances:
       - type: POSTGRES_11
-        name: tokendings-postgres
+        name: {{sqlinstance_name}}
+        diskAutoresize: true
+        highAvailability: true
         databases:
           - name: tokendings
             envVarPrefix: DB

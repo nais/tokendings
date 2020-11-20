@@ -4,7 +4,10 @@ team: plattformsikkerhet
 ingresses:
   - https://tokendings.prod-gcp.nais.io
 host:
+  - login.microsoftonline.com
+  - navnob2c.b2clogin.com
   - oidc.difi.no
 env:
   APPLICATION_PROFILE: PROD
 slack_alert_channel: "plattformsikkerhet-alerts-prod"
+sqlinstance_name: tokendings-postgres

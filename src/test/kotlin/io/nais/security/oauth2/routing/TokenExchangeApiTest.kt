@@ -34,8 +34,10 @@ import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.shouldBe
 import io.nais.security.oauth2.utils.verifySignature
+import io.prometheus.client.CollectorRegistry
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.Date
@@ -43,7 +45,12 @@ import java.util.UUID
 
 @KtorExperimentalAPI
 internal class TokenExchangeApiTest {
-    val mapper = Jackson.defaultMapper
+    private val mapper = Jackson.defaultMapper
+
+    @AfterEach
+    fun tearDown() {
+        CollectorRegistry.defaultRegistry.clear()
+    }
 
     @Test
     fun `call to well-known should successfully return server metadata`() {
@@ -110,7 +117,7 @@ internal class TokenExchangeApiTest {
                 ) {
                     assertThat(response.status()).isEqualTo(HttpStatusCode.OK)
                     val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.content!!)
-                    assertThat(accessTokenResponse.accessToken).isNotBlank()
+                    assertThat(accessTokenResponse.accessToken).isNotBlank
                     val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
                     val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
                     assertThat(claims.subject).isEqualTo(subjectToken.jwtClaimsSet.subject)
@@ -184,9 +191,9 @@ internal class TokenExchangeApiTest {
         }
     }
 
-    // TODO - should return invalid_client instead of invalid_request?
     @Test
     fun `token exchange call with invalid client assertion keys should fail`() {
+
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")

@@ -11,18 +11,18 @@ spec:
     - alert: Antall restarts
       expr: sum(increase(kube_pod_container_status_restarts_total{container=~"tokendings"}[30m])) by (container) > 2
       for: 5m
-      action: Se `kubectl describe pod {{ $labels.container }}` for events, og `kubectl logs -l app=tokendings` for logger
-      description: "\{{ $labels.container }} har restartet flere ganger siste halvtimen!"
+      action: Se `kubectl describe pod tokendings` for events, og `kubectl logs -l app=tokendings` for logger
+      description: "tokendings har restartet flere ganger siste halvtimen!"
       severity: danger
     - alert: Ingen tilgjengelig podder
       expr: kube_deployment_status_replicas_available{deployment="tokendings"} == 0
       for: 2m
-      description: "App \{{ $labels.deployment }} er nede i namespace \{{ $labels.namespace }}. Ingen tilgjengelige podder."
-      action: Se `kubectl get  pod -l app={{ $labels.deployment }}` for status på podder, og `kubectl logs -l app={{ $labels.deployment }}` for logger.
+      description: "App tokendings er nede i namespace plattformsikkerhet. Ingen tilgjengelige podder."
+      action: Se `kubectl get  pod -l app=tokendings` for status på podder, og `kubectl logs -l app=tokendings` for logger.
     - alert: høy feilrate i logger
       expr: (100 * sum by (log_app, log_namespace) (rate(logd_messages_total{log_app="tokendings",log_level=~"Error"}[3m])) / sum by (log_app, log_namespace) (rate(logd_messages_total{log_app="tokendings"}[3m]))) > 10
       for: 3m
-      action: "Sjekk loggene til app \{{ $labels.deployment }} i namespace \{{ $labels.namespace }}, for å se hvorfor det er så mye feil"
+      action: "Sjekk loggene til app tokendings i namespace plattformsikkerhet, for å se hvorfor det er så mye feil"
   receivers:
     slack:
       channel: '#{{ slack_alert_channel }}'

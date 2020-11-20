@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.utils.generateRsaKey
 import org.junit.jupiter.api.Test
+import java.time.Duration
 import java.time.LocalDateTime
 
 internal class RotatableKeysTest {
@@ -17,7 +18,7 @@ internal class RotatableKeysTest {
             nextKey = generateRsaKey(),
             expiry = expiry
         )
-        val rotated = initial.rotate(expiry.plusDays(1))
+        val rotated = initial.rotate(Duration.ofDays(1))
         rotated.previousKey shouldBe initial.currentKey
         rotated.currentKey shouldBe initial.nextKey
         rotated.nextKey shouldNotBe initial.nextKey

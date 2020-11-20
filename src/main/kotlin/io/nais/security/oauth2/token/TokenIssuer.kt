@@ -11,6 +11,7 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.keystore.RotatingKeyStore
+import io.nais.security.oauth2.metrics.Metrics.Companion.issuedTokensCounter
 import java.net.URL
 import java.time.Instant
 import java.util.Date
@@ -36,7 +37,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
 
-    fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet
+    fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet()
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
@@ -58,6 +59,9 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
                 subjectTokenClaims.issuer?.let { claim("idp", it) }
             }
             .build().sign(rotatingKeyStore.currentSigningKey())
+            .also {
+                issuedTokensCounter.labels(targetAudience).inc()
+            }
     }
 
     private fun validator(issuer: String?): TokenValidator =
