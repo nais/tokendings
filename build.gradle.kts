@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 val assertjVersion = "3.18.1"
 val flywayVersion = "7.2.1"
 val freemarkerVersion = "2.3.29"
@@ -37,8 +39,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_14
+    targetCompatibility = JavaVersion.VERSION_14
 }
 
 apply(plugin = "org.jmailen.kotlinter")
@@ -105,16 +107,19 @@ tasks {
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "13"
+            jvmTarget = "14"
         }
     }
 
     withType<Test> {
         useJUnitPlatform()
+        testLogging {
+            events(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+        }
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.6.1"
+        gradleVersion = "6.7.1"
     }
 
     "build" {
