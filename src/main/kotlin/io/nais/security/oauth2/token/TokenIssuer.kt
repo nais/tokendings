@@ -25,10 +25,10 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
-            it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
+            it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri), removeOptionalClaims(DEFAULT_REQUIRED_CLAIMS, it.optionalClaims))
         }
 
-    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
+    private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore, DEFAULT_REQUIRED_CLAIMS)
 
     fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet()
 
@@ -65,4 +65,10 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
                     ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
             }
         }
+
+    private fun <T> removeOptionalClaims(first: List<T>, second: List<T>) = first.filterNot { second.contains(it) }
+
+    companion object {
+        val DEFAULT_REQUIRED_CLAIMS = listOf("sub", "iss", "iat", "exp", "aud")
+    }
 }
