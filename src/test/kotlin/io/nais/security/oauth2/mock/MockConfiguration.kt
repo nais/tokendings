@@ -127,6 +127,7 @@ class MockClientRegistry : ClientRegistry(
 fun <R> withMockOAuth2Server(
     test: MockOAuth2Server.() -> R
 ): R {
+    withMigratedDb { /* noop */ }
     val server = MockOAuth2Server()
     server.start()
     try {

@@ -9,15 +9,15 @@ import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.tokenExchangeApp
+import io.prometheus.client.CollectorRegistry
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 @KtorExperimentalAPI
 internal class ObservabilityApiTest {
 
     @Test
-    @Disabled
     fun `call to isready should answer OK if database is responding`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(mockOAuth2Server = this, failHealthCheck = false)
@@ -32,7 +32,6 @@ internal class ObservabilityApiTest {
     }
 
     @Test
-    @Disabled
     fun `call to isready should fail if database is not responding`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(mockOAuth2Server = this, failHealthCheck = true)
@@ -45,4 +44,8 @@ internal class ObservabilityApiTest {
             }
         }
     }
+
+    @AfterEach
+    fun clearMetricsRegistry() =
+        CollectorRegistry.defaultRegistry.clear()
 }
