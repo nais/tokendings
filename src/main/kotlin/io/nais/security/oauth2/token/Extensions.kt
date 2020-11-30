@@ -40,14 +40,14 @@ fun SignedJWT.expiresIn(): Long =
     Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
-fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<SecurityContext?>, requiredClaims: List<String>): JWTClaimsSet {
+fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<SecurityContext?>, optionalClaims: List<String>): JWTClaimsSet {
     return verify(
         DefaultJWTClaimsVerifier(
             JWTClaimsSet.Builder()
                 .issuer(issuer)
                 .build(),
             HashSet(
-                requiredClaims
+                optionalClaims
             )
         ),
         keySelector
