@@ -66,7 +66,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             }
         }
 
-    private fun <T> List<T>.removeOptionalClaims(second: List<T>) = this.filterNot { second.contains(it) }
+    private fun <T> List<T>.removeOptionalClaims(optionalClaims: List<T>) = this.filterNot { optionalClaims.contains(it) }
 
     companion object {
         val DEFAULT_REQUIRED_CLAIMS = listOf("sub", "iss", "iat", "exp", "aud")
