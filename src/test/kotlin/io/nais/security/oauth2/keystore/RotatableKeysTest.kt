@@ -22,6 +22,8 @@ internal class RotatableKeysTest {
         rotated.previousKey shouldBe initial.currentKey
         rotated.currentKey shouldBe initial.nextKey
         rotated.nextKey shouldNotBe initial.nextKey
-        rotated.expiry shouldBe expiry.plusDays(1)
+        rotated.expiry.toSecondsOfMinutes() shouldBe expiry.plusDays(1).toSecondsOfMinutes()
     }
+
+    private fun LocalDateTime.toSecondsOfMinutes() = this.withSecond(0).withNano(0)
 }
