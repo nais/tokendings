@@ -56,8 +56,9 @@ object ProdConfiguration {
             )
         )
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
+        val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, databaseHealthCheck)
     }
 }
 
@@ -82,8 +83,9 @@ object NonProdConfiguration {
             )
         )
         val clientRegistry = clientRegistry(databaseConfig)
+        val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties)
+        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, databaseHealthCheck)
     }
 }
 
