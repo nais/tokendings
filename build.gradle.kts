@@ -1,35 +1,37 @@
-val assertjVersion = "3.17.2"
-val flywayVersion = "7.0.0"
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+val assertjVersion = "3.18.1"
+val flywayVersion = "7.4.0"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
 val hikaricpVersion = "3.4.5"
 val jacksonVersion = "2.10.1"
 val junitJupiterVersion = "5.7.0"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "4.2.5"
-val kotlinLoggingVersion = "2.0.3"
-val kotlinVersion = "1.4.10"
+val kotestVersion = "4.3.2"
+val kotlinLoggingVersion = "2.0.4"
+val kotlinVersion = "1.4.20"
 val kotlintestVersion = "3.4.2"
 val kotliqueryVersion = "1.3.1"
-val ktorVersion = "1.4.1"
+val ktorVersion = "1.5.0"
 val logbackVersion = "1.2.3"
-val logstashLogbackEncoderVersion = "6.4"
-val micrometerRegistryPrometheusVersion = "1.5.5"
+val logstashLogbackEncoderVersion = "6.6"
+val micrometerRegistryPrometheusVersion = "1.6.2"
 val mockOAuth2ServerVersion = "0.1.35"
 val mockWebServerVersion = "4.9.0"
-val mockkVersion = "1.10.2"
-val nimbusSdkVersion = "8.22"
+val mockkVersion = "1.10.4"
+val nimbusSdkVersion = "8.30"
 val postgresqlVersion = "42.2.18"
-val testcontainersPostgresVersion = "1.15.0-rc2"
+val testcontainersPostgresVersion = "1.15.1"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.10"
-    id("org.jmailen.kotlinter") version "3.2.0"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
-    id("com.github.ben-manes.versions") version "0.33.0"
+    kotlin("jvm") version "1.4.20"
+    id("org.jmailen.kotlinter") version "3.3.0"
+    id("com.github.johnrengelman.shadow") version "6.1.0"
+    id("com.github.ben-manes.versions") version "0.36.0"
 }
 
 application {
@@ -37,8 +39,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_15
+    targetCompatibility = JavaVersion.VERSION_15
 }
 
 apply(plugin = "org.jmailen.kotlinter")
@@ -105,16 +107,19 @@ tasks {
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "13"
+            jvmTarget = "15"
         }
     }
 
     withType<Test> {
         useJUnitPlatform()
+        testLogging {
+            events(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
+        }
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.6.1"
+        gradleVersion = "6.7.1"
     }
 
     "build" {
