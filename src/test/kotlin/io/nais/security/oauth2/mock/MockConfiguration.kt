@@ -16,6 +16,7 @@ import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.config.rotatingKeyStore
+import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
@@ -33,7 +34,8 @@ import java.time.Duration
 @KtorExperimentalAPI
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
-    clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null
+    clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null,
+    failHealthCheck: Boolean = false
 ): AppConfiguration {
 
     val issuerUrl = "http://localhost:8080"
@@ -56,11 +58,15 @@ fun mockConfig(
     }
 
     val clientRegistry = MockClientRegistry()
+    val mockDatabaseHealthCheck = object : HealthCheck {
+        override fun ping() = if (failHealthCheck) throw RuntimeException("oh noes") else "pong"
+    }
     return AppConfiguration(
         ServerProperties(8080),
         clientRegistry,
         authorizationServerProperties,
-        clientRegAuthProperties
+        clientRegAuthProperties,
+        mockDatabaseHealthCheck
     )
 }
 

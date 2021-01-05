@@ -8,9 +8,11 @@ import io.ktor.client.request.get
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.defaultHttpClient
+import io.nais.security.oauth2.health.DatabaseHealthCheck
+import io.nais.security.oauth2.health.HealthCheck
+import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -26,7 +28,8 @@ data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
-    val clientRegistrationAuthProperties: ClientRegistrationAuthProperties
+    val clientRegistrationAuthProperties: ClientRegistrationAuthProperties,
+    val databaseHealthCheck: HealthCheck
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
@@ -109,3 +112,6 @@ internal fun migrate(databaseConfig: DatabaseConfig) =
     dataSourceFrom(databaseConfig).apply {
         migrate(this)
     }
+
+internal fun databaseHealthCheck(dataSource: HikariDataSource) =
+    DatabaseHealthCheck(dataSource)
