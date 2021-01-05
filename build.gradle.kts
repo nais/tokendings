@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 val assertjVersion = "3.18.1"
-val flywayVersion = "7.3.2"
+val flywayVersion = "7.4.0"
 val freemarkerVersion = "2.3.29"
 val h2Version = "1.4.200"
 val hikaricpVersion = "3.4.5"
@@ -39,8 +39,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_14
-    targetCompatibility = JavaVersion.VERSION_14
+    sourceCompatibility = JavaVersion.VERSION_15
+    targetCompatibility = JavaVersion.VERSION_15
 }
 
 apply(plugin = "org.jmailen.kotlinter")
@@ -107,7 +107,7 @@ tasks {
 
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "14"
+            jvmTarget = "15"
         }
     }
 
