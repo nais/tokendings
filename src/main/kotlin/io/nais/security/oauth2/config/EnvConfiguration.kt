@@ -75,7 +75,8 @@ object NonProdConfiguration {
                 SubjectTokenIssuer(
                     "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
                 ),
-                SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration")
+                SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration"),
+                SubjectTokenIssuer("https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration")
             ),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
