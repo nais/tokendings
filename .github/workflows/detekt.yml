@@ -1,0 +1,22 @@
+name: detekt
+
+on: [ push ]
+
+jobs:
+  detekt:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Detekt Codesmell
+        uses: natiginfo/action-detekt-all@1.15.0
+        with:
+          args: >
+            -r txt:reports/detekt.txt
+            --jvm-target 15
+            --build-upon-default-config
+      - name: Print Report
+        if: always()
+        run: cat reports/detekt.txt
