@@ -15,7 +15,7 @@ jobs:
         with:
           args: >
             -r txt:reports/detekt.txt
-            --jvm-target 15
+            --jvm-target 14
             --build-upon-default-config
       - name: Print Report
         if: always()
