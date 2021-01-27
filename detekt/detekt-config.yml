@@ -29,6 +29,8 @@ style:
   ThrowsCount:
     active: true
     max: 3
+  UnnecessaryAbstractClass:
+    active: false
 
 naming:
   TopLevelPropertyNaming:

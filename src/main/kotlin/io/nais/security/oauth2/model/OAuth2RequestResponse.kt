@@ -16,7 +16,7 @@ object SubjectTokenType {
     const val TOKEN_TYPE_JWT = "urn:ietf:params:oauth:token-type:jwt"
 }
 
-open class OAuth2TokenRequest(
+abstract class OAuth2TokenRequest(
     @JsonProperty("grant_type")
     val grantType: String
 )
