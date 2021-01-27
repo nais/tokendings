@@ -66,17 +66,19 @@ fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?
 }
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
-fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>, keySelector: JWSVerificationKeySelector<SecurityContext?>):
-    JWTClaimsSet {
-        try {
-            val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
-            jwtProcessor.jwsKeySelector = keySelector
-            jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
-            return jwtProcessor.process(this, null)
-        } catch (e: Exception) {
-            throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
-        }
+fun SignedJWT.verify(
+    jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
+    keySelector: JWSVerificationKeySelector<SecurityContext?>
+): JWTClaimsSet {
+    try {
+        val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
+        jwtProcessor.jwsKeySelector = keySelector
+        jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
+        return jwtProcessor.process(this, null)
+    } catch (e: Exception) {
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
     }
+}
 
 @Throws(OAuth2Exception::class)
 internal fun String.toJwt(): SignedJWT = try {

@@ -15,7 +15,6 @@ class ClientStore(private val dataSource: DataSource) {
 
     companion object {
         private const val TABLE_NAME = "clients"
-        private const val PRIMARY_KEY = "client_id"
     }
 
     fun storeClient(oAuth2Client: OAuth2Client): Int =
@@ -77,13 +76,4 @@ class ClientStore(private val dataSource: DataSource) {
     private fun Row.mapToOAuth2Client(): OAuth2Client {
         return OAuth2Client.fromJson(this.string("data"))
     }
-
-    private fun OAuth2Client.mapToColumns(): Map<String, *> =
-        mapOf(
-            "client_id" to this.clientId,
-            "data" to PGobject().also {
-                it.type = "jsonb"
-                it.value = this.toJson()
-            }
-        )
 }

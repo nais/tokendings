@@ -1,6 +1,10 @@
 name: detekt
 
-on: [ push ]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   detekt:
@@ -14,9 +18,13 @@ jobs:
         uses: natiginfo/action-detekt-all@1.15.0
         with:
           args: >
-            -r txt:reports/detekt.txt
+            -r sarif:reports/detekt.json
             --jvm-target 14
-            --excludes MagicNumber MaxLineLength
-      - name: Print Report
+            --build-upon-default-config
+            --config detekt/detekt-config.yml
+      - name: Detekt tests results
         if: always()
-        run: cat reports/detekt.txt
+        uses: actions/upload-artifact@v1
+        with:
+          name: detekt-results
+          path: reports/detekt.json
