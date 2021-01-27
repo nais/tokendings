@@ -14,7 +14,8 @@ jobs:
         uses: natiginfo/action-detekt-all@1.15.0
         with:
           args: >
-            -r sarif:reports/detekt.json txt:reports/detekt.txt
+            -r sarif:reports/detekt.json
+            -r txt:reports/detekt.txt
             --jvm-target 14
             --build-upon-default-config
             --config detekt/detekt-config.yml
