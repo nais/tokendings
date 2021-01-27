@@ -26,6 +26,9 @@ style:
     ignoreAnnotation: false
     ignoreNamedArgument: true
     ignoreEnums: false
+  ThrowsCount:
+    active: true
+    max: 3
 
 naming:
   TopLevelPropertyNaming:
@@ -55,7 +58,3 @@ exceptions:
       - Exception
       - Throwable
       - RuntimeException
-  ThrowsCount:
-    active: true
-    max: 3
-

@@ -14,12 +14,12 @@ jobs:
         uses: natiginfo/action-detekt-all@1.15.0
         with:
           args: >
-            -r sarif:reports/detekt.json
+            -r sarif:reports/detekt.json txt:reports/detekt.txt
             --jvm-target 14
             --build-upon-default-config
             --config detekt/detekt-config.yml
-      - name: Detekt tests results
-        if: always()
+      - name: Detekt results
+        # if: always()
         uses: actions/upload-artifact@v1
         with:
           name: detekt-results
