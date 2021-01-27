@@ -10,7 +10,7 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.keystore.RotatingKeyStore
-import io.nais.security.oauth2.metrics.Metrics.Companion.issuedTokensCounter
+import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
 import java.net.URL
 import java.time.Instant
 import java.util.Date
@@ -34,7 +34,6 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
-        // TODO: consider moving subjectToken validation into authnz feature
         val subjectTokenJwt = tokenExchangeRequest.subjectToken.toJwt()
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)

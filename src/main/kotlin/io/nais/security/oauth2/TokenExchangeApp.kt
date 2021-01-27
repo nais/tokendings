@@ -99,7 +99,7 @@ fun server(): NettyApplicationEngine =
 @KtorExperimentalAPI
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
-        header(HttpHeaders.XCorrelationId) // todo: standardize on header name used for correlation IDs
+        header(HttpHeaders.XCorrelationId)
         generate { UUID.randomUUID().toString() }
         verify { callId: String -> callId.isNotEmpty() }
     }
