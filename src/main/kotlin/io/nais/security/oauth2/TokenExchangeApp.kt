@@ -136,21 +136,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(StatusPages) {
-        exception<Throwable> { cause ->
-            log.error("request failed: $cause", cause)
-            when (cause) {
-                is OAuth2Exception -> {
-                    val includeErrorDetails = config.isNonProd()
-                    call.respondWithError(cause, includeErrorDetails)
-                }
-                is JsonProcessingException -> {
-                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
-                }
-                else -> {
-                    call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
-                }
-            }
-        }
+        installExceptionHandling(config)
     }
 
     install(Authentication) {
@@ -163,6 +149,23 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     routing {
         observability(config.databaseHealthCheck)
         routing.apiRouting(this.application)
+    }
+}
+
+@KtorExperimentalAPI
+fun StatusPages.Configuration.installExceptionHandling(config: AppConfiguration) = exception<Throwable> { cause ->
+    log.error("request failed: $cause", cause)
+    when (cause) {
+        is OAuth2Exception -> {
+            val includeErrorDetails = config.isNonProd()
+            call.respondWithError(cause, includeErrorDetails)
+        }
+        is JsonProcessingException -> {
+            call.respond(HttpStatusCode.BadRequest, "invalid request content")
+        }
+        else -> {
+            call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
+        }
     }
 }
 
