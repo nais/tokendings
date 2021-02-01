@@ -48,13 +48,6 @@ exceptions:
       - NullPointerException
       - IndexOutOfBoundsException
       - RuntimeException
-  TooGenericExceptionThrown:
-    active: false
-    exceptionNames:
-      - Error
-      - Exception
-      - Throwable
-      - RuntimeException
 complexity:
   LongMethod:
     active: true
