@@ -18,7 +18,7 @@ jobs:
             -r txt:reports/detekt.txt
             --jvm-target 14
             --build-upon-default-config
-            --config detekt/detekt-config.yml
+            --config .github/detekt/detekt-config.yml
       - name: Detekt results Upload SARIF file
         uses: github/codeql-action/upload-sarif@v1
         with:
