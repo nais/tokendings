@@ -45,7 +45,11 @@ class TokenRequestContext private constructor(
                 MDC.put("client_id", client.clientId)
             }
 
-        private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
+        private fun authenticateClient(
+            config: TokenRequestConfig,
+            clientAssertionCredential:
+                ClientAssertionCredential
+        ): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->
                     val keyIds = oAuth2Client.jwkSet.keys.map { it.keyID }.toList()
@@ -72,7 +76,9 @@ class TokenRequestContext private constructor(
             config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }
                 ?.authorize(parameters, client)
                 ?: throw OAuth2Exception(
-                    OAuth2Error.ACCESS_DENIED.setDescription("could not find authorizer for grant_type=${parameters["grant_type"]}")
+                    OAuth2Error.ACCESS_DENIED.setDescription(
+                        "could not find authorizer for grant_type=${parameters["grant_type"]}"
+                    )
                 )
     }
 }

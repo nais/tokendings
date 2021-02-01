@@ -61,7 +61,11 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             issuerUrl -> internalTokenValidator
             else -> {
                 issuer?.let { tokenValidators[it] }
-                    ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot validate token from issuer=$issuer"))
+                    ?: throw OAuth2Exception(
+                        OAuth2Error.INVALID_REQUEST.setDescription(
+                            "invalid request, cannot validate token from issuer=$issuer"
+                        )
+                    )
             }
         }
 }

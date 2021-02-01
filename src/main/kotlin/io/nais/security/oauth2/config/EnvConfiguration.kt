@@ -43,15 +43,17 @@ internal object EnvKey {
 
 @KtorExperimentalAPI
 object ProdConfiguration {
+    private const val issuerUrl = "https://tokendings.prod-gcp.nais.io"
+    private val subjectTokenIssuers = listOf(
+        "https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration",
+        "https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten",
+        "https://navnob2c.b2clogin.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten"
+    )
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
-            issuerUrl = "https://tokendings.prod-gcp.nais.io",
-            subjectTokenIssuers = listOf(
-                SubjectTokenIssuer("https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration"),
-                SubjectTokenIssuer("https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten"),
-                SubjectTokenIssuer("https://navnob2c.b2clogin.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten")
-            ),
+            issuerUrl = issuerUrl,
+            subjectTokenIssuers = subjectTokenIssuers.toConfiguration(),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
@@ -72,20 +74,18 @@ object ProdConfiguration {
 
 @KtorExperimentalAPI
 object NonProdConfiguration {
+    private const val issuerUrl = "https://tokendings.dev-gcp.nais.io"
+    private val subjectTokenIssuers = listOf(
+        "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1",
+        "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1",
+        "https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration",
+        "https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration"
+    )
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
-            issuerUrl = "https://tokendings.dev-gcp.nais.io",
-            subjectTokenIssuers = listOf(
-                SubjectTokenIssuer(
-                    "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
-                ),
-                SubjectTokenIssuer(
-                    "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1"
-                ),
-                SubjectTokenIssuer("https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration"),
-                SubjectTokenIssuer("https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration")
-            ),
+            issuerUrl = issuerUrl,
+            subjectTokenIssuers = subjectTokenIssuers.toConfiguration(),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
@@ -102,6 +102,11 @@ object NonProdConfiguration {
             databaseHealthCheck
         )
     }
+}
+
+@KtorExperimentalAPI
+fun List<String>.toConfiguration() = this.map { issuerWellKnown ->
+    SubjectTokenIssuer(issuerWellKnown)
 }
 
 @KtorExperimentalAPI
@@ -130,7 +135,8 @@ internal fun databaseConfig(): DatabaseConfig {
 @KtorExperimentalAPI
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
-        identityProviderWellKnownUrl = "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
+        identityProviderWellKnownUrl =
+        "https://login.microsoftonline.com/62366534-1ec3-4962-8869-9b5535279d0b/v2.0/.well-known/openid-configuration",
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
         acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {

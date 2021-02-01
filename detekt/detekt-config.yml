@@ -1,14 +1,14 @@
 formatting:
   MaximumLineLength:
     active: true
-    maxLineLength: 155
+    maxLineLength: 135
   NoWildcardImports:
     active: false
 
 style:
   MaxLineLength:
-    active: false
-    maxLineLength: 155
+    active: true
+    maxLineLength: 135
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
