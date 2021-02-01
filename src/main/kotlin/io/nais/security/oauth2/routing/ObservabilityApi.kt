@@ -14,7 +14,7 @@ import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.withTimeout
 
-private const val TIMEOUT_IN_MILLI_SECONDS = 5000L
+private const val DB_TIMEOUT = 5000L
 
 internal fun Routing.observability(databaseHealthCheck: HealthCheck) {
     route("/internal") {
@@ -23,7 +23,7 @@ internal fun Routing.observability(databaseHealthCheck: HealthCheck) {
         }
 
         get("/isready") {
-            withTimeout(TIMEOUT_IN_MILLI_SECONDS) {
+            withTimeout(DB_TIMEOUT) {
                 databaseHealthCheck.ping()
                 call.respond(OK)
             }
