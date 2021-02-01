@@ -39,7 +39,7 @@ naming:
 
 exceptions:
   TooGenericExceptionCaught:
-    active: false
+    active: true
     exceptionNames:
       - ArrayIndexOutOfBoundsException
       - Error
@@ -48,7 +48,6 @@ exceptions:
       - NullPointerException
       - IndexOutOfBoundsException
       - RuntimeException
-      - Throwable
   TooGenericExceptionThrown:
     active: false
     exceptionNames:

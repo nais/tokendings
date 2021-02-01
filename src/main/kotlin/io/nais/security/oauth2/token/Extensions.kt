@@ -21,7 +21,6 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
-import java.lang.Exception
 import java.time.Duration
 import java.time.Instant
 import java.util.HashSet
@@ -65,7 +64,7 @@ fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?
     )
 }
 
-@Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
+@Throws(OAuth2Exception::class)
 fun SignedJWT.verify(
     jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
     keySelector: JWSVerificationKeySelector<SecurityContext?>
@@ -75,16 +74,16 @@ fun SignedJWT.verify(
         jwtProcessor.jwsKeySelector = keySelector
         jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
         return jwtProcessor.process(this, null)
-    } catch (e: Exception) {
-        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
+    } catch (t: Throwable) {
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${t.message}"), t)
     }
 }
 
 @Throws(OAuth2Exception::class)
 internal fun String.toJwt(): SignedJWT = try {
     SignedJWT.parse(this)
-} catch (e: Exception) {
-    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"))
+} catch (t: Throwable) {
+    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"), t)
 }
 
 @Throws(ParseException::class)
