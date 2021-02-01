@@ -2,6 +2,7 @@ formatting:
   MaximumLineLength:
     active: true
     maxLineLength: 135
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
   NoWildcardImports:
     active: false
 
@@ -9,6 +10,7 @@ style:
   MaxLineLength:
     active: true
     maxLineLength: 135
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
   MagicNumber:
     active: true
     ignoreNumbers: '-1,0,1,2,3,4,5'
@@ -38,3 +40,6 @@ exceptions:
       - NullPointerException
       - IndexOutOfBoundsException
       - RuntimeException
+  TooGenericExceptionThrown:
+    active: true
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']

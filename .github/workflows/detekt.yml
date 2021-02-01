@@ -19,8 +19,8 @@ jobs:
             --jvm-target 14
             --build-upon-default-config
             --config detekt/detekt-config.yml
-      - name: Detekt results
-        uses: actions/upload-artifact@v1
+      - name: Detekt results Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
         with:
-          name: detekt-results
-          path: reports/detekt.json
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: reports/detekt.json
