@@ -15,6 +15,9 @@ import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
+import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
+import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
+import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 import java.net.URL
@@ -34,8 +37,8 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
         val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))
-            .cached(10, 24, TimeUnit.HOURS)
-            .rateLimited(10, 1, TimeUnit.MINUTES)
+            .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+            .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
             .build()
         realm = "BEARER_AUTH"
         verifier { token ->

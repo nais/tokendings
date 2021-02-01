@@ -8,13 +8,13 @@ formatting:
 style:
   MaxLineLength:
     active: false
-    maxLineLength: 160
+    maxLineLength: 155
     excludePackageStatements: true
     excludeImportStatements: true
     excludeCommentStatements: false
   MagicNumber:
-    active: false
-    ignoreNumbers: '-1,0,1,2'
+    active: true
+    ignoreNumbers: '-1,0,1,2,3,4,5'
     ignoreHashCodeFunction: false
     ignorePropertyDeclaration: false
     ignoreConstantDeclaration: true

@@ -10,6 +10,7 @@ import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
+import io.nais.security.oauth2.config.EnvKey.APPLICATION_PORT
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
@@ -37,6 +38,7 @@ internal object EnvKey {
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
+    const val APPLICATION_PORT = 8080
 }
 
 @KtorExperimentalAPI
@@ -58,7 +60,13 @@ object ProdConfiguration {
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, databaseHealthCheck)
+        AppConfiguration(
+            ServerProperties(APPLICATION_PORT),
+            clientRegistry,
+            authorizationServerProperties,
+            bearerTokenAuthenticationProperties,
+            databaseHealthCheck
+        )
     }
 }
 
@@ -86,7 +94,13 @@ object NonProdConfiguration {
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(ServerProperties(8080), clientRegistry, authorizationServerProperties, bearerTokenAuthenticationProperties, databaseHealthCheck)
+        AppConfiguration(
+            ServerProperties(APPLICATION_PORT),
+            clientRegistry,
+            authorizationServerProperties,
+            bearerTokenAuthenticationProperties,
+            databaseHealthCheck
+        )
     }
 }
 

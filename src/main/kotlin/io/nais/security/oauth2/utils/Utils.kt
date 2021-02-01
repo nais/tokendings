@@ -21,6 +21,8 @@ import javax.crypto.SecretKey
 typealias KeyId = String
 typealias KeySize = Int
 
+private const val KEY_SIZE = 128
+
 fun generateRsaKey(keyId: KeyId = UUID.randomUUID().toString(), keySize: KeySize = 2048): RSAKey =
     KeyPairGenerator.getInstance("RSA").apply { initialize(keySize) }.generateKeyPair()
         .let {
@@ -34,7 +36,7 @@ fun generateRsaKey(keyId: KeyId = UUID.randomUUID().toString(), keySize: KeySize
 fun generateAESKey(): SecretKey =
     KeyGenerator.getInstance("AES")
         .apply {
-            this.init(128)
+            this.init(KEY_SIZE)
         }.generateKey()
 
 fun String.encrypt(key: SecretKey): String =
