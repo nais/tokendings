@@ -1,7 +1,7 @@
 formatting:
   MaximumLineLength:
-    active: false
-    maxLineLength: 120
+    active: true
+    maxLineLength: 155
   NoWildcardImports:
     active: false
 

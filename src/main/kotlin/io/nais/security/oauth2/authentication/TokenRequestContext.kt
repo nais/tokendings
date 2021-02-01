@@ -54,19 +54,19 @@ class TokenRequestContext private constructor(
                         config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
                         oAuth2Client.jwkSet
                     )
-                    if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime))
+                    if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime)) {
                         throw OAuth2Exception(
                             OAuth2Error.INVALID_CLIENT.setDescription(
                                 "invalid client authentication for client_id=${clientAssertionCredential.clientId}," +
                                     " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s)."
                             )
                         )
-                }
-                ?: throw OAuth2Exception(
-                    OAuth2Error.INVALID_CLIENT.setDescription(
-                        "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
-                    )
+                    }
+                } ?: throw OAuth2Exception(
+                OAuth2Error.INVALID_CLIENT.setDescription(
+                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
                 )
+            )
 
         private fun authorizeTokenRequest(config: TokenRequestConfig, client: OAuth2Client): OAuth2TokenRequest =
             config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }

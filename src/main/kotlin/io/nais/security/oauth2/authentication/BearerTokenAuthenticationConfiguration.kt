@@ -46,16 +46,25 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
                 val payload = credentials.payload
                 require(payload.audience.containsAll(properties.acceptedAudience)) {
                     throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT
-                            .setDescription("audience claim does not contain accepted audience (${properties.acceptedAudience})")
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "audience claim does not contain accepted audience (${properties.acceptedAudience})"
+                        )
                     )
                 }
                 require(payload.claims.containsKey("roles")) {
-                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim is not present"))
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "roles claim is not present"
+                        )
+                    )
                 }
                 val roles: List<String> = payload.getClaim("roles").asList(String::class.java)
                 require(roles.containsAll(properties.acceptedRoles)) {
-                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim does not contain accepted roles (${properties.acceptedRoles}"))
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "roles claim does not contain accepted roles (${properties.acceptedRoles}"
+                        )
+                    )
                 }
                 JWTPrincipal(credentials.payload)
             } catch (e: Throwable) {
