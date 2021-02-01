@@ -102,7 +102,11 @@ class TokenRequestConfig internal constructor(
             )
         }
 
-        internal var clientAssertionMaxLifetime: Long = 120
+        internal var clientAssertionMaxLifetime: Long = CLIENT_ASSERTION_MAX_LIFETIME
+    }
+
+    companion object {
+        private const val CLIENT_ASSERTION_MAX_LIFETIME = 120L
     }
 }
 
