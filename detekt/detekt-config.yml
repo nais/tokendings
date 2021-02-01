@@ -22,6 +22,7 @@ style:
     ignoreAnnotation: false
     ignoreNamedArgument: true
     ignoreEnums: false
+    ignoreRanges: true
   ThrowsCount:
     active: true
     max: 3
