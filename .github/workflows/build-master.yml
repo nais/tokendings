@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v2
@@ -40,7 +40,7 @@ jobs:
         run: ./gradlew build
 
   release-notes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Release Drafter
         uses: release-drafter/release-drafter@v5

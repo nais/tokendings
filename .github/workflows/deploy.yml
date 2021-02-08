@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build and push Docker container
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v2
@@ -59,7 +59,7 @@ jobs:
     name: Deploy to dev-gcp
     needs: build
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
@@ -73,7 +73,7 @@ jobs:
     name: Deploy to prod-gcp
     needs: deploy-dev-gcp
     if: "github.ref == 'refs/heads/master'"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
       - uses: nais/deploy/actions/deploy@v1
