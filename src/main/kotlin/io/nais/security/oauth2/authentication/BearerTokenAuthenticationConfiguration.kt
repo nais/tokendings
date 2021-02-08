@@ -15,6 +15,9 @@ import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
+import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
+import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
+import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 import java.net.URL
@@ -34,8 +37,8 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
         val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))
-            .cached(10, 24, TimeUnit.HOURS)
-            .rateLimited(10, 1, TimeUnit.MINUTES)
+            .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+            .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
             .build()
         realm = "BEARER_AUTH"
         verifier { token ->
@@ -46,20 +49,29 @@ fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfigurat
                 val payload = credentials.payload
                 require(payload.audience.containsAll(properties.acceptedAudience)) {
                     throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT
-                            .setDescription("audience claim does not contain accepted audience (${properties.acceptedAudience})")
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "audience claim does not contain accepted audience (${properties.acceptedAudience})"
+                        )
                     )
                 }
                 require(payload.claims.containsKey("roles")) {
-                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim is not present"))
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "roles claim is not present"
+                        )
+                    )
                 }
                 val roles: List<String> = payload.getClaim("roles").asList(String::class.java)
                 require(roles.containsAll(properties.acceptedRoles)) {
-                    throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("roles claim does not contain accepted roles (${properties.acceptedRoles}"))
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "roles claim does not contain accepted roles (${properties.acceptedRoles}"
+                        )
+                    )
                 }
                 JWTPrincipal(credentials.payload)
-            } catch (e: Throwable) {
-                log.error("error in validation when authenticating.", e)
+            } catch (o: OAuth2Exception) {
+                log.error("error in validation when authenticating.", o)
                 null
             }
         }

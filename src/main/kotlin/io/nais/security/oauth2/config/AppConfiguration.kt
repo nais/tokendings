@@ -7,6 +7,9 @@ import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.request.get
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
+import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
+import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
+import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.health.DatabaseHealthCheck
 import io.nais.security.oauth2.health.HealthCheck
@@ -22,6 +25,12 @@ import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
+
+object JwkCache {
+    const val CACHE_SIZE = 10L
+    const val EXPIRES_IN = 24L
+    const val BUCKET_SIZE = 10L
+}
 
 @KtorExperimentalAPI
 data class AppConfiguration(
@@ -52,8 +61,8 @@ data class ClientRegistrationAuthProperties(
         defaultHttpClient.get(identityProviderWellKnownUrl)
     }
     val jwkProvider: JwkProvider = JwkProviderBuilder(URL(wellKnown.jwksUri))
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(10, 1, TimeUnit.MINUTES)
+        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
         .build()
 }
 

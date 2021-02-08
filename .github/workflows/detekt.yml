@@ -1,0 +1,26 @@
+name: detekt
+
+on: push
+
+jobs:
+  detekt:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Detekt Codesmell
+        uses: natiginfo/action-detekt-all@1.15.0
+        with:
+          args: >
+            -r sarif:reports/detekt.json
+            -r txt:reports/detekt.txt
+            --jvm-target 14
+            --build-upon-default-config
+            --config .github/detekt/detekt-config.yml
+      - name: Detekt results Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: reports/detekt.json

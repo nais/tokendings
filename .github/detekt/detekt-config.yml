@@ -1,0 +1,45 @@
+formatting:
+  MaximumLineLength:
+    active: true
+    maxLineLength: 135
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
+  NoWildcardImports:
+    active: false
+
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 135
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
+  MagicNumber:
+    active: true
+    ignoreNumbers: '-1,0,1,2,3,4,5'
+    ignoreRanges: true
+  ThrowsCount:
+    active: true
+    max: 3
+  UnnecessaryAbstractClass:
+    active: false
+
+naming:
+  TopLevelPropertyNaming:
+    active: true
+    excludes: [ '**/test/**', '**/commonTest/**']
+    constantPattern: '[_A-Za-z0-9]*'
+    propertyPattern: '[_A-Za-z0-9]*'
+    privatePropertyPattern: '_?[A-Za-z][_A-Za-z0-9]*'
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - ArrayIndexOutOfBoundsException
+      - Error
+      - Exception
+      - IllegalMonitorStateException
+      - NullPointerException
+      - IndexOutOfBoundsException
+      - RuntimeException
+  TooGenericExceptionThrown:
+    active: true
+    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']

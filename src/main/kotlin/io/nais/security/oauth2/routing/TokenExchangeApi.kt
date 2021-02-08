@@ -69,7 +69,11 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                         )
                     )
                 }
-                else -> throw OAuth2Exception(OAuth2Error.INVALID_GRANT.setDescription("grant_type=${tokenRequest.grantType} is not supported"))
+                else -> throw OAuth2Exception(
+                    OAuth2Error.INVALID_GRANT.setDescription(
+                        "grant_type=${tokenRequest.grantType} is not supported"
+                    )
+                )
             }
         }
     }

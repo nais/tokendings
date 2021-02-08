@@ -9,6 +9,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.oauth2.sdk.ErrorObject
@@ -35,7 +36,7 @@ fun jwkSet(): JWKSet =
                 .build()
         }.let { JWKSet(it) }
 
-fun SignedJWT.verifySignature(jwkSet: JWKSet) =
+fun SignedJWT.verifySignature(jwkSet: JWKSet): JWTClaimsSet =
     DefaultJWTProcessor<SecurityContext?>().apply {
         jwsKeySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwkSet))
     }.process(this, null)
