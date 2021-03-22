@@ -10,7 +10,7 @@ val junitJupiterVersion = "5.7.0"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "4.3.2"
 val kotlinLoggingVersion = "2.0.4"
-val kotlinVersion = "1.4.20"
+val kotlinVersion = "1.4.31"
 val kotlintestVersion = "3.4.2"
 val kotliqueryVersion = "1.3.1"
 val ktorVersion = "1.5.0"
@@ -28,7 +28,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.20"
+    kotlin("jvm") version "1.4.31"
     id("org.jmailen.kotlinter") version "3.3.0"
     id("com.github.johnrengelman.shadow") version "6.1.0"
     id("com.github.ben-manes.versions") version "0.36.0"
@@ -119,7 +119,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.7.1"
+        gradleVersion = "6.8.3"
     }
 
     "build" {
