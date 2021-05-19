@@ -1,6 +1,7 @@
 package io.nais.security.oauth2.token
 
 import io.kotest.matchers.maps.shouldContainAll
+import io.kotest.matchers.shouldBe
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
@@ -52,6 +53,32 @@ internal class TokenIssuerTest {
                         Pair("iss", ISSUER_URL),
                         Pair("aud", listOf(tokenAudience))
                     )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `exchanged token should keep idp claim if already present in subject_token`() {
+        withMigratedDb {
+            withMockOAuth2Server {
+                val subjectToken = this.createSubjectToken(
+                    "thesubject",
+                    mapOf(
+                        "claim1" to "claim1value",
+                        "claim2" to "claim2value",
+                        "idp" to "http://originalidp"
+                    )
+                ).serialize()
+
+                with(tokenIssuer(this)) {
+                    val oAuth2Client = oAuth2Client()
+                    val tokenAudience = "jollo"
+                    val issuedToken = issueTokenFor(
+                        oAuth2Client,
+                        tokenExchangeRequest(subjectToken, "aud")
+                    )
+                    issuedToken.verifySignature(this.publicJwkSet()).claims["idp"] shouldBe "http://originalidp"
                 }
             }
         }

@@ -48,7 +48,9 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             .audience(targetAudience)
             .claim("client_id", oAuth2Client.clientId)
             .apply {
-                subjectTokenClaims.issuer?.let { claim("idp", it) }
+                if (!subjectTokenClaims.claims.containsKey("idp")) {
+                    subjectTokenClaims.issuer?.let { claim("idp", it) }
+                }
             }
             .build().sign(rotatingKeyStore.currentSigningKey())
             .also {
