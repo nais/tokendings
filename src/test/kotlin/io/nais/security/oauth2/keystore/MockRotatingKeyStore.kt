@@ -5,7 +5,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.proc.SecurityContext
 import java.time.Duration
 
-class MockRotatingKeyStore(private val rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStore {
+class MockRotatingKeyStore(private val rotationInterval: Duration = Duration.ofDays(1)) : RotatingKeyStore {
     private var keys = RotatableKeys.generate(expiresIn = rotationInterval)
 
     override fun currentSigningKey() = getAndRotateKeysIfExpired().currentKey

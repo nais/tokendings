@@ -10,7 +10,6 @@ import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.model.SubjectTokenType
 import io.nais.security.oauth2.registration.ClientRegistry
-import io.nais.security.oauth2.registration.ClientRegistryPostgres
 import mu.KotlinLogging
 import org.slf4j.Logger
 

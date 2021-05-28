@@ -18,7 +18,6 @@ import io.nais.security.oauth2.config.rotatingKeyStore
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.MockRotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStore
-import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
@@ -101,8 +100,8 @@ fun MockApp(
     }
 }
 
-class MockClientRegistry: ClientRegistry {
-    private val clients: MutableMap<ClientId,OAuth2Client> = mutableMapOf()
+class MockClientRegistry : ClientRegistry {
+    private val clients: MutableMap<ClientId, OAuth2Client> = mutableMapOf()
 
     override fun findClient(clientId: ClientId): OAuth2Client? = clients[clientId]
 

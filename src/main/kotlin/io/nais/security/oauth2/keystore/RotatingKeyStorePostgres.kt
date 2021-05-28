@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import io.nais.security.oauth2.config.KeyStoreProperties
 import mu.KotlinLogging
@@ -13,7 +12,7 @@ import java.time.Duration
 
 private val log: Logger = KotlinLogging.logger { }
 
-class RotatingKeyStorePostgres(keyStoreProperties: KeyStoreProperties): RotatingKeyStore {
+class RotatingKeyStorePostgres(keyStoreProperties: KeyStoreProperties) : RotatingKeyStore {
     private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
     private val rotationInterval: Duration = keyStoreProperties.rotationInterval
     private val rotatableKeys: RotatableKeys = getOrGenerateKeys()

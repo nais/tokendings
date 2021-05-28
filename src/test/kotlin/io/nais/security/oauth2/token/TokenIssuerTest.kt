@@ -2,7 +2,7 @@ package io.nais.security.oauth2.token
 
 import io.kotest.matchers.maps.shouldContainAll
 import io.kotest.matchers.shouldBe
-import io.ktor.util.*
+import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.keystore.MockRotatingKeyStore

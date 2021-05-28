@@ -9,7 +9,7 @@ private val log = KotlinLogging.logger {}
 
 open class ClientRegistryPostgres(
     clientRegistryProperties: ClientRegistryProperties
-): ClientRegistry {
+) : ClientRegistry {
     private val clientStore = ClientStore(clientRegistryProperties.dataSource)
 
     override fun findClient(clientId: ClientId): OAuth2Client? = clientStore.find(clientId)
