@@ -14,8 +14,10 @@ import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.health.DatabaseHealthCheck
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
+import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
+import io.nais.security.oauth2.registration.ClientRegistryPostgres
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -102,16 +104,16 @@ data class KeyStoreProperties(
 
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
 
-fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStore =
-    RotatingKeyStore(
+fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStorePostgres =
+    RotatingKeyStorePostgres(
         KeyStoreProperties(
             dataSource = dataSource,
             rotationInterval = rotationInterval
         )
     )
 
-internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
-    ClientRegistry(
+internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistryPostgres =
+    ClientRegistryPostgres(
         ClientRegistryProperties(
             dataSource
         )
