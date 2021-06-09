@@ -10,13 +10,13 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
-import io.nais.security.oauth2.config.ClientRegistryProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
 import io.nais.security.oauth2.config.rotatingKeyStore
 import io.nais.security.oauth2.health.HealthCheck
+import io.nais.security.oauth2.keystore.MockRotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
@@ -87,9 +87,9 @@ fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: J
         every { it.jwkProvider } returns jwkProvider
     }
 
-fun rotatingKeyStore(): RotatingKeyStore = rotatingKeyStore(DataSource.instance)
+fun rotatingKeyStore(): RotatingKeyStore = MockRotatingKeyStore()
 
-fun rotatingKeyStore(rotationInterval: Duration): RotatingKeyStore = rotatingKeyStore(DataSource.instance, rotationInterval)
+fun rotatingKeyStore(rotationInterval: Duration): RotatingKeyStore = MockRotatingKeyStore(rotationInterval)
 
 @KtorExperimentalAPI
 fun MockApp(
@@ -100,34 +100,31 @@ fun MockApp(
     }
 }
 
-class MockClientRegistry : ClientRegistry(
-    ClientRegistryProperties(DataSource.instance.apply { clean(this) }.apply { migrate(this) })
-) {
+class MockClientRegistry : ClientRegistry {
+    private val clients: MutableMap<ClientId, OAuth2Client> = mutableMapOf()
 
-    private fun registerClientAndGenerateKeys(
-        clientId: String,
-        accessPolicy: AccessPolicy = AccessPolicy(),
-        allowedScopes: List<String> = emptyList(),
-        allowedGrantTypes: List<String> = emptyList()
-    ): OAuth2Client =
-        registerClient(
-            OAuth2Client(
-                clientId,
-                JsonWebKeys(jwkSet()),
-                accessPolicy,
-                accessPolicy,
-                allowedScopes,
-                allowedGrantTypes
-            )
-        )
+    override fun findClient(clientId: ClientId): OAuth2Client? = clients[clientId]
 
-    fun register(clientId: ClientId, accessPolicy: AccessPolicy = AccessPolicy()): OAuth2Client = this.registerClientAndGenerateKeys(clientId, accessPolicy)
+    override fun registerClient(client: OAuth2Client) = client.apply { clients[clientId] = this }
+
+    override fun findAll(): List<OAuth2Client> = clients.values.toList()
+
+    override fun deleteClient(clientId: ClientId) = clients.remove(clientId)?.let { 1 } ?: 0
+
+    fun register(clientId: ClientId, accessPolicy: AccessPolicy = AccessPolicy()) =
+        OAuth2Client(
+            clientId,
+            JsonWebKeys(jwkSet()),
+            accessPolicy,
+            accessPolicy,
+            emptyList(),
+            emptyList()
+        ).let { registerClient(it) }
 }
 
 fun <R> withMockOAuth2Server(
     test: MockOAuth2Server.() -> R
 ): R {
-    withMigratedDb { /* noop */ }
     val server = MockOAuth2Server()
     server.start()
     try {

@@ -6,10 +6,10 @@ import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
+import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
-import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
 import java.net.URL
 import java.time.Instant
