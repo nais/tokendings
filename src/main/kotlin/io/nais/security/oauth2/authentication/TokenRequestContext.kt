@@ -102,9 +102,8 @@ class TokenRequestConfig internal constructor(
                 JWTClaimsSet.Builder()
                     .issuer(it.first.clientId)
                     .subject(it.first.clientId)
-                    .audience(it.second)
                     .build(),
-                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti", "nbf"))
+                HashSet(listOf("sub", "iss", "iat", "exp", "jti", "nbf"))
             )
         }
 
