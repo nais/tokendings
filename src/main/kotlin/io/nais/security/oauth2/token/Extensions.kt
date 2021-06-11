@@ -46,7 +46,7 @@ fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<Sec
                 .issuer(issuer)
                 .build(),
             HashSet(
-                listOf("sub", "iss", "iat", "exp", "aud")
+                listOf("sub", "iss", "iat", "exp")
             )
         ),
         keySelector
