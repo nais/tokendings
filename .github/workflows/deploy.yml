@@ -7,6 +7,8 @@ on:
     paths-ignore:
       - "doc/**"
       - "**/*.md"
+      - ".github/workflows/**"
+      - ".github/dependabot.yml"
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
