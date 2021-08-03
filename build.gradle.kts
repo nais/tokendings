@@ -8,7 +8,7 @@ val junitJupiterVersion = "5.8.0-M1"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "4.4.3"
 val kotlinLoggingVersion = "2.0.10"
-val kotlinVersion = "1.4.31"
+val kotlinVersion = "1.5.21"
 val kotliqueryVersion = "1.3.1"
 val ktorVersion = "1.5.2"
 val logbackVersion = "1.2.5"
@@ -25,10 +25,10 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.31"
+    kotlin("jvm") version "1.5.21"
     id("org.jmailen.kotlinter") version "3.3.0"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
-    id("com.github.ben-manes.versions") version "0.36.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
 
 application {
@@ -44,12 +44,13 @@ apply(plugin = "org.jmailen.kotlinter")
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven(url="https://dl.bintray.com/michaelbull/maven")
+    maven(url = "https://dl.bintray.com/michaelbull/maven")
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
@@ -83,7 +84,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-
 }
 
 tasks {
@@ -116,7 +116,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.8.3"
+        gradleVersion = "7.1.1"
     }
 
     "build" {
