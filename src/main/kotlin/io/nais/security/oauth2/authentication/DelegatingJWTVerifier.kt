@@ -25,9 +25,9 @@ internal class DelegatingJWTVerifier(private val verifier: JWTVerifier) : JWTVer
         try {
             return block()
         } catch (e: JWTVerificationException) {
-            log.error("received verfication exception with message: ${e.message}", e)
+            log.error("received verification exception with message: ${e.message}")
             throw OAuth2Exception(
-                OAuth2Error.INVALID_CLIENT.setDescription("token verification failed. ${e.message}")
+                OAuth2Error.INVALID_CLIENT.setDescription("token verification failed. ${e.message}"), e
             )
         }
     }
