@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 val assertjVersion = "3.19.0"
-val flywayVersion = "7.7.0"
+val flywayVersion = "7.12.0"
 val h2Version = "1.4.200"
 val hikaricpVersion = "4.0.3"
 val junitJupiterVersion = "5.8.0-M1"
