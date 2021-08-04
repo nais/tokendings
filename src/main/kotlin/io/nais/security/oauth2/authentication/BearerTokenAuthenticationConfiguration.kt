@@ -101,7 +101,7 @@ internal fun bearerTokenVerifier(
 }
 
 private fun HttpAuthHeader.getBlob(): String? = when {
-    this is HttpAuthHeader.Single && authScheme.toLowerCase() in listOf("bearer") -> blob
+    this is HttpAuthHeader.Single && authScheme.lowercase() in listOf("bearer") -> blob
     else -> null
 }
 
