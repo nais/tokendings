@@ -86,10 +86,8 @@ fun SignedJWT.verify(
 internal fun Throwable.handleOAuth2ExceptionMessage(): OAuth2Exception {
     val illegalCharacter = "\""
     try {
-        log.error("token verification failed: ${this.message}", this)
         throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${this.message}"), this)
     } catch (i: IllegalArgumentException) {
-        log.debug("Could not parse error message: ${i.message}", i)
         throw OAuth2Exception(
             OAuth2Error.INVALID_REQUEST.setDescription(
                 "token verification failed: ${this.message?.replace(illegalCharacter, "") ?: ""}"
