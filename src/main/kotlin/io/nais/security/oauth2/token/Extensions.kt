@@ -78,6 +78,7 @@ fun SignedJWT.verify(
         jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
         return jwtProcessor.process(this, null)
     } catch (t: Throwable) {
+        log.error("token verification failed: ${t.message}", t)
         throw t.handleOAuth2ExceptionMessage()
     }
 }
