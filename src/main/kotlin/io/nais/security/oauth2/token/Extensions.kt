@@ -21,8 +21,12 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
+import mu.KotlinLogging
+import org.slf4j.Logger
 import java.time.Duration
 import java.time.Instant
+
+private val log: Logger = KotlinLogging.logger { }
 
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
@@ -83,9 +87,12 @@ internal fun Throwable.handleOAuth2ExceptionMessage(): OAuth2Exception {
     val illegalCharacter = "\""
     try {
         throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${this.message}"), this)
-    } catch (p: IllegalArgumentException) {
+    } catch (i: IllegalArgumentException) {
+        log.debug("Could not parse error message: ${i.message}", i)
         throw OAuth2Exception(
-            OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${this.message?.replace(illegalCharacter, "") ?: ""}"),
+            OAuth2Error.INVALID_REQUEST.setDescription(
+                "token verification failed: ${this.message?.replace(illegalCharacter, "") ?: ""}"
+            ),
             this
         )
     }
