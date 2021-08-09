@@ -39,7 +39,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.stop
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
-import io.ktor.util.KtorExperimentalAPI
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -67,7 +66,6 @@ import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger { }
 
-@KtorExperimentalAPI
 fun main() {
     try {
         val engine = server()
@@ -81,7 +79,6 @@ fun main() {
     }
 }
 
-@KtorExperimentalAPI
 fun server(): NettyApplicationEngine =
     embeddedServer(
         Netty,
@@ -96,7 +93,6 @@ fun server(): NettyApplicationEngine =
         }
     )
 
-@KtorExperimentalAPI
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
         header(HttpHeaders.XCorrelationId)
@@ -152,7 +148,6 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 }
 
-@KtorExperimentalAPI
 fun StatusPages.Configuration.installExceptionHandling(config: AppConfiguration) = exception<Throwable> { cause ->
     log.error("request failed: $cause", cause)
     when (cause) {
@@ -196,7 +191,6 @@ private fun ErrorObject.toGeneric(): ErrorObject =
         this.uri
     )
 
-@KtorExperimentalAPI
 internal val defaultHttpClient = HttpClient(CIO) {
     install(JsonFeature) {
         serializer = JacksonSerializer {

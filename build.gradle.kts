@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.19.0"
 val flywayVersion = "7.12.0"
@@ -10,7 +11,7 @@ val kotestVersion = "4.6.1"
 val kotlinLoggingVersion = "2.0.10"
 val kotlinVersion = "1.5.21"
 val kotliqueryVersion = "1.3.1"
-val ktorVersion = "1.5.2"
+val ktorVersion = "1.6.2"
 val logbackVersion = "1.2.5"
 val logstashLogbackEncoderVersion = "6.6"
 val micrometerRegistryPrometheusVersion = "1.7.2"
@@ -102,9 +103,14 @@ tasks {
         }
     }
 
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "15"
+            configureEach {
+                freeCompilerArgs = listOf(
+                    "-Xopt-in=io.ktor.util.KtorExperimentalAPI"
+                )
+            }
         }
     }
 

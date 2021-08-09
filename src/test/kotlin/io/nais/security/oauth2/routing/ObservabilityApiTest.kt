@@ -5,7 +5,6 @@ import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.http.HttpStatusCode.Companion.OK
 import io.ktor.server.testing.withTestApplication
 import io.ktor.server.testing.handleRequest
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.tokenExchangeApp
@@ -14,7 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
-@KtorExperimentalAPI
 internal class ObservabilityApiTest {
 
     @Test

@@ -43,7 +43,6 @@ import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.model.ClientRegistration
 import io.nais.security.oauth2.model.ClientRegistrationRequest
@@ -69,7 +68,6 @@ data class ClientConfig(
     }
 )
 
-@KtorExperimentalAPI
 fun main() {
     embeddedServer(
         Netty,
@@ -84,7 +82,6 @@ fun main() {
     ).start()
 }
 
-@KtorExperimentalAPI
 fun Application.mockJwkerApp() {
     val tokenDingsClient = TokenDingsClient()
 
@@ -141,7 +138,6 @@ fun Application.mockJwkerApp() {
     }
 }
 
-@KtorExperimentalAPI
 class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
 
     suspend fun registerClient(
@@ -247,7 +243,6 @@ private fun createClientAssertion(clientId: String, tokenEndpoint: String, rsaKe
         sign(RSASSASigner(rsaKey.toPrivateKey()))
     }.serialize()
 
-@KtorExperimentalAPI
 internal val httpClient = HttpClient(CIO) {
     install(JsonFeature) {
         serializer = JacksonSerializer {

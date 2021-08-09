@@ -15,7 +15,6 @@ import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
@@ -43,7 +42,6 @@ import java.time.Instant
 import java.util.Date
 import java.util.UUID
 
-@KtorExperimentalAPI
 internal class TokenExchangeApiTest {
     private val mapper = Jackson.defaultMapper
 

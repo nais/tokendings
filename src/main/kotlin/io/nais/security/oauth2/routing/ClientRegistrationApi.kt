@@ -11,7 +11,6 @@ import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.model.AccessPolicy
@@ -22,7 +21,6 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.verifySoftwareStatement
 
-@KtorExperimentalAPI
 internal fun Route.clientRegistrationApi(config: AppConfiguration) {
     authenticate(BearerTokenAuth.CLIENT_REGISTRATION_AUTH) {
         route("/registration/client") {
