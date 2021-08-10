@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - "doc/**"
       - "**/*.md"
-      - ".github/workflows/**"
       - ".github/dependabot.yml"
 
 env:
