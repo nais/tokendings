@@ -45,7 +45,6 @@ apply(plugin = "org.jmailen.kotlinter")
 
 repositories {
     mavenCentral()
-    maven(url = "https://dl.bintray.com/michaelbull/maven")
 }
 
 dependencies {

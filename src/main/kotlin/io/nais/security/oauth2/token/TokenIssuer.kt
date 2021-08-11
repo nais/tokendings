@@ -6,10 +6,10 @@ import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.keystore.RotatingKeyStore
+import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
-import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
 import java.net.URL
 import java.time.Instant
 import java.util.Date
@@ -23,7 +23,11 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
-            it.issuer to TokenValidator(it.issuer, URL(it.wellKnown.jwksUri))
+            it.issuer to TokenValidator(
+                it.issuer,
+                URL(it.wellKnown.jwksUri),
+                authorizationServerProperties.cacheProperties,
+            )
         }
 
     private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
