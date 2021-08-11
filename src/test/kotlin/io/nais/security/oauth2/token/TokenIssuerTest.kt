@@ -2,7 +2,6 @@ package io.nais.security.oauth2.token
 
 import io.kotest.matchers.maps.shouldContainAll
 import io.kotest.matchers.shouldBe
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.keystore.MockRotatingKeyStore
@@ -21,7 +20,6 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
-@KtorExperimentalAPI
 internal class TokenIssuerTest {
 
     @Test
@@ -72,7 +70,6 @@ internal class TokenIssuerTest {
 
             with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore)) {
                 val oAuth2Client = oAuth2Client()
-                val tokenAudience = "jollo"
                 val issuedToken = issueTokenFor(
                     oAuth2Client,
                     tokenExchangeRequest(subjectToken, "aud")

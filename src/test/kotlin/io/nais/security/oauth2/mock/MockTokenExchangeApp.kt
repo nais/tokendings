@@ -5,7 +5,6 @@ import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
@@ -22,7 +21,6 @@ private val jwkerJwks = "jwker-jwks.json".asResource().readText().let {
     JWKSet.parse(it)
 }
 
-@KtorExperimentalAPI
 fun main() {
     val mockOAuth2Server: MockOAuth2Server = startMockOAuth2Server()
 

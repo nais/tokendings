@@ -8,7 +8,6 @@ import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PORT
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
@@ -41,7 +40,6 @@ internal object EnvKey {
     const val APPLICATION_PORT = 8080
 }
 
-@KtorExperimentalAPI
 object ProdConfiguration {
     private const val issuerUrl = "https://tokendings.prod-gcp.nais.io"
     private val subjectTokenIssuers = listOf(
@@ -72,7 +70,6 @@ object ProdConfiguration {
     }
 }
 
-@KtorExperimentalAPI
 object NonProdConfiguration {
     private const val issuerUrl = "https://tokendings.dev-gcp.nais.io"
     private val subjectTokenIssuers = listOf(
@@ -104,12 +101,10 @@ object NonProdConfiguration {
     }
 }
 
-@KtorExperimentalAPI
 fun List<String>.toConfiguration() = this.map { issuerWellKnown ->
     SubjectTokenIssuer(issuerWellKnown)
 }
 
-@KtorExperimentalAPI
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
         Profile.NON_PROD -> NonProdConfiguration.instance
@@ -118,7 +113,6 @@ fun configByProfile(): AppConfiguration =
     }
 
 @Suppress("unused")
-@KtorExperimentalAPI
 fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
@@ -132,7 +126,6 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
-@KtorExperimentalAPI
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
     ClientRegistrationAuthProperties(
         identityProviderWellKnownUrl =

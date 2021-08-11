@@ -5,7 +5,6 @@ import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.request.get
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
 import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
@@ -34,7 +33,6 @@ object JwkCache {
     const val BUCKET_SIZE = 10L
 }
 
-@KtorExperimentalAPI
 data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
@@ -51,7 +49,6 @@ data class ClientRegistryProperties(
     val dataSource: DataSource
 )
 
-@KtorExperimentalAPI
 data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
@@ -68,7 +65,6 @@ data class ClientRegistrationAuthProperties(
         .build()
 }
 
-@KtorExperimentalAPI
 class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
@@ -88,7 +84,6 @@ class AuthorizationServerProperties(
     }
 }
 
-@KtorExperimentalAPI
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
