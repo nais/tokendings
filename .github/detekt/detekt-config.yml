@@ -43,5 +43,3 @@ exceptions:
   TooGenericExceptionThrown:
     active: true
     excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
-  SwallowedException:
-    active: false

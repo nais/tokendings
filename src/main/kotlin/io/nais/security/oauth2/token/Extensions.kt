@@ -21,6 +21,8 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.Instant
 
@@ -74,22 +76,8 @@ fun SignedJWT.verify(
         jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
         return jwtProcessor.process(this, null)
     } catch (t: Throwable) {
-        throw t.handleOAuth2ExceptionMessage()
-    }
-}
-
-@Throws(OAuth2Exception::class)
-internal fun Throwable.handleOAuth2ExceptionMessage(): OAuth2Exception {
-    val illegalCharacter = "\""
-    try {
-        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${this.message}"), this)
-    } catch (i: IllegalArgumentException) {
-        throw OAuth2Exception(
-            OAuth2Error.INVALID_REQUEST.setDescription(
-                "token verification failed: ${this.message?.replace(illegalCharacter, "") ?: ""}"
-            ),
-            this
-        )
+        val description = "token verification failed: ${URLEncoder.encode(t.message, Charset.defaultCharset())}"
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription(description), t)
     }
 }
 
