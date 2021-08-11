@@ -12,7 +12,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.handleRequest
 import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockApp
@@ -33,7 +32,6 @@ import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
-@KtorExperimentalAPI
 internal class ClientRegistrationApiTest {
 
     @AfterEach
@@ -75,7 +73,7 @@ internal class ClientRegistrationApiTest {
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
-                    audience = "incorrect_aud",
+                    audience = listOf("incorrect_aud"),
                     claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE)
                 )
             ).serialize()
@@ -149,7 +147,7 @@ internal class ClientRegistrationApiTest {
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
-                    audience = "correct_aud"
+                    audience = listOf("correct_aud")
                 )
             ).serialize()
 
@@ -198,7 +196,7 @@ internal class ClientRegistrationApiTest {
                 DefaultOAuth2TokenCallback(
                     issuerId = "mockaad",
                     subject = "client1",
-                    audience = "correct_aud",
+                    audience = listOf("correct_aud"),
                     claims = mapOf("roles" to listOf("not_accepted"))
                 )
             ).serialize()
@@ -413,12 +411,12 @@ internal class ClientRegistrationApiTest {
 
     private fun MockOAuth2Server.issueValidToken(clientId: String): String =
         this.issueToken(
-            issuerId = "mockaad",
-            clientId = clientId,
-            OAuth2TokenCallback = DefaultOAuth2TokenCallback(
+            "mockaad",
+            clientId,
+            DefaultOAuth2TokenCallback(
                 issuerId = "mockaad",
                 subject = clientId,
-                audience = "correct_aud",
+                audience = listOf("correct_aud"),
                 claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE)
             )
         ).serialize()

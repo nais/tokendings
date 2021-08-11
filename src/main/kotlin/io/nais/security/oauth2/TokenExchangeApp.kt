@@ -39,7 +39,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.stop
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
-import io.ktor.util.KtorExperimentalAPI
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -67,7 +66,6 @@ import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger { }
 
-@KtorExperimentalAPI
 fun main() {
     try {
         val engine = server()
@@ -81,7 +79,6 @@ fun main() {
     }
 }
 
-@KtorExperimentalAPI
 fun server(): NettyApplicationEngine =
     embeddedServer(
         Netty,
@@ -96,10 +93,9 @@ fun server(): NettyApplicationEngine =
         }
     )
 
-@KtorExperimentalAPI
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
-        header(HttpHeaders.XCorrelationId) // todo: standardize on header name used for correlation IDs
+        header(HttpHeaders.XCorrelationId)
         generate { UUID.randomUUID().toString() }
         verify { callId: String -> callId.isNotEmpty() }
     }
@@ -136,21 +132,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(StatusPages) {
-        exception<Throwable> { cause ->
-            log.error("request failed: $cause", cause)
-            when (cause) {
-                is OAuth2Exception -> {
-                    val includeErrorDetails = config.isNonProd()
-                    call.respondWithError(cause, includeErrorDetails)
-                }
-                is JsonProcessingException -> {
-                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
-                }
-                else -> {
-                    call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
-                }
-            }
-        }
+        installExceptionHandling(config)
     }
 
     install(Authentication) {
@@ -163,6 +145,22 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     routing {
         observability(config.databaseHealthCheck)
         routing.apiRouting(this.application)
+    }
+}
+
+fun StatusPages.Configuration.installExceptionHandling(config: AppConfiguration) = exception<Throwable> { cause ->
+    log.error("request failed: $cause", cause)
+    when (cause) {
+        is OAuth2Exception -> {
+            val includeErrorDetails = config.isNonProd()
+            call.respondWithError(cause, includeErrorDetails)
+        }
+        is JsonProcessingException -> {
+            call.respond(HttpStatusCode.BadRequest, "invalid request content")
+        }
+        else -> {
+            call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
+        }
     }
 }
 
@@ -193,7 +191,6 @@ private fun ErrorObject.toGeneric(): ErrorObject =
         this.uri
     )
 
-@KtorExperimentalAPI
 internal val defaultHttpClient = HttpClient(CIO) {
     install(JsonFeature) {
         serializer = JacksonSerializer {

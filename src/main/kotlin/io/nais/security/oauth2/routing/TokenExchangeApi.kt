@@ -8,7 +8,6 @@ import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.TokenExchangeRequestAuthorizer
 import io.nais.security.oauth2.authentication.receiveTokenRequestContext
 import io.nais.security.oauth2.config.AppConfiguration
@@ -27,7 +26,6 @@ import mu.KotlinLogging
 
 private val log = KotlinLogging.logger { }
 
-@KtorExperimentalAPI
 internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     val tokenIssuer = config.tokenIssuer
 
@@ -69,7 +67,11 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                         )
                     )
                 }
-                else -> throw OAuth2Exception(OAuth2Error.INVALID_GRANT.setDescription("grant_type=${tokenRequest.grantType} is not supported"))
+                else -> throw OAuth2Exception(
+                    OAuth2Error.INVALID_GRANT.setDescription(
+                        "grant_type=${tokenRequest.grantType} is not supported"
+                    )
+                )
             }
         }
     }

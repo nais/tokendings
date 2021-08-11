@@ -45,7 +45,11 @@ class TokenRequestContext private constructor(
                 MDC.put("client_id", client.clientId)
             }
 
-        private fun authenticateClient(config: TokenRequestConfig, clientAssertionCredential: ClientAssertionCredential): OAuth2Client =
+        private fun authenticateClient(
+            config: TokenRequestConfig,
+            clientAssertionCredential:
+                ClientAssertionCredential
+        ): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->
                     val keyIds = oAuth2Client.jwkSet.keys.map { it.keyID }.toList()
@@ -54,25 +58,27 @@ class TokenRequestContext private constructor(
                         config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
                         oAuth2Client.jwkSet
                     )
-                    if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime))
+                    if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime)) {
                         throw OAuth2Exception(
                             OAuth2Error.INVALID_CLIENT.setDescription(
                                 "invalid client authentication for client_id=${clientAssertionCredential.clientId}," +
                                     " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s)."
                             )
                         )
-                }
-                ?: throw OAuth2Exception(
-                    OAuth2Error.INVALID_CLIENT.setDescription(
-                        "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
-                    )
+                    }
+                } ?: throw OAuth2Exception(
+                OAuth2Error.INVALID_CLIENT.setDescription(
+                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
                 )
+            )
 
         private fun authorizeTokenRequest(config: TokenRequestConfig, client: OAuth2Client): OAuth2TokenRequest =
             config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }
                 ?.authorize(parameters, client)
                 ?: throw OAuth2Exception(
-                    OAuth2Error.ACCESS_DENIED.setDescription("could not find authorizer for grant_type=${parameters["grant_type"]}")
+                    OAuth2Error.ACCESS_DENIED.setDescription(
+                        "could not find authorizer for grant_type=${parameters["grant_type"]}"
+                    )
                 )
     }
 }
@@ -102,7 +108,11 @@ class TokenRequestConfig internal constructor(
             )
         }
 
-        internal var clientAssertionMaxLifetime: Long = 120
+        internal var clientAssertionMaxLifetime: Long = CLIENT_ASSERTION_MAX_LIFETIME
+    }
+
+    companion object {
+        private const val CLIENT_ASSERTION_MAX_LIFETIME = 120L
     }
 }
 

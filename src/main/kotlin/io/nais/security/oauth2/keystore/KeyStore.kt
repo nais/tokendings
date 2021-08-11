@@ -49,7 +49,8 @@ class KeyStore(private val dataSource: DataSource) {
     private fun modify(rotatableKeys: RotatableKeys): Query {
         return queryOf(
             """
-            INSERT INTO $TABLE_NAME(id, current_key, previous_key, next_key, expiry) VALUES (:id, :current_key, :previous_key, :next_key, :expiry)
+            INSERT INTO $TABLE_NAME(id, current_key, previous_key, next_key, expiry) VALUES 
+            (:id, :current_key, :previous_key, :next_key, :expiry)
             ON CONFLICT (id)
                 DO UPDATE SET
                 current_key=:current_key, previous_key=:previous_key, next_key=:next_key, expiry=:expiry;

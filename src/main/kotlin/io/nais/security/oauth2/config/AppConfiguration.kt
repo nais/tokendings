@@ -5,14 +5,18 @@ import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.request.get
-import io.ktor.util.KtorExperimentalAPI
 import io.nais.security.oauth2.authentication.BearerTokenAuth
+import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
+import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
+import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.health.DatabaseHealthCheck
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
+import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
+import io.nais.security.oauth2.registration.ClientRegistryPostgres
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -23,7 +27,12 @@ import javax.sql.DataSource
 
 private val log = KotlinLogging.logger {}
 
-@KtorExperimentalAPI
+object JwkCache {
+    const val CACHE_SIZE = 10L
+    const val EXPIRES_IN = 24L
+    const val BUCKET_SIZE = 10L
+}
+
 data class AppConfiguration(
     val serverProperties: ServerProperties,
     val clientRegistry: ClientRegistry,
@@ -40,7 +49,6 @@ data class ClientRegistryProperties(
     val dataSource: DataSource
 )
 
-@KtorExperimentalAPI
 data class ClientRegistrationAuthProperties(
     val identityProviderWellKnownUrl: String,
     val acceptedAudience: List<String>,
@@ -52,12 +60,11 @@ data class ClientRegistrationAuthProperties(
         defaultHttpClient.get(identityProviderWellKnownUrl)
     }
     val jwkProvider: JwkProvider = JwkProviderBuilder(URL(wellKnown.jwksUri))
-        .cached(10, 24, TimeUnit.HOURS)
-        .rateLimited(10, 1, TimeUnit.MINUTES)
+        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
         .build()
 }
 
-@KtorExperimentalAPI
 class AuthorizationServerProperties(
     val issuerUrl: String,
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
@@ -79,7 +86,6 @@ class AuthorizationServerProperties(
     }
 }
 
-@KtorExperimentalAPI
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
@@ -95,16 +101,16 @@ data class KeyStoreProperties(
 
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
 
-fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStore =
-    RotatingKeyStore(
+fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStorePostgres =
+    RotatingKeyStorePostgres(
         KeyStoreProperties(
             dataSource = dataSource,
             rotationInterval = rotationInterval
         )
     )
 
-internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistry =
-    ClientRegistry(
+internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistryPostgres =
+    ClientRegistryPostgres(
         ClientRegistryProperties(
             dataSource
         )

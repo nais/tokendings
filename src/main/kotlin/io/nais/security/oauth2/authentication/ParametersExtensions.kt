@@ -10,7 +10,11 @@ fun Parameters.require(name: String, requiredValue: String? = null): String =
         requiredValue != null -> {
             this[name]
                 ?.takeIf { it == requiredValue }
-                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("Parameter $name must be $requiredValue"))
+                ?: throw OAuth2Exception(
+                    OAuth2Error.INVALID_REQUEST.setDescription(
+                        "Parameter $name must be $requiredValue"
+                    )
+                )
         }
         else -> {
             this[name] ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("Parameter $name missing"))

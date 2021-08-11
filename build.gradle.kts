@@ -1,37 +1,35 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.18.1"
-val flywayVersion = "7.4.0"
-val freemarkerVersion = "2.3.29"
+val assertjVersion = "3.20.2"
+val flywayVersion = "7.12.1"
 val h2Version = "1.4.200"
-val hikaricpVersion = "3.4.5"
-val jacksonVersion = "2.10.1"
-val junitJupiterVersion = "5.7.0"
+val hikaricpVersion = "5.0.0"
+val junitJupiterVersion = "5.8.0-M1"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "4.3.2"
-val kotlinLoggingVersion = "2.0.4"
-val kotlinVersion = "1.4.20"
-val kotlintestVersion = "3.4.2"
+val kotestVersion = "4.6.1"
+val kotlinLoggingVersion = "2.0.10"
+val kotlinVersion = "1.5.21"
 val kotliqueryVersion = "1.3.1"
-val ktorVersion = "1.5.0"
-val logbackVersion = "1.2.3"
+val ktorVersion = "1.6.2"
+val logbackVersion = "1.2.5"
 val logstashLogbackEncoderVersion = "6.6"
-val micrometerRegistryPrometheusVersion = "1.6.2"
-val mockOAuth2ServerVersion = "0.1.35"
-val mockWebServerVersion = "4.9.0"
-val mockkVersion = "1.10.4"
-val nimbusSdkVersion = "8.30"
-val postgresqlVersion = "42.2.18"
-val testcontainersPostgresVersion = "1.15.1"
+val micrometerRegistryPrometheusVersion = "1.7.2"
+val mockOAuth2ServerVersion = "0.3.4"
+val mockWebServerVersion = "4.9.1"
+val mockkVersion = "1.12.0"
+val nimbusSdkVersion = "9.12"
+val postgresqlVersion = "42.2.23"
+val testcontainersPostgresVersion = "1.16.0"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.4.20"
-    id("org.jmailen.kotlinter") version "3.3.0"
-    id("com.github.johnrengelman.shadow") version "6.1.0"
-    id("com.github.ben-manes.versions") version "0.36.0"
+    kotlin("jvm") version "1.5.21"
+    id("org.jmailen.kotlinter") version "3.4.5"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
 }
 
 application {
@@ -47,12 +45,13 @@ apply(plugin = "org.jmailen.kotlinter")
 
 repositories {
     mavenCentral()
-    jcenter()
-    maven(url="https://dl.bintray.com/michaelbull/maven")
+    maven(url = "https://dl.bintray.com/michaelbull/maven")
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
@@ -86,7 +85,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-
 }
 
 tasks {
@@ -105,9 +103,14 @@ tasks {
         }
     }
 
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "15"
+            configureEach {
+                freeCompilerArgs = listOf(
+                    "-Xopt-in=io.ktor.util.KtorExperimentalAPI"
+                )
+            }
         }
     }
 
@@ -119,7 +122,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.7.1"
+        gradleVersion = "7.1.1"
     }
 
     "build" {

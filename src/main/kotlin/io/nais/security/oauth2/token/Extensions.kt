@@ -21,10 +21,10 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
-import java.lang.Exception
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.Instant
-import java.util.HashSet
 
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
@@ -47,7 +47,7 @@ fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<Sec
                 .issuer(issuer)
                 .build(),
             HashSet(
-                listOf("sub", "iss", "iat", "exp", "aud")
+                listOf("sub", "iss", "iat", "exp")
             )
         ),
         keySelector
@@ -65,24 +65,27 @@ fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?
     )
 }
 
-@Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
-fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>, keySelector: JWSVerificationKeySelector<SecurityContext?>):
-    JWTClaimsSet {
-        try {
-            val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
-            jwtProcessor.jwsKeySelector = keySelector
-            jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
-            return jwtProcessor.process(this, null)
-        } catch (e: Exception) {
-            throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${e.message}"), e)
-        }
+@Throws(OAuth2Exception::class)
+fun SignedJWT.verify(
+    jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
+    keySelector: JWSVerificationKeySelector<SecurityContext?>
+): JWTClaimsSet {
+    try {
+        val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
+        jwtProcessor.jwsKeySelector = keySelector
+        jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
+        return jwtProcessor.process(this, null)
+    } catch (t: Throwable) {
+        val description = "token verification failed: ${URLEncoder.encode(t.message, Charset.defaultCharset())}"
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription(description), t)
     }
+}
 
 @Throws(OAuth2Exception::class)
 internal fun String.toJwt(): SignedJWT = try {
     SignedJWT.parse(this)
-} catch (e: Exception) {
-    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"))
+} catch (t: Throwable) {
+    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"), t)
 }
 
 @Throws(ParseException::class)
