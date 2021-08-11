@@ -20,7 +20,7 @@ val mockWebServerVersion = "4.9.1"
 val mockkVersion = "1.12.0"
 val nimbusSdkVersion = "9.12"
 val postgresqlVersion = "42.2.23"
-val testcontainersPostgresVersion = "1.15.2"
+val testcontainersPostgresVersion = "1.16.0"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
