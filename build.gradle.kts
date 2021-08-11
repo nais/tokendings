@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.20.2"
-val flywayVersion = "7.12.0"
+val flywayVersion = "7.12.1"
 val h2Version = "1.4.200"
 val hikaricpVersion = "5.0.0"
 val junitJupiterVersion = "5.8.0-M1"
