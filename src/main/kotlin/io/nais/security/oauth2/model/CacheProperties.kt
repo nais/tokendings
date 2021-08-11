@@ -6,12 +6,12 @@ import com.nimbusds.jose.jwk.source.RemoteJWKSet.DEFAULT_HTTP_READ_TIMEOUT
 import com.nimbusds.jose.jwk.source.RemoteJWKSet.DEFAULT_HTTP_SIZE_LIMIT
 import com.nimbusds.jose.util.DefaultResourceRetriever
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.TimeUnit.MINUTES
 
 data class CacheProperties(
     val lifeSpan: Long,
     val refreshTime: Long,
-    val timeUnit: TimeUnit = SECONDS,
+    val timeUnit: TimeUnit = MINUTES,
     val connectionTimeout: Int = DEFAULT_HTTP_CONNECT_TIMEOUT,
     val readTimeOut: Int = DEFAULT_HTTP_READ_TIMEOUT,
     val sizeLimit: Int = DEFAULT_HTTP_SIZE_LIMIT

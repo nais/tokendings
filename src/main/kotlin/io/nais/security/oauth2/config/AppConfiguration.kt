@@ -14,6 +14,7 @@ import io.nais.security.oauth2.health.DatabaseHealthCheck
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
+import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
@@ -71,9 +72,13 @@ class AuthorizationServerProperties(
     val tokenExpiry: Long = 300,
     val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
-    val jwkSetCacheLifeSpan: Long = 15,
-    val jwksSetCacheRefreshTime: Long = 5
 ) {
+    val cacheProperties = CacheProperties(
+        lifeSpan = 15,
+        refreshTime = 5,
+        timeUnit = TimeUnit.MINUTES,
+    )
+
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
 
