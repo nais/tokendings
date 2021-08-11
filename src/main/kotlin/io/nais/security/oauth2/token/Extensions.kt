@@ -21,9 +21,10 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.time.Duration
 import java.time.Instant
-import java.util.HashSet
 
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
@@ -75,7 +76,8 @@ fun SignedJWT.verify(
         jwtProcessor.jwtClaimsSetVerifier = jwtClaimsSetVerifier
         return jwtProcessor.process(this, null)
     } catch (t: Throwable) {
-        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: ${t.message}"), t)
+        val description = "token verification failed: ${URLEncoder.encode(t.message, Charset.defaultCharset())}"
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription(description), t)
     }
 }
 
