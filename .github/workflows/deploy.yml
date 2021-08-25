@@ -21,29 +21,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Set up JDK 15
-        uses: actions/setup-java@v2.2.0
+        uses: actions/setup-java@v2.3.0
         with:
           java-version: '15'
           distribution: 'zulu'
+          cache: 'gradle'
 
       - name: Verify Gradle wrapper checksum
         uses: gradle/wrapper-validation-action@v1
-
-      - name: Setup build cache
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Setup Gradle wrapper cache
-        uses: actions/cache@v2.1.6
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-wrapper-
 
       - name: Build with Gradle
         run: ./gradlew build
