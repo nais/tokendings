@@ -18,7 +18,7 @@ val micrometerRegistryPrometheusVersion = "1.7.4"
 val mockOAuth2ServerVersion = "0.3.5"
 val mockWebServerVersion = "4.9.2"
 val mockkVersion = "1.12.0"
-val nimbusSdkVersion = "9.17"
+val nimbusSdkVersion = "9.19"
 val postgresqlVersion = "42.2.24"
 val testcontainersPostgresVersion = "1.16.0"
 
