@@ -13,7 +13,7 @@ val kotlinVersion = "1.5.31"
 val kotliqueryVersion = "1.3.1"
 val ktorVersion = "1.6.4"
 val logbackVersion = "1.2.6"
-val logstashLogbackEncoderVersion = "6.6"
+val logstashLogbackEncoderVersion = "7.0"
 val micrometerRegistryPrometheusVersion = "1.7.4"
 val mockOAuth2ServerVersion = "0.3.5"
 val mockWebServerVersion = "4.9.2"
@@ -28,7 +28,7 @@ plugins {
     application
     kotlin("jvm") version "1.5.31"
     id("org.jmailen.kotlinter") version "3.6.0"
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("com.github.johnrengelman.shadow") version "7.1.0"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
