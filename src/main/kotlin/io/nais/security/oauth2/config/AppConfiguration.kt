@@ -77,6 +77,8 @@ class AuthorizationServerProperties(
         lifeSpan = 15,
         refreshTime = 5,
         timeUnit = TimeUnit.MINUTES,
+        connectionTimeout = 1500,
+        readTimeOut = 1500
     )
 
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
