@@ -21,7 +21,7 @@ jobs:
           args: >
             -r sarif:reports/detekt.json
             -r txt:reports/detekt.txt
-            --jvm-target 17
+            --jvm-target 16
             --build-upon-default-config
             --config .github/detekt/detekt-config.yml
       - name: Detekt results Upload SARIF file
