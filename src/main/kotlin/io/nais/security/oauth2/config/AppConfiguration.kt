@@ -74,11 +74,11 @@ class AuthorizationServerProperties(
     val clientAssertionMaxExpiry: Long = 120,
 ) {
     val cacheProperties = CacheProperties(
-        lifeSpan = 15,
-        refreshTime = 5,
+        lifeSpan = 30,
+        refreshTime = 10,
         timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 1500,
-        readTimeOut = 1500
+        connectionTimeout = 2000,
+        readTimeOut = 2000
     )
 
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
