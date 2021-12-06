@@ -37,8 +37,8 @@ application {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_15
-    targetCompatibility = JavaVersion.VERSION_15
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 apply(plugin = "org.jmailen.kotlinter")
@@ -104,7 +104,7 @@ tasks {
 
     withType<KotlinCompile> {
         kotlinOptions {
-            jvmTarget = "15"
+            jvmTarget = "17"
             configureEach {
                 freeCompilerArgs = listOf(
                     "-Xopt-in=io.ktor.util.KtorExperimentalAPI"
@@ -121,7 +121,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.1.1"
+        gradleVersion = "7.3.1"
     }
 
     "build" {
