@@ -2,19 +2,19 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.21.0"
-val flywayVersion = "8.0.5"
+val flywayVersion = "8.2.2"
 val h2Version = "2.0.202"
 val hikaricpVersion = "5.0.0"
 val junitJupiterVersion = "5.8.2"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "5.0.1"
-val kotlinLoggingVersion = "2.1.15"
-val kotlinVersion = "1.6.0"
+val kotestVersion = "5.0.2"
+val kotlinLoggingVersion = "2.1.20"
+val kotlinVersion = "1.6.10"
 val kotliqueryVersion = "1.6.1"
-val ktorVersion = "1.6.6"
-val logbackVersion = "1.2.7"
+val ktorVersion = "1.6.7"
+val logbackVersion = "1.2.8"
 val logstashLogbackEncoderVersion = "7.0.1"
-val micrometerRegistryPrometheusVersion = "1.8.0"
+val micrometerRegistryPrometheusVersion = "1.8.1"
 val mockOAuth2ServerVersion = "0.4.0"
 val mockWebServerVersion = "4.9.3"
 val mockkVersion = "1.12.1"
@@ -26,14 +26,14 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm") version "1.6.10"
     id("org.jmailen.kotlinter") version "3.7.0"
     id("com.github.johnrengelman.shadow") version "7.1.0"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
 application {
-    mainClassName = mainClassKt
+    mainClass.set(mainClassKt)
 }
 
 java {
@@ -105,11 +105,6 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "17"
-            configureEach {
-                freeCompilerArgs = listOf(
-                    "-Xopt-in=io.ktor.util.KtorExperimentalAPI"
-                )
-            }
         }
     }
 
@@ -121,7 +116,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.3.1"
+        gradleVersion = "7.3.2"
     }
 
     "build" {
