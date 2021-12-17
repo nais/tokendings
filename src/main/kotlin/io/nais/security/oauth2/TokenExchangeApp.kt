@@ -109,6 +109,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                 !call.request.path().startsWith("/internal/isready") &&
                 !call.request.path().startsWith("/internal/metrics")
         }
+        disableDefaultColors()
     }
 
     install(MicrometerMetrics) {
