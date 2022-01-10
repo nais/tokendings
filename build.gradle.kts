@@ -1,7 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.21.0"
+val assertjVersion = "3.22.0"
 val flywayVersion = "8.2.2"
 val h2Version = "2.0.206"
 val hikaricpVersion = "5.0.0"
@@ -17,7 +17,7 @@ val logstashLogbackEncoderVersion = "7.0.1"
 val micrometerRegistryPrometheusVersion = "1.8.1"
 val mockOAuth2ServerVersion = "0.4.0"
 val mockWebServerVersion = "4.9.3"
-val mockkVersion = "1.12.1"
+val mockkVersion = "1.12.2"
 val nimbusSdkVersion = "9.20"
 val postgresqlVersion = "42.3.1"
 val testcontainersPostgresVersion = "1.16.2"
@@ -28,7 +28,7 @@ plugins {
     application
     kotlin("jvm") version "1.6.10"
     id("org.jmailen.kotlinter") version "3.8.0"
-    id("com.github.johnrengelman.shadow") version "7.1.0"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.github.ben-manes.versions") version "0.39.0"
 }
 
