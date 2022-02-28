@@ -1,7 +1,6 @@
 package io.nais.security.oauth2.token
 
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.jwk.source.RemoteJWKSet
 import com.nimbusds.jose.proc.JWSVerificationKeySelector
@@ -11,15 +10,15 @@ import com.nimbusds.jwt.SignedJWT
 import io.nais.security.oauth2.model.CacheProperties
 import java.net.URL
 
-class TokenValidator(private val issuer: String, private val jwkSource: JWKSource<SecurityContext?>) {
+class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityContext?>) {
 
     private val keySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, jwkSource)
 
-    constructor(issuer: String, jwkSetUri: URL, cacheProperties: CacheProperties, initialJwks: JWKSet) : this(
+    constructor(issuer: String, jwkSetUri: URL, cacheProperties: CacheProperties, initialJwks: String) : this(
         issuer,
         RemoteJWKSet(
             jwkSetUri,
-            MutibleJwkFailOver(initialJwks),
+            JwkSetFailOver(initialJwks, jwkSetUri),
             cacheProperties.configurableResourceRetriever,
             cacheProperties.configurableJWKSetCache
         )

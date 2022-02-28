@@ -20,6 +20,8 @@ style:
     max: 3
   UnnecessaryAbstractClass:
     active: false
+  ReturnCount:
+    max: 3
 
 naming:
   TopLevelPropertyNaming:

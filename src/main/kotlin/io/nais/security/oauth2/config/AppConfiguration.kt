@@ -91,8 +91,8 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         defaultHttpClient.get(wellKnownUrl)
     }
     val issuer = wellKnown.issuer
-    val initialJwks: JWKSet = runBlocking {
-        log.info("getting initial jwks metadata from well-known url=${wellKnown.jwksUri}")
+    val initialJwks: String = runBlocking {
+        log.info("getting initial jwks metadata from jwks-uri=${wellKnown.jwksUri}")
         defaultHttpClient.get(wellKnown.jwksUri)
     }
     val cacheProperties = CacheProperties(
