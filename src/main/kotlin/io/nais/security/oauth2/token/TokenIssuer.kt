@@ -1,6 +1,7 @@
 package io.nais.security.oauth2.token
 
 import com.nimbusds.jose.jwk.JWKSet
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
@@ -12,8 +13,7 @@ import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import java.net.URL
 import java.time.Instant
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
 
@@ -26,7 +26,8 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             it.issuer to TokenValidator(
                 it.issuer,
                 URL(it.wellKnown.jwksUri),
-                authorizationServerProperties.cacheProperties,
+                it.cacheProperties,
+                it.initialJwks
             )
         }
 

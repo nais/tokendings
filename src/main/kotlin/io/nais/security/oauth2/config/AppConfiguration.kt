@@ -4,7 +4,7 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.client.request.get
+import io.ktor.client.request.*
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
 import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
@@ -73,14 +73,6 @@ class AuthorizationServerProperties(
     val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
 ) {
-    val cacheProperties = CacheProperties(
-        lifeSpan = 60,
-        refreshTime = 20,
-        timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 2000,
-        readTimeOut = 2000
-    )
-
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
 
@@ -99,6 +91,17 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         defaultHttpClient.get(wellKnownUrl)
     }
     val issuer = wellKnown.issuer
+    val initialJwks: JWKSet = runBlocking {
+        log.info("getting initial jwks metadata from well-known url=${wellKnown.jwksUri}")
+        defaultHttpClient.get(wellKnown.jwksUri)
+    }
+    val cacheProperties = CacheProperties(
+        lifeSpan = 60,
+        refreshTime = 20,
+        timeUnit = TimeUnit.MINUTES,
+        connectionTimeout = 2000,
+        readTimeOut = 2000
+    )
 }
 
 data class KeyStoreProperties(
