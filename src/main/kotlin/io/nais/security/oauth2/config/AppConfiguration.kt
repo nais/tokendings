@@ -73,13 +73,6 @@ class AuthorizationServerProperties(
     val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
 ) {
-    val cacheProperties = CacheProperties(
-        lifeSpan = 60,
-        refreshTime = 20,
-        timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 4000,
-        readTimeOut = 4000
-    )
 
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
@@ -103,6 +96,13 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         log.info("getting initial jwks metadata from jwks-uri=${wellKnown.jwksUri}")
         defaultHttpClient.get(wellKnown.jwksUri)
     }
+    val cacheProperties: CacheProperties = CacheProperties(
+        lifeSpan = 60,
+        refreshTime = 20,
+        timeUnit = TimeUnit.MINUTES,
+        connectionTimeout = 4000,
+        readTimeOut = 4000
+    )
 }
 
 data class KeyStoreProperties(
