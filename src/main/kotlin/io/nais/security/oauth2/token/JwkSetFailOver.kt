@@ -1,6 +1,6 @@
 package io.nais.security.oauth2.token
 
-import com.nimbusds.jose.RemoteKeySourceException
+import com.nimbusds.jose.KeySourceException
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.JWKSet
@@ -14,6 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
+import java.io.IOException
 import java.net.URL
 import java.text.ParseException
 
@@ -34,34 +35,34 @@ class JwkSetFailOver(
         this.jwkSet = inputJwks
     }
 
+    @Throws(KeySourceException::class)
     override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
-        val coroutineScope = CoroutineScope(Dispatchers.Main)
-
         try {
-            coroutineScope.launch {
-                log.info("getting jwks metadata from url=$jwkSetUri")
-                val responseJwksString: Resource?
-                withContext(Dispatchers.IO) {
-                    responseJwksString = retry(jwkSetUri = jwkSetUri) {
-                        resourceRetriever.retrieveResource(jwkSetUri)
-                    }
-                    responseJwksString?.let {
-                        val parsedJwksSet = JWKSet.parse(responseJwksString.content)
-                        setJWKSet(parsedJwksSet)
-                        log.debug("failover jwkSet updated")
-                    }
-                }
-            }
+            updateJwkSetResourceFrom(CoroutineScope(Dispatchers.Main))
         } catch (t: Throwable) {
-            if (t is ParseException) {
-                log.error(t) { "could not parse resource content to jwksSet - ${t.message}" }
-            } else {
-                log.error(t) { "error when trying to get current jwks from resource: $jwkSetUri - ${t.message}" }
-            }
+            val errMessage = "trying to get current jwks from resource: $jwkSetUri"
+            log.error(t) { "$errMessage - ${t.message}" }
+            throw KeySourceException(errMessage, t)
         }
 
         log.debug("failover jwkSet launched")
         return jwkSelector.select(jwkSet)
+    }
+
+    private fun updateJwkSetResourceFrom(coroutineScope: CoroutineScope) {
+        coroutineScope.launch {
+            log.info("getting jwks metadata from url=$jwkSetUri")
+            val resourceResponse: Resource?
+            withContext(Dispatchers.IO) {
+                resourceResponse = retry(jwkSetUri = jwkSetUri) {
+                    resourceRetriever.retrieveResource(jwkSetUri)
+                }
+                resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
+                    setJWKSet(parsedJwkSet)
+                    log.debug("failover jwkSet updated with kid's: ${parsedJwkSet.keys.map { it.keyID.toString() }}")
+                }
+            }
+        }
     }
 
     private suspend fun <T> retry(
@@ -75,7 +76,7 @@ class JwkSetFailOver(
         repeat(times - 1) { attempt ->
             try {
                 return block()
-            } catch (e: RemoteKeySourceException) {
+            } catch (e: IOException) {
                 log.warn(e) {
                     "$jwkSetUri: Attempt #${attempt + 1} of $times failed - retrying in $currentDelay ms - ${e.message}"
                 }
@@ -85,9 +86,18 @@ class JwkSetFailOver(
         }
         return try {
             block()
-        } catch (e: RemoteKeySourceException) {
+        } catch (e: IOException) {
             log.error(e) { "$jwkSetUri: Final retry attempt #$times failed - ${e.message}" }
             return null
+        }
+    }
+
+    @Throws(KeySourceException::class)
+    private fun String.toJwkSet(): JWKSet? {
+        try {
+            return JWKSet.parse(this)
+        } catch (p: ParseException) {
+            throw KeySourceException("parsing jwks from resource", p)
         }
     }
 }
