@@ -4,7 +4,7 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.client.request.*
+import io.ktor.client.request.get
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
 import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
