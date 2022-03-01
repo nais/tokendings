@@ -21,7 +21,7 @@ private val log = KotlinLogging.logger {}
 
 private const val DEFAULT_RETRY_ATTEMPTS = 5
 
-open class JwkSetFailOver(
+class JwkSetFailOver(
     initialJwks: String,
     private val jwkSetUri: URL,
     private val resourceRetriever: ResourceRetriever,
