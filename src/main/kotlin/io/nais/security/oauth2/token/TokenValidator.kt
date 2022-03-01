@@ -22,7 +22,7 @@ class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityCo
                 initialJwks,
                 jwkSetUri,
                 cacheProperties.configurableResourceRetriever,
-                RetryOptions()
+                RetryOptions(5)
             ),
             cacheProperties.configurableResourceRetriever,
             cacheProperties.configurableJWKSetCache
