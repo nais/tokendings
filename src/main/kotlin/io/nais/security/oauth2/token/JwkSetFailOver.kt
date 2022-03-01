@@ -54,9 +54,9 @@ open class JwkSetFailOver(
             }
         } catch (t: Throwable) {
             if (t is ParseException) {
-                log.warn(t) { "could not parse resource content to jwksSet - ${t.message}" }
+                log.error(t) { "could not parse resource content to jwksSet - ${t.message}" }
             } else {
-                log.warn(t) { "error when trying to get current jwks from resource: $jwkSetUri - ${t.message}" }
+                log.error(t) { "error when trying to get current jwks from resource: $jwkSetUri - ${t.message}" }
             }
         }
 
