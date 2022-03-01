@@ -11,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.io.IOException
 import java.net.URL
@@ -24,7 +23,7 @@ class JwkSetFailover(
     private val options: FailoverOptions
 ) : JWKSource<SecurityContext> {
     private var jwkSet = initialKeySource.toJwkSet()
-    private val dispatcher = Dispatchers.IO
+    private val dispatcher = Dispatchers.Main
 
     private fun setJWKSet(inputJwks: JWKSet) {
         this.jwkSet = inputJwks
@@ -37,28 +36,26 @@ class JwkSetFailover(
     @Throws(KeySourceException::class)
     override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
         try {
-            updateJwkSetResourceAsync()
+            updateJwkSetResourceAsync(CoroutineScope(dispatcher))
         } catch (t: Throwable) {
             val errMessage = "trying to get current jwks from resource: $jwkSetUri"
             log.error(t) { "$errMessage - ${t.message}" }
             throw KeySourceException(errMessage, t)
         }
 
-        log.debug("failover jwkSet launched")
-        return jwkSelector.select(jwkSet)
+        log.info("failover jwkSet launched")
+        return jwkSelector.select(getJwkSet())
     }
 
-    fun updateJwkSetResourceAsync() {
-        CoroutineScope(dispatcher).launch {
+    fun updateJwkSetResourceAsync(scope: CoroutineScope) {
+        scope.launch {
             log.info("getting jwks metadata from url=$jwkSetUri")
-            withContext(dispatcher) {
-                val resourceResponse: Resource? = retry(jwkSetUri) {
-                    options.resourceRetriever.retrieveResource(jwkSetUri)
-                }
-                resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
-                    setJWKSet(parsedJwkSet)
-                    log.debug("failover jwkSet updated with kid's: ${parsedJwkSet.keys.map { it.keyID.toString() }}")
-                }
+            val resourceResponse: Resource? = retry(jwkSetUri) {
+                options.resourceRetriever.retrieveResource(jwkSetUri)
+            }
+            resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
+                setJWKSet(parsedJwkSet)
+                log.debug("failover jwkSet updated with kid's: ${parsedJwkSet.keys.map { it.keyID.toString() }}")
             }
         }
     }
