@@ -16,29 +16,30 @@ import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.io.IOException
 import java.net.URL
-import java.text.ParseException
 
 private val log = KotlinLogging.logger {}
 
-private const val DEFAULT_RETRY_ATTEMPTS = 5
-
 class JwkSetFailOver(
-    initialJwks: String,
+    initialKeySource: String,
     private val jwkSetUri: URL,
     private val resourceRetriever: ResourceRetriever,
+    private val retryOptions: RetryOptions
 ) : JWKSource<SecurityContext> {
-
-    // TODO handle parse
-    private var jwkSet = JWKSet.parse(initialJwks)
+    private var jwkSet = initialKeySource.toJwkSet()
+    private val dispatcher = Dispatchers.IO
 
     private fun setJWKSet(inputJwks: JWKSet) {
         this.jwkSet = inputJwks
     }
 
+    fun getJwkSet(): JWKSet? {
+        return this.jwkSet
+    }
+
     @Throws(KeySourceException::class)
     override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
         try {
-            updateJwkSetResourceFrom(CoroutineScope(Dispatchers.Main))
+            updateJwkSetResourceAsync()
         } catch (t: Throwable) {
             val errMessage = "trying to get current jwks from resource: $jwkSetUri"
             log.error(t) { "$errMessage - ${t.message}" }
@@ -49,12 +50,11 @@ class JwkSetFailOver(
         return jwkSelector.select(jwkSet)
     }
 
-    private fun updateJwkSetResourceFrom(coroutineScope: CoroutineScope) {
-        coroutineScope.launch {
+    fun updateJwkSetResourceAsync() {
+        CoroutineScope(dispatcher).launch {
             log.info("getting jwks metadata from url=$jwkSetUri")
-            val resourceResponse: Resource?
-            withContext(Dispatchers.IO) {
-                resourceResponse = retry(jwkSetUri = jwkSetUri) {
+            withContext(dispatcher) {
+                val resourceResponse: Resource? = retry(jwkSetUri, retryOptions) {
                     resourceRetriever.retrieveResource(jwkSetUri)
                 }
                 resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
@@ -67,37 +67,28 @@ class JwkSetFailOver(
 
     private suspend fun <T> retry(
         jwkSetUri: URL,
-        times: Int = DEFAULT_RETRY_ATTEMPTS,
-        initialDelay: Long = 100L,
-        maxDelay: Long = 1000L,
+        retryOptions: RetryOptions,
         block: suspend () -> T?
     ): T? {
-        var currentDelay = initialDelay
-        repeat(times - 1) { attempt ->
+        var currentDelay = retryOptions.initialDelay
+        repeat(retryOptions.times - 1) { attempt ->
             try {
                 return block()
             } catch (e: IOException) {
-                log.warn(e) {
-                    "$jwkSetUri: Attempt #${attempt + 1} of $times failed - retrying in $currentDelay ms - ${e.message}"
+                log.warn {
+                    "$jwkSetUri: Attempt #${attempt + 1} of ${retryOptions.times} failed - retrying in $currentDelay ms - ${e.message}"
                 }
                 delay(currentDelay)
-                currentDelay = (currentDelay * 2.0).toLong().coerceAtMost(maxDelay)
+                currentDelay = (currentDelay * 2.0).toLong().coerceAtMost(retryOptions.maxDelay)
             }
         }
         return try {
             block()
         } catch (e: IOException) {
-            log.error(e) { "$jwkSetUri: Final retry attempt #$times failed - ${e.message}" }
+            log.error {
+                "$jwkSetUri: Final retry attempt #${retryOptions.times} failed - ${e.message}"
+            }
             return null
-        }
-    }
-
-    @Throws(KeySourceException::class)
-    private fun String.toJwkSet(): JWKSet? {
-        try {
-            return JWKSet.parse(this)
-        } catch (p: ParseException) {
-            throw KeySourceException("parsing jwks from resource", p)
         }
     }
 }

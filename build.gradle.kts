@@ -11,6 +11,7 @@ val kotestVersion = "5.1.0"
 val kotlinLoggingVersion = "2.1.21"
 val kotlinVersion = "1.6.10"
 val kotliqueryVersion = "1.6.1"
+val kotlinCoroutines = "1.6.0"
 val ktorVersion = "1.6.7"
 val logbackVersion = "1.2.10"
 val logstashLogbackEncoderVersion = "7.0.1"
@@ -51,6 +52,8 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutines")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutines")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-auth:$ktorVersion")
     implementation("io.ktor:ktor-auth-jwt:$ktorVersion")
@@ -84,6 +87,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinCoroutines")
 }
 
 tasks {
@@ -121,5 +125,11 @@ tasks {
 
     "build" {
         dependsOn("shadowJar")
+    }
+
+    withType<KotlinCompile>() {
+        kotlinOptions.freeCompilerArgs = listOf(
+            "-opt-in=kotlin.RequiresOptIn"
+        )
     }
 }

@@ -4,6 +4,7 @@ import com.nimbusds.jose.JOSEException
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.KeySourceException
 import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
@@ -92,3 +93,12 @@ internal fun String.toJwt(): SignedJWT = try {
 internal fun String.toRSAKey() = RSAKey.parse(this)
 
 internal fun RSAKey.toJSON() = this.toJSONString()
+
+@Throws(KeySourceException::class)
+fun String.toJwkSet(): JWKSet? {
+    try {
+        return JWKSet.parse(this)
+    } catch (p: java.text.ParseException) {
+        throw KeySourceException("parsing jwks from resource - ${p.message}", p)
+    }
+}
