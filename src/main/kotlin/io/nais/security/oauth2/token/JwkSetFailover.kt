@@ -7,7 +7,6 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.Resource
-import com.nimbusds.jose.util.ResourceRetriever
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -19,11 +18,10 @@ import java.net.URL
 
 private val log = KotlinLogging.logger {}
 
-class JwkSetFailOver(
+class JwkSetFailover(
     initialKeySource: String,
     private val jwkSetUri: URL,
-    private val resourceRetriever: ResourceRetriever,
-    private val retryOptions: RetryOptions
+    private val options: FailoverOptions
 ) : JWKSource<SecurityContext> {
     private var jwkSet = initialKeySource.toJwkSet()
     private val dispatcher = Dispatchers.IO
@@ -54,8 +52,8 @@ class JwkSetFailOver(
         CoroutineScope(dispatcher).launch {
             log.info("getting jwks metadata from url=$jwkSetUri")
             withContext(dispatcher) {
-                val resourceResponse: Resource? = retry(jwkSetUri, retryOptions) {
-                    resourceRetriever.retrieveResource(jwkSetUri)
+                val resourceResponse: Resource? = retry(jwkSetUri) {
+                    options.resourceRetriever.retrieveResource(jwkSetUri)
                 }
                 resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
                     setJWKSet(parsedJwkSet)
@@ -67,26 +65,25 @@ class JwkSetFailOver(
 
     private suspend fun <T> retry(
         jwkSetUri: URL,
-        retryOptions: RetryOptions,
         block: suspend () -> T?
     ): T? {
-        var currentDelay = retryOptions.initialDelay
-        repeat(retryOptions.times - 1) { attempt ->
+        var currentDelay = options.initialDelay
+        repeat(options.times - 1) { attempt ->
             try {
                 return block()
             } catch (e: IOException) {
                 log.warn {
-                    "$jwkSetUri: Attempt #${attempt + 1} of ${retryOptions.times} failed - retrying in $currentDelay ms - ${e.message}"
+                    "$jwkSetUri: Attempt #${attempt + 1} of ${options.times} failed - retrying in $currentDelay ms - ${e.message}"
                 }
                 delay(currentDelay)
-                currentDelay = (currentDelay * 2.0).toLong().coerceAtMost(retryOptions.maxDelay)
+                currentDelay = (currentDelay * 2.0).toLong().coerceAtMost(options.maxDelay)
             }
         }
         return try {
             block()
         } catch (e: IOException) {
             log.error {
-                "$jwkSetUri: Final retry attempt #${retryOptions.times} failed - ${e.message}"
+                "$jwkSetUri: Final retry attempt #${options.times} failed - ${e.message}"
             }
             return null
         }

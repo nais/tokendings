@@ -18,11 +18,10 @@ class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityCo
         issuer,
         RemoteJWKSet(
             jwkSetUri,
-            JwkSetFailOver(
+            JwkSetFailover(
                 initialJwks,
                 jwkSetUri,
-                cacheProperties.configurableResourceRetriever,
-                RetryOptions(5)
+                FailoverOptions(5, cacheProperties.configurableResourceRetriever)
             ),
             cacheProperties.configurableResourceRetriever,
             cacheProperties.configurableJWKSetCache

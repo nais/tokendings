@@ -14,7 +14,7 @@ import org.junit.Before
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-class JwkSetFailOverTest {
+class JwkSetFailoverTest {
     private val mainThreadSurrogate = newSingleThreadContext("UI thread")
 
     @Before
@@ -33,11 +33,10 @@ class JwkSetFailOverTest {
         withMockOAuth2Server {
             val jwksUri = this.jwksUrl("issuer1").toUrl()
             val resourceRetriever = DefaultResourceRetriever(200, 20)
-            val jwksFailOver = JwkSetFailOver(
+            val jwksFailOver = JwkSetFailover(
                 initialJwksSet,
                 jwksUri,
-                resourceRetriever,
-                RetryOptions(1, 30, 60)
+                FailoverOptions(1, resourceRetriever, 30, 60)
             )
             jwksFailOver.updateJwkSetResourceAsync()
             val expectedJwkSet = initialJwksSet.toJwkSet()
