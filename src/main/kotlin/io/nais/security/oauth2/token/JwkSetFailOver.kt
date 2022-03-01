@@ -6,8 +6,8 @@ import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
-import io.ktor.client.request.get
-import io.nais.security.oauth2.defaultHttpClient
+import com.nimbusds.jose.util.Resource
+import com.nimbusds.jose.util.ResourceRetriever
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.net.URL
+import java.text.ParseException
 
 private val log = KotlinLogging.logger {}
 
@@ -23,31 +24,42 @@ private const val DEFAULT_RETRY_ATTEMPTS = 5
 open class JwkSetFailOver(
     initialJwks: String,
     private val jwkSetUri: URL,
+    private val resourceRetriever: ResourceRetriever,
 ) : JWKSource<SecurityContext> {
 
     // TODO handle parse
     private var jwkSet = JWKSet.parse(initialJwks)
 
-    private fun setJWKSet(inputJwks: String) {
-        val parsedJwksSet = JWKSet.parse(inputJwks)
-        this.jwkSet = parsedJwksSet
+    private fun setJWKSet(inputJwks: JWKSet) {
+        this.jwkSet = inputJwks
     }
 
     override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
         val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-        coroutineScope.launch {
-            log.info("getting jwks metadata from url=$jwkSetUri")
-            var responseJwksString: String?
-            withContext(Dispatchers.IO) {
-                responseJwksString = retry(jwkSetUri = jwkSetUri) {
-                    defaultHttpClient.get<String>(jwkSetUri)
-                }
-                responseJwksString?.let {
-                    setJWKSet(it)
+        try {
+            coroutineScope.launch {
+                log.info("getting jwks metadata from url=$jwkSetUri")
+                val responseJwksString: Resource?
+                withContext(Dispatchers.IO) {
+                    responseJwksString = retry(jwkSetUri = jwkSetUri) {
+                        resourceRetriever.retrieveResource(jwkSetUri)
+                    }
+                    responseJwksString?.let {
+                        val parsedJwksSet = JWKSet.parse(responseJwksString.content)
+                        setJWKSet(parsedJwksSet)
+                        log.debug("failover jwkSet updated")
+                    }
                 }
             }
+        } catch (t: Throwable) {
+            if (t is ParseException) {
+                log.warn(t) { "could not parse resource content to jwksSet - ${t.message}" }
+            } else {
+                log.warn(t) { "error when trying to get current jwks from resource: $jwkSetUri - ${t.message}" }
+            }
         }
+
         log.debug("failover jwkSet launched")
         return jwkSelector.select(jwkSet)
     }
