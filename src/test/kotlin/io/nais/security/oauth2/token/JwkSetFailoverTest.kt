@@ -1,17 +1,24 @@
 package io.nais.security.oauth2.token
 
+import com.nimbusds.jose.jwk.JWKMatcher
+import com.nimbusds.jose.jwk.JWKSelector
 import com.nimbusds.jose.util.DefaultResourceRetriever
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.withMockOAuth2Server
+import io.nais.security.oauth2.utils.generateRsaKey
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
+import no.nav.security.mock.oauth2.http.objectMapper
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Before
@@ -19,7 +26,7 @@ import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 class JwkSetFailoverTest {
-    private val dispatcher = UnconfinedTestDispatcher()
+    private val dispatcher = UnconfinedTestDispatcher(name = "JwkSetFailoverTest")
     private val scope = TestScope(dispatcher)
 
     @Before
@@ -33,58 +40,74 @@ class JwkSetFailoverTest {
     }
 
     @Test
-    fun `failover returns the initial cached jwkset and tries async to update failover cache`() {
+    fun `failover returns the initial cached jwk set`() {
         withMockOAuth2Server {
             val jwksUri = this.jwksUrl("issuer1").toUrl()
-            val resourceRetriever = DefaultResourceRetriever(200, 20)
-            val jwksFailOver = JwkSetFailover(
-                TestData.initialJwksSet,
+            val resourceRetriever = DefaultResourceRetriever(1000, 500)
+            val jwksFailoverSource = JwkSetFailover(
+                resourceRetriever.retrieveResource(jwksUri).content,
                 jwksUri,
-                FailoverOptions(1, resourceRetriever, 30, 60)
+                FailoverOptions(
+                    1,
+                    resourceRetriever,
+                    30,
+                    60,
+                    scope
+                )
             )
-            jwksFailOver.updateJwkSetResourceAsync(scope)
-            val expectedJwkSet = TestData.initialJwksSet.toJwkSet()
-            val result = jwksFailOver.getJwkSet()
+            val expectedJwkSet = jwksFailoverSource.getJwkSet()
+            scope.launch {
+                jwksFailoverSource.updateJwkSetResourceAsync()
+                delay(1000)
+            }
+            val result = jwksFailoverSource.getJwkSet()
             expectedJwkSet?.keys ?: failOnNull()
             result?.keys ?: failOnNull()
             expectedJwkSet.keys.size shouldBe result.keys.size
 
-            jwksFailOver.getJwkSet()?.keys?.forEach {
-                val e = expectedJwkSet.keys[0]
-                e.keyID shouldBe it.keyID
-                e.keyType shouldBe it.keyType
+            expectedJwkSet.keys?.forEach { expected ->
+                expectedJwkSet.keys?.forEach { got ->
+                    expected.keyID shouldBe got.keyID
+                    expected.keyType shouldBe got.keyType
+                }
             }
         }
     }
 
     @Test
-    fun `failover returns the new set of updated keys`() {
-        val serverMock = MockOAuth2Server(OAuth2Config.fromJson(TestData.signingJsonSpecified))
-        val jwksUri = serverMock.jwksUrl("issuer1").toUrl()
-        val resourceRetriever = DefaultResourceRetriever(400, 200)
-        val jwksFailOver = JwkSetFailover(
+    fun `failover returns the updated jwk set`() {
+        val serverMock = MockOAuth2Server(
+            OAuth2Config.fromJson(
+                TestData.signingJsonSpecified(
+                    objectMapper.writeValueAsString(generateRsaKey(keyId = "issuer2").toPublicJWK().toString())
+                )
+            )
+        )
+        serverMock.start()
+        val jwksUri = serverMock.jwksUrl("issuer2").toUrl()
+        val resourceRetriever = DefaultResourceRetriever(1000, 500)
+        val jwksSource = JwkSetFailover(
             TestData.initialJwksSet,
             jwksUri,
-            FailoverOptions(2, resourceRetriever, 30, 60)
+            FailoverOptions(
+                times = 5,
+                resourceRetriever = resourceRetriever,
+                coroutineScope = scope
+            )
         )
-        jwksFailOver.updateJwkSetResourceAsync(scope)
-        val expectedJwkSet = TestData.initialJwksSet.toJwkSet()
-        val result = jwksFailOver.getJwkSet()
-        expectedJwkSet?.keys ?: failOnNull()
-        result?.keys ?: failOnNull()
-        expectedJwkSet.keys.size shouldBe result.keys.size
-
-        jwksFailOver.getJwkSet()?.keys?.forEach {
-            val e = expectedJwkSet.keys[0]
-            e.keyID shouldBe it.keyID
-            e.keyType shouldBe it.keyType
-        }
+        val initialJwkSet = jwksSource.getJwkSet()
+        jwksSource.get(JWKSelector(JWKMatcher.Builder().keyID("1").build()), null)
+        val updatedJwkSet = jwksSource.getJwkSet()
+        initialJwkSet ?: failOnNull()
+        updatedJwkSet ?: failOnNull()
+        initialJwkSet.keys[0].keyID shouldNotBe updatedJwkSet.keys[0].keyID
+        serverMock.shutdown()
     }
 }
 
-internal fun failOnNull(): Nothing = throw AssertionError("Value should not be null")
+private fun failOnNull(): Nothing = throw AssertionError("Value should not be null")
 
-internal object TestData {
+private object TestData {
     const val initialJwksSet =
         "{\"keys\":[{\"kty\":\"RSA\"," +
             "\"e\":\"AQAB\"," +
@@ -99,11 +122,11 @@ internal object TestData {
             "xEZddtUY5plSz-vgX3GSvANLDH-LZJ76Zmx3a8dEZbI7VxgsBQAqcUlQ\"}]}\n"
 
     @Language("json")
-    val signingJsonSpecified = """
+    fun signingJsonSpecified(key: String) = """
         {
         "tokenProvider" : {
             "keyProvider" : {
-               "initialKeys" : "{\"kty\":\"RSA\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"issuer1\",\"n\":\"onZcB1ryWS1keTIcbgsLKJ1UBwL1Wbzse5P2HjkrNwbG3Jy2lefUEcTVJxN8bpLeW460Luz3ScZd3d9p8IoHjmhZ2cyO49E41aBRIlBRzWNpebK5xeC95rSKenYHpOPlLzPgybg2qxallzQUOcKCheiF0fsErlapaA9YmKwzP3DwvzYW4JqSrHhDGWPwUCcsR4dpetwKXP_9tRFso06ryr4um3qiq7giyZEyZVG3fHMplD-5e-2-RrzBiGFW_zvs-XVRGPIf9Y5YNjeQJRuS4vF82V8mNZxEZddtUY5plSz-vgX3GSvANLDH-LZJ76Zmx3a8dEZbI7VxgsBQAqcUlQ\"}",
+               "initialKeys" : $key,
                "algorithm" : "RS256"
             }
           }
