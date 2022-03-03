@@ -9,6 +9,9 @@ import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.Resource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import mu.KotlinLogging
 import java.io.IOException
 import java.net.URL
@@ -21,9 +24,15 @@ class JwkSetFailover(
     private val options: FailoverOptions
 ) : JWKSource<SecurityContext> {
     private var jwkSet = initialKeySource.toJwkSet()
+    private val mutex = Mutex()
 
+    //  fine-grained Thread safe operation
     private fun setJWKSet(inputJwks: JWKSet) {
-        this.jwkSet = inputJwks
+        runBlocking {
+            mutex.withLock {
+                jwkSet = inputJwks
+            }
+        }
     }
 
     fun getJwkSet(): JWKSet? {

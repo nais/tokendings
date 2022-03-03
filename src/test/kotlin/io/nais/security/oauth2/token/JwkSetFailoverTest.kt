@@ -76,17 +76,19 @@ class JwkSetFailoverTest {
 
     @Test
     fun `failover returns the updated jwk set`() {
-        val serverMock = MockOAuth2Server(
-            OAuth2Config.fromJson(
-                TestData.signingJsonSpecified(
-                    objectMapper.writeValueAsString(generateRsaKey(keyId = "issuer2").toPublicJWK().toString())
-                )
+        val issuer = "issuer2"
+        val generatedPublicJwkSet = TestData.signingJsonSpecified(
+            objectMapper.writeValueAsString(
+                generateRsaKey(keyId = issuer).toPublicJWK().toString()
             )
         )
+        val oauth2Config = OAuth2Config.fromJson(generatedPublicJwkSet)
+        val serverMock = MockOAuth2Server(oauth2Config)
         serverMock.start()
-        val jwksUri = serverMock.jwksUrl("issuer2").toUrl()
+        val jwksUri = serverMock.jwksUrl(issuer).toUrl()
         val resourceRetriever = DefaultResourceRetriever(1000, 500)
         val jwksSource = JwkSetFailover(
+            // Initial jwk set is "issuer1"
             TestData.initialJwksSet,
             jwksUri,
             FailoverOptions(
