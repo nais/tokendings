@@ -87,12 +87,12 @@ class AuthorizationServerProperties(
 }
 
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
-    val wellKnown: WellKnown = runBlocking {
+    private val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
         defaultHttpClient.get(wellKnownUrl)
     }
     val issuer = wellKnown.issuer
-    val initialJwks: String = runBlocking {
+    private val initialJwks: String = runBlocking {
         log.info("getting initial jwks metadata from jwks-uri=${wellKnown.jwksUri}")
         defaultHttpClient.get(wellKnown.jwksUri)
     }
@@ -101,7 +101,10 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         refreshTime = 20,
         timeUnit = TimeUnit.MINUTES,
         connectionTimeout = 4000,
-        readTimeOut = 4000
+        readTimeOut = 4000,
+        initialJwks = initialJwks,
+        jwksUrl = wellKnown.jwksUri,
+        failoverTimes = 10
     )
 }
 

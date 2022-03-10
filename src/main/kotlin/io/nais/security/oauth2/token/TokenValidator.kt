@@ -14,15 +14,11 @@ class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityCo
 
     private val keySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, jwkSource)
 
-    constructor(issuer: String, jwkSetUri: URL, cacheProperties: CacheProperties, initialJwks: String) : this(
+    constructor(issuer: String, cacheProperties: CacheProperties) : this(
         issuer,
         RemoteJWKSet(
-            jwkSetUri,
-            JwkSetFailover(
-                initialJwks,
-                jwkSetUri,
-                FailoverOptions(5, cacheProperties.configurableResourceRetriever)
-            ),
+            URL(cacheProperties.jwksUrl),
+            cacheProperties.configurableFailOver,
             cacheProperties.configurableResourceRetriever,
             cacheProperties.configurableJWKSetCache
         )

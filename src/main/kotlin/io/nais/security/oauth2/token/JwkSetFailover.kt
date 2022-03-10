@@ -20,7 +20,7 @@ private val log = KotlinLogging.logger {}
 
 class JwkSetFailover(
     initialKeySource: String,
-    private val jwkSetUri: URL,
+    private val jwkSetUri: String,
     private val options: FailoverOptions
 ) : JWKSource<SecurityContext> {
     private var jwkSet = initialKeySource.toJwkSet()
@@ -53,7 +53,7 @@ class JwkSetFailover(
     suspend fun updateJwkSetResourceAsync() {
         log.info("getting jwks metadata from url=$jwkSetUri")
         val resourceResponse: Resource? = retry(jwkSetUri) {
-            options.resourceRetriever.retrieveResource(jwkSetUri)
+            options.resourceRetriever.retrieveResource(URL(jwkSetUri))
         }
         resourceResponse?.content?.toJwkSet()?.let { parsedJwkSet ->
             setJWKSet(parsedJwkSet)
@@ -62,7 +62,7 @@ class JwkSetFailover(
     }
 
     private suspend fun <T> retry(
-        jwkSetUri: URL,
+        jwkSetUri: String,
         block: suspend () -> T?
     ): T? {
         var currentDelay = options.initialDelay

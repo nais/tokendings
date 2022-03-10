@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.setMain
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
 import no.nav.security.mock.oauth2.http.objectMapper
+import okhttp3.internal.wait
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Before
@@ -43,22 +44,22 @@ class JwkSetFailoverTest {
     fun `failover returns the initial cached jwk set`() {
         withMockOAuth2Server {
             val jwksUri = this.jwksUrl("issuer1").toUrl()
-            val resourceRetriever = DefaultResourceRetriever(1000, 500)
+            val resourceRetriever = DefaultResourceRetriever(1000, 100)
             val jwksFailoverSource = JwkSetFailover(
                 resourceRetriever.retrieveResource(jwksUri).content,
-                jwksUri,
+                jwksUri.toString(),
                 FailoverOptions(
-                    1,
+                    2,
                     resourceRetriever,
-                    30,
-                    60,
+                    100,
+                    200,
                     scope
                 )
             )
+            this.shutdown()
             val expectedJwkSet = jwksFailoverSource.getJwkSet()
             scope.launch {
                 jwksFailoverSource.updateJwkSetResourceAsync()
-                delay(1000)
             }
             val result = jwksFailoverSource.getJwkSet()
             expectedJwkSet?.keys ?: failOnNull()
@@ -90,7 +91,7 @@ class JwkSetFailoverTest {
         val jwksSource = JwkSetFailover(
             // Initial jwk set is "issuer1"
             TestData.initialJwksSet,
-            jwksUri,
+            jwksUri.toString(),
             FailoverOptions(
                 times = 5,
                 resourceRetriever = resourceRetriever,
@@ -98,7 +99,7 @@ class JwkSetFailoverTest {
             )
         )
         val initialJwkSet = jwksSource.getJwkSet()
-        jwksSource.get(JWKSelector(JWKMatcher.Builder().keyID("1").build()), null)
+        jwksSource.get(JWKSelector(JWKMatcher.Builder().keyID(issuer).build()), null)
         val updatedJwkSet = jwksSource.getJwkSet()
         initialJwkSet ?: failOnNull()
         updatedJwkSet ?: failOnNull()

@@ -10,7 +10,6 @@ import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
-import java.net.URL
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
@@ -25,9 +24,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         authorizationServerProperties.subjectTokenIssuers.associate {
             it.issuer to TokenValidator(
                 it.issuer,
-                URL(it.wellKnown.jwksUri),
                 it.cacheProperties,
-                it.initialJwks
             )
         }
 
