@@ -74,8 +74,8 @@ class AuthorizationServerProperties(
     val clientAssertionMaxExpiry: Long = 120,
 ) {
     val cacheProperties = CacheProperties(
-        lifeSpan = 60,
-        refreshTime = 20,
+        lifeSpan = 180,
+        refreshTime = 60,
         timeUnit = TimeUnit.MINUTES,
         connectionTimeout = 4000,
         readTimeOut = 4000
