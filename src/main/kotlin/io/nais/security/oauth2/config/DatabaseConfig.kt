@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.HikariProperties.CONNECTION_TIMEOUT
 import io.nais.security.oauth2.config.HikariProperties.IDLE_TIMEOUT
+import io.nais.security.oauth2.config.HikariProperties.LEAK_THRESHOLD
 import io.nais.security.oauth2.config.HikariProperties.MAX_LIFETIME
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
@@ -27,6 +28,7 @@ private fun hikariConfig(databaseConfig: DatabaseConfig) =
     HikariConfig().apply {
         jdbcUrl = databaseConfig.url
         maximumPoolSize = 3
+        leakDetectionThreshold = LEAK_THRESHOLD
         minimumIdle = 1
         idleTimeout = IDLE_TIMEOUT
         connectionTimeout = CONNECTION_TIMEOUT
@@ -39,4 +41,5 @@ object HikariProperties {
     const val IDLE_TIMEOUT = 10001L
     const val CONNECTION_TIMEOUT = 1000L
     const val MAX_LIFETIME = 30001L
+    const val LEAK_THRESHOLD = 60 * 1000L
 }
