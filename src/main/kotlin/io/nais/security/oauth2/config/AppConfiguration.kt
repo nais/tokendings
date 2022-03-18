@@ -97,8 +97,8 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         defaultHttpClient.get(wellKnown.jwksUri)
     }
     val cacheProperties: CacheProperties = CacheProperties(
-        lifeSpan = 60,
-        refreshTime = 20,
+        lifeSpan = 180,
+        refreshTime = 60,
         timeUnit = TimeUnit.MINUTES,
         connectionTimeout = 4000,
         readTimeOut = 4000,
