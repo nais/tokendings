@@ -44,6 +44,26 @@ jobs:
           docker build --pull --tag ${IMAGE} .
           docker push ${IMAGE}
 
+      - name: 'Authenticate to Google Cloud'
+        id: 'google'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: NAIS SLSA Provenance Action
+        uses: nais/salsa@v0.0.1-alpha
+        with:
+          image: ${IMAGE}
+
+      # For test output
+      - name: Upload provenance
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            ./salsa.provenance
+            ./salsa.raw.txt
+            ./salsa.att
+
   deploy-dev-gcp:
     name: Deploy to dev-gcp
     needs: build
