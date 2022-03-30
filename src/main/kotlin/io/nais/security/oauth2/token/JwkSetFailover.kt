@@ -41,10 +41,12 @@ class JwkSetFailover(
 
     @Throws(KeySourceException::class)
     override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
-        try {
-            options.coroutineScope.launch { updateJwkSetResourceAsync() }
-        } catch (t: Throwable) {
-            throw KeySourceException("trying to get current jwks from resource: $jwkSetUri", t)
+        options.coroutineScope.launch {
+            try {
+                updateJwkSetResourceAsync()
+            } catch (t: Throwable) {
+                throw KeySourceException("trying to get current jwks from resource: $jwkSetUri", t)
+            }
         }
         log.info("failover jwkSet launched")
         return jwkSelector.select(getJwkSet())

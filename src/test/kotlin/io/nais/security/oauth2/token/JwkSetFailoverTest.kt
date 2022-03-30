@@ -10,7 +10,6 @@ import io.nais.security.oauth2.utils.generateRsaKey
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -19,7 +18,6 @@ import kotlinx.coroutines.test.setMain
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.OAuth2Config
 import no.nav.security.mock.oauth2.http.objectMapper
-import okhttp3.internal.wait
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Before
