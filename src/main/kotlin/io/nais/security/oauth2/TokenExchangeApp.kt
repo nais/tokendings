@@ -185,7 +185,7 @@ private fun ErrorObject.toGeneric(): ErrorObject =
     ErrorObject(
         this.code,
         when (this.httpStatusCode) {
-            in 400..499 -> "invalid request ${this.description}"
+            in 400..499 -> "" + this.description
             else -> "unexpected error"
         },
         this.httpStatusCode,
