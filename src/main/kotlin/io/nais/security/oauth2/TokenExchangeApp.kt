@@ -168,7 +168,7 @@ fun StatusPages.Configuration.installExceptionHandling(config: AppConfiguration)
 private suspend fun ApplicationCall.respondWithError(exception: OAuth2Exception, includeErrorDetails: Boolean) {
     val errorObject = exception.toErrorObject(includeErrorDetails)
     Metrics.oauth2ErrorCounter.labels(errorObject.code).inc()
-    this.respond(HttpStatusCode.fromValue(errorObject.httpStatusCode), errorObject)
+    this.respond(HttpStatusCode.fromValue(errorObject.httpStatusCode), errorObject.toJSONObject())
 }
 
 private fun OAuth2Exception.toErrorObject(includeErrorDetails: Boolean): ErrorObject {
@@ -185,7 +185,7 @@ private fun ErrorObject.toGeneric(): ErrorObject =
     ErrorObject(
         this.code,
         when (this.httpStatusCode) {
-            in 400..499 -> "invalid request."
+            in 400..499 -> "invalid request ${this.description}"
             else -> "unexpected error"
         },
         this.httpStatusCode,
