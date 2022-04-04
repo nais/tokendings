@@ -305,6 +305,7 @@ internal class ClientRegistrationApiTest {
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: Signed+JWT+rejected%3A+Another+algorithm+expected%2C+or+no+matching+key%28s%29+found")
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
             }
@@ -345,7 +346,7 @@ internal class ClientRegistrationApiTest {
                         setBody(invalidSoftwareStatement)
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_REQUEST
+                    response shouldBe OAuth2Error.INVALID_REQUEST.setDescription("empty JWKS not allowed")
                     config.clientRegistry.findClient("cluster1:ns1:client1") shouldBe null
                 }
             }

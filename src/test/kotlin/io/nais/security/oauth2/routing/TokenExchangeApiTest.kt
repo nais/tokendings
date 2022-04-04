@@ -38,6 +38,7 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.net.URLEncoder
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
@@ -154,6 +155,7 @@ internal class TokenExchangeApiTest {
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
+                        .setDescription("client '${client1.clientId}' is not authorized to get token with aud=${client2.clientId}")
                 }
             }
         }
@@ -183,7 +185,7 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_CLIENT
+                    response shouldBe OAuth2Error.INVALID_CLIENT.setDescription("invalid client authentication for client_id=unknown, client not registered.")
                 }
             }
         }
@@ -216,6 +218,7 @@ internal class TokenExchangeApiTest {
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: Signed+JWT+rejected%3A+Another+algorithm+expected%2C+or+no+matching+key%28s%29+found")
                 }
             }
         }
@@ -226,7 +229,10 @@ internal class TokenExchangeApiTest {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")
-            val invalidClientAssertion = client1.createClientAssertion("yolo")
+
+            val invalidAudience = "yolo"
+            val invalidClientAssertion = client1.createClientAssertion(audience = invalidAudience)
+            val expectedAudience = URLEncoder.encode(mockConfig.authorizationServerProperties.tokenEndpointUrl(), Charsets.UTF_8)
 
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
@@ -247,6 +253,7 @@ internal class TokenExchangeApiTest {
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+%5B$expectedAudience%5D")
                 }
             }
         }
@@ -280,7 +287,10 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
+                    val seconds = mockConfig.authorizationServerProperties.clientAssertionMaxExpiry
+                    val clientId = client1.clientId
                     response shouldBe OAuth2Error.INVALID_CLIENT
+                        .setDescription("invalid client authentication for client_id=$clientId, client assertion exceeded max lifetime (${seconds}s).")
                 }
             }
         }
@@ -317,7 +327,7 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_REQUEST
+                    response shouldBe OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: JWT+before+use+time")
                 }
             }
         }
@@ -360,7 +370,7 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_REQUEST
+                    response shouldBe OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token")
                 }
             }
         }
@@ -373,7 +383,8 @@ internal class TokenExchangeApiTest {
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
             val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
-            val subjectToken = this.issueToken("unknown", "someclient", DefaultOAuth2TokenCallback()).serialize()
+            val subjectToken = this.issueToken("unknown", "someclient", DefaultOAuth2TokenCallback())
+            val subjectTokenSerialized = subjectToken.serialize()
 
             withTestApplication({
                 tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
@@ -388,12 +399,13 @@ internal class TokenExchangeApiTest {
                                 "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                                 "audience" to client2.clientId,
                                 "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                                "subject_token" to subjectToken
+                                "subject_token" to subjectTokenSerialized
                             ).formUrlEncode()
                         )
                     }
                 ) {
                     response shouldBe OAuth2Error.INVALID_REQUEST
+                        .setDescription("invalid subject_token: invalid request, cannot validate token from issuer=${subjectToken.jwtClaimsSet.issuer}")
                 }
             }
         }
@@ -435,7 +447,7 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_REQUEST
+                    response shouldBe OAuth2Error.INVALID_REQUEST.setDescription("invalid subject_token: invalid request, cannot parse token")
                 }
             }
         }
@@ -470,7 +482,7 @@ internal class TokenExchangeApiTest {
                         )
                     }
                 ) {
-                    response shouldBe OAuth2Error.INVALID_REQUEST
+                    response shouldBe OAuth2Error.INVALID_REQUEST.setDescription("invalid subject_token: token verification failed: Expired+JWT")
                 }
             }
         }

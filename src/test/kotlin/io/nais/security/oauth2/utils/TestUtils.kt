@@ -52,6 +52,7 @@ infix fun TestApplicationResponse.shouldBe(error: ErrorObject) {
     content shouldNotBe null
     val errorResponse: ErrorResponse = Jackson.defaultMapper.readValue(content!!)
     errorResponse.error shouldBe error.code
+    errorResponse.error_description shouldBe error.description
 }
 
 fun mockkFuture(duration: Duration) {

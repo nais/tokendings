@@ -36,15 +36,12 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
-        val subjectTokenJwt = tokenExchangeRequest.subjectToken.toJwt()
+        val subjectTokenJwt = tryOrInvalidSubjectToken {
+            tokenExchangeRequest.subjectToken.toJwt()
+        }
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
-        val subjectTokenClaims = try {
+        val subjectTokenClaims = tryOrInvalidSubjectToken {
             validator(issuer).validate(subjectTokenJwt)
-        } catch (e: OAuth2Exception) {
-            throw OAuth2Exception(
-                errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
-                throwable = e,
-            )
         }
 
         val now = Instant.now()
