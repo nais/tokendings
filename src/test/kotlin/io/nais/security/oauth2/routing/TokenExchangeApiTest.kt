@@ -441,6 +441,41 @@ internal class TokenExchangeApiTest {
         }
     }
 
+    @Test
+    fun `token exchange with valid client and expired subject_token should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf("client1")))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+            val expiryInSeconds = -60L
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback(expiry = expiryInSeconds))
+
+            withTestApplication({
+                tokenExchangeApp(mockConfig, DefaultRouting(mockConfig))
+            }) {
+                with(
+                    handleRequest(HttpMethod.Post, "/token") {
+                        addHeader(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize()
+                            ).formUrlEncode()
+                        )
+                    }
+                ) {
+                    response shouldBe OAuth2Error.INVALID_REQUEST
+                }
+            }
+        }
+    }
+
     private fun AppConfiguration.mockClientRegistry() = this.clientRegistry as MockClientRegistry
 
     private fun oAuth2Client(clientId: ClientId = "unknown") = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
