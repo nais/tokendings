@@ -38,7 +38,14 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         val targetAudience: String = tokenExchangeRequest.audience
         val subjectTokenJwt = tokenExchangeRequest.subjectToken.toJwt()
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
-        val subjectTokenClaims = validator(issuer).validate(subjectTokenJwt)
+        val subjectTokenClaims = try {
+            validator(issuer).validate(subjectTokenJwt)
+        } catch (e: OAuth2Exception) {
+            throw OAuth2Exception(
+                errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
+                throwable = e,
+            )
+        }
 
         val now = Instant.now()
         return JWTClaimsSet.Builder(subjectTokenClaims)
