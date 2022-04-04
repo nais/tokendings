@@ -97,10 +97,8 @@ internal fun RSAKey.toJSON() = this.toJSONString()
 internal fun <T> tryOrInvalidSubjectToken(block: () -> T): T = try {
     block()
 } catch (e: OAuth2Exception) {
-    throw e.invalidSubjectToken()
+    throw OAuth2Exception(
+        errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
+        throwable = e,
+    )
 }
-
-internal fun OAuth2Exception.invalidSubjectToken(): OAuth2Exception = OAuth2Exception(
-    errorObject = this.errorObject?.setDescription("invalid subject_token: ${this.errorObject.description}"),
-    throwable = this,
-)
