@@ -44,7 +44,9 @@ spec:
       - type: POSTGRES_11
         name: {{sqlinstance_name}}
         diskAutoresize: true
+        diskSize: 100
         highAvailability: true
+        tier: db-custom-4-15360
         databases:
           - name: tokendings
             envVarPrefix: DB
