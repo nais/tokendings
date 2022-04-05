@@ -73,13 +73,6 @@ class AuthorizationServerProperties(
     val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
 ) {
-    val cacheProperties = CacheProperties(
-        lifeSpan = 180,
-        refreshTime = 60,
-        timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 4000,
-        readTimeOut = 4000
-    )
 
     fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
     fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
@@ -99,6 +92,12 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         defaultHttpClient.get(wellKnownUrl)
     }
     val issuer = wellKnown.issuer
+    val cacheProperties = CacheProperties(
+        lifeSpan = 180,
+        refreshTime = 60,
+        timeUnit = TimeUnit.MINUTES,
+        jwksURL = URL(wellKnown.jwksUri)
+    )
 }
 
 data class KeyStoreProperties(
