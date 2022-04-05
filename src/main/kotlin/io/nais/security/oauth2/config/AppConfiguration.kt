@@ -96,8 +96,6 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         lifeSpan = 180,
         refreshTime = 60,
         timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 4000,
-        readTimeOut = 4000,
         jwksURL = URL(wellKnown.jwksUri)
     )
 }

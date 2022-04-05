@@ -45,8 +45,6 @@ class FailoverJwksTest {
         lifeSpan = 0,
         refreshTime = 0,
         timeUnit = TimeUnit.MINUTES,
-        connectionTimeout = 1000,
-        readTimeOut = 1000,
         jwksURL = jwksURL
     )
 }
