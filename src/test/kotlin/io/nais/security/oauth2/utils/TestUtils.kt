@@ -43,17 +43,16 @@ fun SignedJWT.verifySignature(jwkSet: JWKSet): JWTClaimsSet =
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorResponse(
-    val code: String,
-    val description: String,
-    val uri: String?,
-    val httpstatusCode: Int
+    val error_description: String,
+    val error: String
 )
 
 infix fun TestApplicationResponse.shouldBe(error: ErrorObject) {
     status()!!.value shouldBe error.httpStatusCode
     content shouldNotBe null
     val errorResponse: ErrorResponse = Jackson.defaultMapper.readValue(content!!)
-    errorResponse.code shouldBe error.code
+    errorResponse.error shouldBe error.code
+    errorResponse.error_description shouldBe error.description
 }
 
 fun mockkFuture(duration: Duration) {

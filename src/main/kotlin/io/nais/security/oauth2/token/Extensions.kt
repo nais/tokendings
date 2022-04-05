@@ -92,3 +92,13 @@ internal fun String.toJwt(): SignedJWT = try {
 internal fun String.toRSAKey() = RSAKey.parse(this)
 
 internal fun RSAKey.toJSON() = this.toJSONString()
+
+@Throws(OAuth2Exception::class)
+internal fun <T> tryOrInvalidSubjectToken(block: () -> T): T = try {
+    block()
+} catch (e: OAuth2Exception) {
+    throw OAuth2Exception(
+        errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
+        throwable = e,
+    )
+}
