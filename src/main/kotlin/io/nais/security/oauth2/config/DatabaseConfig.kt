@@ -4,7 +4,9 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.HikariProperties.CONNECTION_TIMEOUT
 import io.nais.security.oauth2.config.HikariProperties.IDLE_TIMEOUT
+import io.nais.security.oauth2.config.HikariProperties.MAX_POOL_SIZE
 import io.nais.security.oauth2.config.HikariProperties.MAX_LIFETIME
+import io.nais.security.oauth2.config.HikariProperties.MIN_IDLE_CONNECTIONS
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 
@@ -26,8 +28,8 @@ internal fun clean(dataSource: HikariDataSource) = Flyway.configure().dataSource
 private fun hikariConfig(databaseConfig: DatabaseConfig) =
     HikariConfig().apply {
         jdbcUrl = databaseConfig.url
-        maximumPoolSize = 10
-        minimumIdle = 1
+        maximumPoolSize = MAX_POOL_SIZE
+        minimumIdle = MIN_IDLE_CONNECTIONS
         idleTimeout = IDLE_TIMEOUT
         connectionTimeout = CONNECTION_TIMEOUT
         maxLifetime = MAX_LIFETIME
@@ -39,4 +41,6 @@ object HikariProperties {
     const val IDLE_TIMEOUT = 10001L
     const val CONNECTION_TIMEOUT = 1000L
     const val MAX_LIFETIME = 30001L
+    const val MAX_POOL_SIZE = 10
+    const val MIN_IDLE_CONNECTIONS = 1
 }
