@@ -5,6 +5,8 @@ metadata:
   namespace: {{namespace}}
   labels:
     team: {{team}}
+  annotations:
+    config.alpha.linkerd.io/proxy-wait-before-exit-seconds: "10"
 spec:
   image: {{ image }}
   accessPolicy:
