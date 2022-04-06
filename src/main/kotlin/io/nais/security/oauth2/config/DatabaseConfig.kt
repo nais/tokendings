@@ -26,7 +26,7 @@ internal fun clean(dataSource: HikariDataSource) = Flyway.configure().dataSource
 private fun hikariConfig(databaseConfig: DatabaseConfig) =
     HikariConfig().apply {
         jdbcUrl = databaseConfig.url
-        maximumPoolSize = 3
+        maximumPoolSize = 10
         minimumIdle = 1
         idleTimeout = IDLE_TIMEOUT
         connectionTimeout = CONNECTION_TIMEOUT
