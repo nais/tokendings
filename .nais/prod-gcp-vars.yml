@@ -11,3 +11,6 @@ env:
   APPLICATION_PROFILE: PROD
 slack_alert_channel: "plattformsikkerhet-alerts-prod"
 sqlinstance_name: tokendings-postgres
+replicas:
+  min: 6
+  max: 12
