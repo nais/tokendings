@@ -39,8 +39,8 @@ private fun hikariConfig(databaseConfig: DatabaseConfig) =
 
 object HikariProperties {
     const val IDLE_TIMEOUT = 10001L
-    const val CONNECTION_TIMEOUT = 1000L
+    const val CONNECTION_TIMEOUT = 3000L
     const val MAX_LIFETIME = 30001L
     const val MAX_POOL_SIZE = 10
-    const val MIN_IDLE_CONNECTIONS = 1
+    const val MIN_IDLE_CONNECTIONS = 5
 }
