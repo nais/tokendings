@@ -10,7 +10,7 @@ A static code analysis tool for the Kotlin programming language.
   * Install the plugin: [detekt](https://github.com/detekt/detekt-intellij-plugin)
   * Add `detekt/detekt-config.yml` as Configuration path. 
     
-* See this: [Configuration example](https://github.com/kozmi55/Kotlin-Android-Examples/blob/master/detekt-config.yml) for more settings
+* See this: [Configuration](https://github.com/detekt/detekt/blob/main/detekt-core/src/main/resources/default-detekt-config.yml) for more settings
   
 ### Github Actions
 
