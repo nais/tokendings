@@ -1,11 +1,3 @@
-formatting:
-  MaximumLineLength:
-    active: true
-    maxLineLength: 135
-    excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
-  NoWildcardImports:
-    active: false
-
 style:
   MaxLineLength:
     active: true
@@ -22,6 +14,9 @@ style:
     active: false
 
 naming:
+  ConstructorParameterNaming:
+    active: true
+    parameterPattern: '[a-z][_a-zA-Z0-9]*'
   TopLevelPropertyNaming:
     active: true
     excludes: [ '**/test/**', '**/commonTest/**']
