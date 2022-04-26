@@ -16,7 +16,7 @@ style:
 naming:
   ConstructorParameterNaming:
     active: true
-    parameterPattern: '[a-z]+_[A-Za-z0-9]*'
+    parameterPattern: '[a-z][_a-zA-Z0-9]*'
   TopLevelPropertyNaming:
     active: true
     excludes: [ '**/test/**', '**/commonTest/**']
