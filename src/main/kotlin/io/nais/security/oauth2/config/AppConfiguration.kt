@@ -4,6 +4,7 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
+import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
@@ -58,7 +59,7 @@ data class ClientRegistrationAuthProperties(
 ) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OpenID Connect server metadata from well-known url=$identityProviderWellKnownUrl")
-        defaultHttpClient.get(identityProviderWellKnownUrl)
+        defaultHttpClient.get(identityProviderWellKnownUrl).body()
     }
     val jwkProvider: JwkProvider = JwkProviderBuilder(URL(wellKnown.jwksUri))
         .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
@@ -89,7 +90,7 @@ class AuthorizationServerProperties(
 class SubjectTokenIssuer(private val wellKnownUrl: String) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
-        defaultHttpClient.get(wellKnownUrl)
+        defaultHttpClient.get(wellKnownUrl).body()
     }
     val issuer = wellKnown.issuer
     val cacheProperties = CacheProperties(

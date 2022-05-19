@@ -7,10 +7,10 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.auth.Authentication
-import io.ktor.auth.jwt.JWTPrincipal
-import io.ktor.auth.jwt.jwt
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.ktor.http.auth.HttpAuthHeader
+import io.ktor.server.auth.AuthenticationConfig
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
@@ -31,7 +31,7 @@ object BearerTokenAuth {
     val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
 }
 
-fun Authentication.Configuration.clientRegistrationAuth(appConfig: AppConfiguration) {
+fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
         val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))

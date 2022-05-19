@@ -1,44 +1,38 @@
 package io.nais.security.oauth2
 
-import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
 import com.nimbusds.oauth2.sdk.ErrorObject
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.application.Application
-import io.ktor.application.ApplicationCall
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.auth.Authentication
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.features.CallId
-import io.ktor.features.CallLogging
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.DoubleReceive
-import io.ktor.features.ForwardedHeaderSupport
-import io.ktor.features.StatusPages
-import io.ktor.features.callIdMdc
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.jackson.JacksonConverter
-import io.ktor.metrics.micrometer.MicrometerMetrics
-import io.ktor.request.path
-import io.ktor.response.respond
-import io.ktor.routing.routing
+import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
 import io.ktor.server.engine.addShutdownHook
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.stop
+import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.doublereceive.DoubleReceive
+import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.path
+import io.ktor.server.response.respond
+import io.ktor.server.routing.routing
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
@@ -58,10 +52,10 @@ import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.routing.observability
 import io.prometheus.client.CollectorRegistry
+import java.util.UUID
 import mu.KotlinLogging
 import org.slf4j.event.Level
-import java.util.UUID
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger { }
@@ -70,7 +64,7 @@ fun main() {
     try {
         val engine = server()
         engine.addShutdownHook {
-            engine.stop(3, 5, TimeUnit.SECONDS)
+            engine.stop(3, 5, SECONDS)
         }
         engine.start(wait = true)
     } catch (t: Throwable) {
@@ -129,11 +123,31 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(ContentNegotiation) {
-        register(ContentType.Application.Json, JacksonConverter(Jackson.defaultMapper))
+        jackson() {
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            setSerializationInclusion(NON_NULL)
+        }
     }
 
     install(StatusPages) {
-        installExceptionHandling(config)
+        exception<Throwable> { call, cause ->
+            log.error("request failed: $cause", cause)
+            when (cause) {
+                is OAuth2Exception -> {
+                    val includeErrorDetails = config.isNonProd()
+                    call.respondWithError(cause, includeErrorDetails)
+                }
+                is BadRequestException -> {
+                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
+                }
+                is JsonProcessingException -> {
+                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
+                }
+                else -> {
+                    call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
+                }
+            }
+        }
     }
 
     install(Authentication) {
@@ -141,27 +155,11 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(DoubleReceive)
-    install(ForwardedHeaderSupport)
+    install(ForwardedHeaders)
 
     routing {
         observability(config.databaseHealthCheck)
         routing.apiRouting(this.application)
-    }
-}
-
-fun StatusPages.Configuration.installExceptionHandling(config: AppConfiguration) = exception<Throwable> { cause ->
-    log.error("request failed: $cause", cause)
-    when (cause) {
-        is OAuth2Exception -> {
-            val includeErrorDetails = config.isNonProd()
-            call.respondWithError(cause, includeErrorDetails)
-        }
-        is JsonProcessingException -> {
-            call.respond(HttpStatusCode.BadRequest, "invalid request content")
-        }
-        else -> {
-            call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
-        }
     }
 }
 
@@ -193,18 +191,10 @@ private fun ErrorObject.toGeneric(): ErrorObject =
     )
 
 internal val defaultHttpClient = HttpClient(CIO) {
-    install(JsonFeature) {
-        serializer = JacksonSerializer {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+        jackson() {
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            setSerializationInclusion(NON_NULL)
         }
-    }
-}
-
-object Jackson {
-    val defaultMapper: ObjectMapper = jacksonObjectMapper()
-
-    init {
-        defaultMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
     }
 }

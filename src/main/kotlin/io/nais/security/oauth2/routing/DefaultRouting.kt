@@ -1,8 +1,8 @@
 package io.nais.security.oauth2.routing
 
-import io.ktor.application.Application
-import io.ktor.routing.Routing
-import io.ktor.routing.routing
+import io.ktor.server.application.Application
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.routing
 import io.nais.security.oauth2.config.AppConfiguration
 
 interface ApiRouting {

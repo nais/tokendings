@@ -1,14 +1,14 @@
 package io.nais.security.oauth2.model
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.oauth2.sdk.`as`.AuthorizationServerMetadata
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-import io.nais.security.oauth2.Jackson
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class WellKnownTest {
 
-    private val mapper = Jackson.defaultMapper
+    private val mapper = jacksonObjectMapper()
 
     @Test
     fun `WellKnown data class should parse as valid OAuth2 Authorization Server metadata`() {

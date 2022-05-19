@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectWriter
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.nais.security.oauth2.Jackson
 import io.nais.security.oauth2.token.verify
 
 typealias SoftwareStatementJwt = String
@@ -24,7 +24,7 @@ data class ClientRegistrationRequest(
     @JsonProperty("grant_types") val grantTypes: List<String> = listOf(GrantType.TOKEN_EXCHANGE_GRANT)
 ) {
     companion object Mapper {
-        private val writer: ObjectWriter = Jackson.defaultMapper.writerFor(ClientRegistrationRequest::class.java)
+        private val writer: ObjectWriter = jacksonObjectMapper().writerFor(ClientRegistrationRequest::class.java)
         fun toJson(clientRegistrationRequest: ClientRegistrationRequest): String = writer.writeValueAsString(clientRegistrationRequest)
     }
 

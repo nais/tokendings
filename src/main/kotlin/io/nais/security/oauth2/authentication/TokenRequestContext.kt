@@ -5,10 +5,10 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.application.ApplicationCall
-import io.ktor.auth.Credential
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.Credential
 import io.ktor.http.Parameters
-import io.ktor.request.receiveParameters
+import io.ktor.server.request.receiveParameters
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
