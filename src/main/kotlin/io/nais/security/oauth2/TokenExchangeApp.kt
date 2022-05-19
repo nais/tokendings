@@ -193,7 +193,6 @@ private fun ErrorObject.toGeneric(): ErrorObject =
 internal val defaultHttpClient = HttpClient(CIO) {
     install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
         jackson() {
-            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             setSerializationInclusion(NON_NULL)
         }
     }
