@@ -124,7 +124,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
 
     install(ContentNegotiation) {
         jackson() {
-            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, true)
             setSerializationInclusion(NON_NULL)
         }
     }
@@ -194,6 +194,7 @@ internal val defaultHttpClient = HttpClient(CIO) {
     install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
         jackson() {
             setSerializationInclusion(NON_NULL)
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
     }
 }
