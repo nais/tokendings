@@ -2,7 +2,7 @@ package io.nais.security.oauth2.mock
 
 import com.auth0.jwk.JwkProvider
 import com.zaxxer.hikari.HikariDataSource
-import io.ktor.application.Application
+import io.ktor.server.application.Application
 import io.mockk.every
 import io.mockk.mockk
 import io.nais.security.oauth2.authentication.BearerTokenAuth

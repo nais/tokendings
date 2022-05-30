@@ -8,6 +8,7 @@ import com.nimbusds.jose.proc.SimpleSecurityContext
 import io.kotest.common.runBlocking
 import io.kotest.matchers.collections.shouldContainAll
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.CacheProperties
@@ -31,7 +32,7 @@ class FailoverJwksTest {
             val context = SimpleSecurityContext()
 
             val expected: JWKSet = runBlocking {
-                JWKSet.parse(defaultHttpClient.get<String>(jwksURL))
+                JWKSet.parse(defaultHttpClient.get(jwksURL).bodyAsText())
             }
 
             val failoverJwks = FailoverJwks(cacheProperties.jwksURL, cacheProperties.configurableResourceRetriever)

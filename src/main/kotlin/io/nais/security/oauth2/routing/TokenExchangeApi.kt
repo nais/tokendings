@@ -2,12 +2,12 @@ package io.nais.security.oauth2.routing
 
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.application.call
-import io.ktor.response.respond
-import io.ktor.routing.Routing
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.route
+import io.ktor.server.application.call
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import io.nais.security.oauth2.authentication.TokenExchangeRequestAuthorizer
 import io.nais.security.oauth2.authentication.receiveTokenRequestContext
 import io.nais.security.oauth2.config.AppConfiguration

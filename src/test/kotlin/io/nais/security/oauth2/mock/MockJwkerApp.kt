@@ -1,7 +1,8 @@
 package io.nais.security.oauth2.mock
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -10,53 +11,52 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.features.ClientRequestException
-import io.ktor.client.features.json.JacksonSerializer
-import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.statement.readText
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.client.utils.EmptyContent
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.StatusPages
-import io.ktor.http.ContentType
+import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.parametersOf
-import io.ktor.jackson.jackson
-import io.ktor.request.receive
-import io.ktor.response.respond
-import io.ktor.routing.delete
-import io.ktor.routing.get
-import io.ktor.routing.post
-import io.ktor.routing.route
-import io.ktor.routing.routing
+import io.ktor.serialization.jackson.jackson
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.nais.security.oauth2.Jackson
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.server.routing.routing
 import io.nais.security.oauth2.model.ClientRegistration
 import io.nais.security.oauth2.model.ClientRegistrationRequest
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.SoftwareStatement
-import kotlinx.coroutines.runBlocking
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
+import kotlinx.coroutines.runBlocking
 
 data class ClientConfig(
     val jwkerClientId: String = "jwker_client_id_1",
@@ -86,17 +86,17 @@ fun Application.mockJwkerApp() {
     val tokenDingsClient = TokenDingsClient()
 
     install(ContentNegotiation) {
-        jackson {}
+        jackson { }
     }
 
     install(StatusPages) {
-        exception<Throwable> { error ->
+        exception<Throwable> { call, error ->
             log.debug("received exception:", error)
             when (error) {
                 is ClientRequestException -> {
                     val statusCode: HttpStatusCode = error.response.status
                     val body: Any = if (statusCode != HttpStatusCode.NoContent) {
-                        error.response.readText()
+                        error.response.bodyAsText()
                     } else {
                         EmptyContent
                     }
@@ -147,27 +147,29 @@ class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
             log.debug("using bearer token ${it.accessToken}")
             httpClient.post(config.registrationEndpoint) {
                 header("Authorization", "Bearer ${it.accessToken}")
-                contentType(ContentType.Application.Json)
-                body = ClientRegistrationRequest(
-                    clientName = softwareStatement.appId,
-                    jwks = JsonWebKeys(JWKSet(createJWK())),
-                    softwareStatementJwt = softwareStatement.sign(),
-                    scopes = listOf(),
-                    grantTypes = listOf()
+                contentType(Json)
+                setBody(
+                    ClientRegistrationRequest(
+                        clientName = softwareStatement.appId,
+                        jwks = JsonWebKeys(JWKSet(createJWK())),
+                        softwareStatementJwt = softwareStatement.sign(),
+                        scopes = listOf(),
+                        grantTypes = listOf()
+                    )
                 )
-            }
+            }.body()
         }
 
     suspend fun deleteWithoutId() =
         requestBearerToken().let {
-            httpClient.delete<Any>("${config.registrationEndpoint}") {
+            httpClient.delete("${config.registrationEndpoint}") {
                 header("Authorization", "Bearer ${it.accessToken}")
             }
         }
 
     suspend fun deleteClient(clientId: String) =
         requestBearerToken().let {
-            httpClient.delete<Any>("${config.registrationEndpoint}/$clientId") {
+            httpClient.delete("${config.registrationEndpoint}/$clientId") {
                 header("Authorization", "Bearer ${it.accessToken}")
             }
         }
@@ -176,14 +178,14 @@ class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
         requestBearerToken().let {
             httpClient.get("${config.registrationEndpoint}/$clientId") {
                 header("Authorization", "Bearer ${it.accessToken}")
-            }
+            }.body()
         }
 
     suspend fun getClients(): List<OAuth2Client> =
         requestBearerToken().let {
             httpClient.get(config.registrationEndpoint) {
                 header("Authorization", "Bearer ${it.accessToken}")
-            }
+            }.body()
         }
 
     private fun SoftwareStatement.sign(): String =
@@ -191,7 +193,7 @@ class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
             JWSHeader.Builder(JWSAlgorithm.RS256)
                 .keyID(config.signingKey.keyID)
                 .type(JOSEObjectType.JWT).build(),
-            JWTClaimsSet.parse(Jackson.defaultMapper.writeValueAsString(this))
+            JWTClaimsSet.parse(jacksonObjectMapper().writeValueAsString(this))
         ).apply {
             sign(RSASSASigner(config.signingKey.toPrivateKey()))
         }.serialize()
@@ -212,7 +214,7 @@ class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
                     "scope" to listOf(config.bearerTokenScope)
                 ),
                 encodeInQuery = false
-            )
+            ).body()
         }
 }
 
@@ -244,9 +246,9 @@ private fun createClientAssertion(clientId: String, tokenEndpoint: String, rsaKe
     }.serialize()
 
 internal val httpClient = HttpClient(CIO) {
-    install(JsonFeature) {
-        serializer = JacksonSerializer {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+        jackson() {
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             setSerializationInclusion(JsonInclude.Include.NON_NULL)
         }
     }

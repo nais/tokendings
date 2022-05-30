@@ -1,6 +1,7 @@
 package io.nais.security.oauth2.utils
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWKSet
@@ -15,10 +16,10 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.oauth2.sdk.ErrorObject
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.ktor.server.testing.TestApplicationResponse
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.mockk.every
 import io.mockk.mockkStatic
-import io.nais.security.oauth2.Jackson
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
@@ -47,10 +48,11 @@ data class ErrorResponse(
     val error: String
 )
 
-infix fun TestApplicationResponse.shouldBe(error: ErrorObject) {
-    status()!!.value shouldBe error.httpStatusCode
-    content shouldNotBe null
-    val errorResponse: ErrorResponse = Jackson.defaultMapper.readValue(content!!)
+suspend infix fun HttpResponse.shouldBeObject(error: ErrorObject) {
+    status.value shouldBe error.httpStatusCode
+    val body = bodyAsText()
+    body shouldNotBe null
+    val errorResponse: ErrorResponse = jacksonObjectMapper().readValue(body)
     errorResponse.error shouldBe error.code
     errorResponse.error_description shouldBe error.description
 }

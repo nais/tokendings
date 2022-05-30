@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSet
-import io.nais.security.oauth2.Jackson
 
 // JWKSet does not implement equals and cant be directly serialized as json
 data class JsonWebKeys(
@@ -47,8 +47,8 @@ data class OAuth2Client(
     val jwkSet: JWKSet = JWKSet(jwks.keys)
 
     companion object Mapper {
-        private val reader = Jackson.defaultMapper.readerFor(OAuth2Client::class.java)
-        private val writer = Jackson.defaultMapper.writerFor(OAuth2Client::class.java)
+        private val reader = jacksonObjectMapper().readerFor(OAuth2Client::class.java)
+        private val writer = jacksonObjectMapper().writerFor(OAuth2Client::class.java)
         fun toJson(oAuth2Client: OAuth2Client): String = writer.writeValueAsString(oAuth2Client)
         fun fromJson(json: String): OAuth2Client = reader.readValue(json)
     }
