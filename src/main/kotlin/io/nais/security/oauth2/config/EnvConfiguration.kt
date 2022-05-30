@@ -18,6 +18,7 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
 import java.time.Duration
 
 val konfig = ConfigurationProperties.systemProperties() overriding
@@ -38,6 +39,7 @@ internal object EnvKey {
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
     const val APPLICATION_PORT = 8080
+    const val TOKEN_EXPIRY_SECONDS = 900L
 }
 
 object ProdConfiguration {
@@ -55,7 +57,8 @@ object ProdConfiguration {
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
-            )
+            ),
+            tokenExpiry = TOKEN_EXPIRY_SECONDS
         )
         val clientRegistry = clientRegistry(dataSource = databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
@@ -87,7 +90,8 @@ object NonProdConfiguration {
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
-            )
+            ),
+            tokenExpiry = TOKEN_EXPIRY_SECONDS
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)

@@ -1,14 +1,12 @@
-name: Build, push, and deploy to GCP
+name: Build and deploy specific branch to GCP
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "doc/**"
-      - "**/*.md"
-      - ".github/dependabot.yml"
-      - ".github/deploy_branch_to_dev.yml"
+  workflow_dispatch:
+    inputs:
+      branchName:
+        description: Name of branch to deploy
+        required: true
+        type: string
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
@@ -20,6 +18,8 @@ jobs:
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branchName }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -66,15 +66,3 @@ jobs:
           RESOURCE: .nais/nais.yml,.nais/alerts.yml
           VARS: .nais/dev-gcp-vars.yml
 
-  deploy-prod-gcp:
-    name: Deploy to prod-gcp
-    needs: deploy-dev-gcp
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yml,.nais/alerts.yml
-          VARS: .nais/prod-gcp-vars.yml
