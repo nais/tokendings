@@ -87,6 +87,7 @@ fun server(): NettyApplicationEngine =
         }
     )
 
+@Suppress("LongMethod")
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
     install(CallId) {
         header(HttpHeaders.XCorrelationId)
