@@ -6,6 +6,8 @@ metadata:
   labels:
     team: {{team}}
   annotations:
+    config.linkerd.io/proxy-cpu-request: "50m"
+    config.linkerd.io/proxy-memory-request: "50Mi"
     config.alpha.linkerd.io/proxy-wait-before-exit-seconds: "10"
 spec:
   image: {{ image }}
