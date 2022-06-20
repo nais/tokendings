@@ -131,6 +131,8 @@ To get started, please fork the repo and checkout a new branch. You can then bui
 ```shell script
 ./gradlew build
 ```
+Remeber to also update the gradle version in the build.gradle.kts file
+``` gradleVersion = "$gradleVersion"```
 
 See more info in [CONTRIBUTING.md](CONTRIBUTING.md)
 
