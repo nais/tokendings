@@ -110,6 +110,12 @@ The API for client registration requires a JWT bearer token from Azure AD and a 
 
 For more details about the client registration process see this diagram [Client Registration](doc/client_registration.svg)
 
+## Upgrading the gradle wrapper
+Find the newest version of gradle here: https://gradle.org/releases/
+Then run this command:
+```./gradlew wrapper --gradle-version $gradleVersion```
+
+
 ## 👥 Contact
 
 This project is currently maintained by the organisation [@navikt](https://github.com/navikt).
@@ -125,6 +131,8 @@ To get started, please fork the repo and checkout a new branch. You can then bui
 ```shell script
 ./gradlew build
 ```
+Remeber to also update the gradle version in the build.gradle.kts file
+``` gradleVersion = "$gradleVersion"```
 
 See more info in [CONTRIBUTING.md](CONTRIBUTING.md)
 
