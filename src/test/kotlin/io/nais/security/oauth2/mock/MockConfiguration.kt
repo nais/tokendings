@@ -35,7 +35,6 @@ fun mockConfig(
     clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null,
     failHealthCheck: Boolean = false
 ): AppConfiguration {
-
     val issuerUrl = "http://localhost:8080"
     val authorizationServerProperties = AuthorizationServerProperties(
         issuerUrl = issuerUrl,

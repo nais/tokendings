@@ -26,7 +26,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             it.issuer to TokenValidator(
                 it.issuer,
                 URL(it.wellKnown.jwksUri),
-                it.cacheProperties,
+                it.cacheProperties
             )
         }
 

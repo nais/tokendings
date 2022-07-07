@@ -131,4 +131,8 @@ tasks {
     "build" {
         dependsOn("shadowJar")
     }
+
+    kotlinter {
+        disabledRules = arrayOf("filename")
+    }
 }

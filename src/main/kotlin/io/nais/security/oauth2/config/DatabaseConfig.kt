@@ -4,8 +4,8 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.HikariProperties.CONNECTION_TIMEOUT
 import io.nais.security.oauth2.config.HikariProperties.IDLE_TIMEOUT
-import io.nais.security.oauth2.config.HikariProperties.MAX_POOL_SIZE
 import io.nais.security.oauth2.config.HikariProperties.MAX_LIFETIME
+import io.nais.security.oauth2.config.HikariProperties.MAX_POOL_SIZE
 import io.nais.security.oauth2.config.HikariProperties.MIN_IDLE_CONNECTIONS
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
