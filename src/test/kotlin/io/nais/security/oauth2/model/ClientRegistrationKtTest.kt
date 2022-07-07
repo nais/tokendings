@@ -17,7 +17,6 @@ internal class ClientRegistrationKtTest {
 
     @Test
     fun `softwarestatement should successfully verify and parse into SoftwareStatement`() {
-
         val signingKey = generateRsaKey()
 
         val ss = JWTClaimsSet.Builder()

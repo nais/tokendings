@@ -50,13 +50,13 @@ import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.SoftwareStatement
+import kotlinx.coroutines.runBlocking
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.time.Instant
 import java.util.Date
 import java.util.UUID
-import kotlinx.coroutines.runBlocking
 
 data class ClientConfig(
     val jwkerClientId: String = "jwker_client_id_1",

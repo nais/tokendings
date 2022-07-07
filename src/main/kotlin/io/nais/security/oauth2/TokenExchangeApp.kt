@@ -52,9 +52,9 @@ import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.routing.observability
 import io.prometheus.client.CollectorRegistry
-import java.util.UUID
 import mu.KotlinLogging
 import org.slf4j.event.Level
+import java.util.UUID
 import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.system.exitProcess
 

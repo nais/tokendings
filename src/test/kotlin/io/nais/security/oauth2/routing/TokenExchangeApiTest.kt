@@ -36,14 +36,14 @@ import io.nais.security.oauth2.utils.jwkSet
 import io.nais.security.oauth2.utils.shouldBeObject
 import io.nais.security.oauth2.utils.verifySignature
 import io.prometheus.client.CollectorRegistry
-import java.net.URLEncoder
-import java.time.Instant
-import java.util.Date
-import java.util.UUID
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.net.URLEncoder
+import java.time.Instant
+import java.util.Date
+import java.util.UUID
 
 internal class TokenExchangeApiTest {
     private val mapper = jacksonObjectMapper()
@@ -179,7 +179,6 @@ internal class TokenExchangeApiTest {
 
     @Test
     fun `token exchange call with invalid client assertion keys should fail`() {
-
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")

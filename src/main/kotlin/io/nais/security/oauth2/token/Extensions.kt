@@ -99,6 +99,6 @@ internal fun <T> tryOrInvalidSubjectToken(block: () -> T): T = try {
 } catch (e: OAuth2Exception) {
     throw OAuth2Exception(
         errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
-        throwable = e,
+        throwable = e
     )
 }
