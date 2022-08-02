@@ -45,9 +45,7 @@ internal object EnvKey {
 object ProdConfiguration {
     private const val issuerUrl = "https://tokendings.prod-gcp.nais.io"
     private val subjectTokenIssuers = listOf(
-        "https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration",
-        "https://login.microsoftonline.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten",
-        "https://navnob2c.b2clogin.com/navnob2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten"
+        "https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration"
     )
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
