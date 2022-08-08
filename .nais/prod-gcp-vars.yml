@@ -5,7 +5,6 @@ ingresses:
   - https://tokendings.prod-gcp.nais.io
 host:
   - login.microsoftonline.com
-  - navnob2c.b2clogin.com
   - oidc.difi.no
 env:
   APPLICATION_PROFILE: PROD
