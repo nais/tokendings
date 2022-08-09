@@ -4,6 +4,7 @@ import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.enumType
+import com.natpryce.konfig.intType
 import com.natpryce.konfig.listType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
@@ -18,6 +19,8 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
+import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
 import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
 import java.time.Duration
 
@@ -38,48 +41,15 @@ internal object EnvKey {
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
-    const val APPLICATION_PORT = 8080
+    const val APPLICATION_PORT = "APPLICATION_PORT"
     const val TOKEN_EXPIRY_SECONDS = 900L
+    const val ISSUER_URL = "ISSUER_URL"
+    const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
 }
 
-object ProdConfiguration {
-    private const val issuerUrl = "https://tokendings.prod-gcp.nais.io"
-    private val subjectTokenIssuers = listOf(
-        "https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration"
-    )
-    val instance by lazy {
-        val databaseConfig = migrate(databaseConfig())
-        val authorizationServerProperties = AuthorizationServerProperties(
-            issuerUrl = issuerUrl,
-            subjectTokenIssuers = subjectTokenIssuers.toConfiguration(),
-            rotatingKeyStore = rotatingKeyStore(
-                dataSource = databaseConfig,
-                rotationInterval = Duration.ofDays(1)
-            ),
-            tokenExpiry = TOKEN_EXPIRY_SECONDS
-        )
-        val clientRegistry = clientRegistry(dataSource = databaseConfig)
-        val databaseHealthCheck = databaseHealthCheck(databaseConfig)
-        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
-        AppConfiguration(
-            ServerProperties(APPLICATION_PORT),
-            clientRegistry,
-            authorizationServerProperties,
-            bearerTokenAuthenticationProperties,
-            databaseHealthCheck
-        )
-    }
-}
-
-object NonProdConfiguration {
-    private const val issuerUrl = "https://tokendings.dev-gcp.nais.io"
-    private val subjectTokenIssuers = listOf(
-        "https://login.microsoftonline.com/NAVtestB2C.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1",
-        "https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1",
-        "https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration",
-        "https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration",
-        "https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration"
-    )
+object Configuration {
+    private val issuerUrl = konfig[Key(ISSUER_URL, stringType)]
+    private val subjectTokenIssuers = konfig[Key(SUBJECT_TOKEN_ISSUERS, stringType)].split(",").map { it.trim() }
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
@@ -95,7 +65,7 @@ object NonProdConfiguration {
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(
-            ServerProperties(APPLICATION_PORT),
+            ServerProperties(konfig[Key(APPLICATION_PORT, intType)]),
             clientRegistry,
             authorizationServerProperties,
             bearerTokenAuthenticationProperties,
@@ -110,13 +80,13 @@ fun List<String>.toConfiguration() = this.map { issuerWellKnown ->
 
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
-        Profile.NON_PROD -> NonProdConfiguration.instance
-        Profile.PROD -> ProdConfiguration.instance
-        else -> ProdConfiguration.instance
+        Profile.NON_PROD -> Configuration.instance
+        Profile.PROD -> Configuration.instance
+        else -> Configuration.instance
     }
 
 @Suppress("unused")
-fun AppConfiguration.isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
+fun isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
     val hostname = konfig[Key(DB_HOST, stringType)]
