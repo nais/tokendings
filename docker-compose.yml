@@ -10,5 +10,9 @@ services:
       - "5432:5432"
    #volumes:
     #  - database-data:/var/lib/postgresql/data/ # persist data even if container shuts down
-#volumes:
- # database-data: # named volumes can be managed easier using docker-compose
+  tokendings:
+    env_file:
+      - "local.env"
+    build: .
+    ports:
+      - "8080:8080"

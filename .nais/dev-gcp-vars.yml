@@ -4,12 +4,15 @@ team: plattformsikkerhet
 ingresses:
   - https://tokendings.dev-gcp.nais.io
 host:
-  - login.microsoftonline.com
   - navtestb2c.b2clogin.com
   - oidc-ver2.difi.no
   - fakedings.dev-gcp.nais.io
 env:
   APPLICATION_PROFILE: NON_PROD
+  ISSUER_URL: https://tokendings.dev-gcp.nais.io
+  SUBJECT_TOKEN_ISSUERS: https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1,https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration
+  APPLICATION_PORT: 8080
+
 slack_alert_channel: "plattformsikkerhet-alerts-dev"
 sqlinstance_name: tokendings-postgres-11
 replicas:
