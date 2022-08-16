@@ -24,12 +24,12 @@ spec:
     max: {{replicas.max}}
     cpuThresholdPercentage: 50
   liveness:
-    path: /internal/isNOTalive
+    path: /internal/isalive
     initialDelay: 5
     periodSeconds: 5
     failureThreshold: 30
   readiness:
-    path: /internal/isNOTready
+    path: /internal/isready
     initialDelay: 5
     periodSeconds: 5
     failureThreshold: 30
