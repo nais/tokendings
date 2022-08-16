@@ -15,7 +15,7 @@ env:
   AUTH_IDENTITY_PROVIDER: https://login.microsoftonline.com/navno.onmicrosoft.com/v2.0/.well-known/openid-configuration
 
 slack_alert_channel: "plattformsikkerhet-alerts-dev"
-sqlinstance_name: tokendings-postgres-11
+sqlinstance_name: tokendings
 replicas:
   min: 2
   max: 4

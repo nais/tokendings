@@ -66,15 +66,3 @@ jobs:
           RESOURCE: .nais/nais.yml,.nais/alerts.yml
           VARS: .nais/dev-gcp-vars.yml
 
-  deploy-prod-gcp:
-    name: Deploy to prod-gcp
-    needs: deploy-dev-gcp
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yml,.nais/alerts.yml
-          VARS: .nais/prod-gcp-vars.yml

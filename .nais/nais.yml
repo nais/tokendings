@@ -24,12 +24,12 @@ spec:
     max: {{replicas.max}}
     cpuThresholdPercentage: 50
   liveness:
-    path: /internal/isalive
+    path: /internal/isNOTalive
     initialDelay: 5
     periodSeconds: 5
     failureThreshold: 30
   readiness:
-    path: /internal/isready
+    path: /internal/isNOTready
     initialDelay: 5
     periodSeconds: 5
     failureThreshold: 30
@@ -45,7 +45,7 @@ spec:
       memory: 256Mi
   gcp:
     sqlInstances:
-      - type: POSTGRES_11
+      - type: POSTGRES_14
         name: {{sqlinstance_name}}
         diskSize: 100
         highAvailability: true
