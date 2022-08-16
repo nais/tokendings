@@ -53,19 +53,6 @@ jobs:
           docker build --pull --tag ${IMAGE} .
           docker push ${IMAGE}
 
-  deploy-dev-gcp:
-    name: Deploy to dev-gcp
-    needs: build
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: dev-gcp
-          RESOURCE: .nais/nais.yml,.nais/alerts.yml
-          VARS: .nais/dev-gcp-vars.yml
-
   deploy-prod-gcp:
     name: Deploy to prod-gcp
     needs: deploy-dev-gcp
