@@ -55,7 +55,6 @@ jobs:
 
   deploy-prod-gcp:
     name: Deploy to prod-gcp
-    needs: deploy-dev-gcp
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
