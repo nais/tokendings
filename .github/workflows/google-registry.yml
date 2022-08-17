@@ -2,7 +2,7 @@ name: Build and deploy image to Google
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   REGISTRY: europe-north1-docker.pkg.dev/nais-io/nais/images
