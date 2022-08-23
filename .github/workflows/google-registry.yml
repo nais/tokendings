@@ -58,7 +58,7 @@ jobs:
 
       - name: Docker meta
         id: metadata
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/tokendings
           # Docker tags based on the following events/attributes
