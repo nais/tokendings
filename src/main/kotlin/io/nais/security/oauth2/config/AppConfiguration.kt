@@ -1,11 +1,10 @@
 package io.nais.security.oauth2.config
 
 import com.auth0.jwk.Jwk
+import com.auth0.jwk.JwkException
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.oauth2.sdk.ErrorObject
-import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -19,7 +18,6 @@ import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.CacheProperties
-import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
@@ -44,8 +42,7 @@ data class AppConfiguration(
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
     val clientRegistrationAuthProperties: ClientRegistrationAuthProperties,
-    val clientRegistrationSelfSignedProperties: ClientRegistrationSelfSignedProperties
-    val databaseHealthCheck: HealthCheck,
+    val databaseHealthCheck: HealthCheck
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
@@ -55,45 +52,51 @@ data class ServerProperties(val port: Int)
 data class ClientRegistryProperties(
     val dataSource: DataSource
 )
-
-data class ClientRegistrationSelfSignedProperties(
+data class ClientRegistrationAuthProperties(
+    val authProvider: AuthProvider,
     val acceptedAudience: List<String>,
     val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-    val softwareStatementJwks: JWKSet,
-    val selfSignedIssuer: String,
+    val softwareStatementJwks: JWKSet
+) {
+    constructor(
+        identityProviderWellKnownUrl: String,
+        acceptedAudience: List<String>,
+        acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+        softwareStatementJwks: JWKSet
+    ) : this(
+        authProvider = AuthProvider.fromWellKnown(identityProviderWellKnownUrl),
+        acceptedAudience = acceptedAudience,
+        acceptedRoles = acceptedRoles,
+        softwareStatementJwks = softwareStatementJwks
+    )
 
-    ) {
-    val jwkProvider = object : JwkProvider {
-        override fun get(keyId: String?): Jwk {
-            val jwk = softwareStatementJwks.keys.first()!!
-            return Jwk.fromValues(jwk.toJSONObject())
-        }
-    }
+    val issuer = authProvider.issuer
+    val jwkProvider = authProvider.jwkProvider
 }
 
-data class ClientRegistrationAuthProperties(
-    val identityProviderWellKnownUrl: String,
-    val acceptedAudience: List<String>,
-    val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-    val softwareStatementJwks: JWKSet,
-    private val selfSignedIssuer: String? = null,
+class AuthProvider(
+    val issuer: String,
+    val jwkProvider: JwkProvider
 ) {
-    val wellKnown: WellKnown? = if (selfSignedIssuer == null) runBlocking {
-        log.info("getting OpenID Connect server metadata from well-known url=$identityProviderWellKnownUrl")
-        defaultHttpClient.get(identityProviderWellKnownUrl).body()
-    } else null
-    val issuer: String = selfSignedIssuer ?: wellKnown?.issuer ?: throw OAuth2Exception(OAuth2Error.SERVER_ERROR.setDescription("Unable to determine issuer"))
-    val jwkProvider: JwkProvider = selfSignedIssuer?.let {
-        object : JwkProvider {
-            override fun get(keyId: String?): Jwk {
-                val jwk = softwareStatementJwks.keys.first()!!
-                return Jwk.fromValues(jwk.toJSONObject())
+    companion object {
+        fun fromWellKnown(wellKnownUrl: String): AuthProvider {
+            val wellKnown: WellKnown = runBlocking {
+                log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
+                defaultHttpClient.get(wellKnownUrl).body()
             }
+            val jwk = JwkProviderBuilder(URL(wellKnown.jwksUri))
+                .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+                .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+                .build()
+            return AuthProvider(wellKnown.issuer, jwk)
         }
-    } ?: JwkProviderBuilder(URL(wellKnown.jwksUri))
-        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-        .build()
+        fun fromSelfSigned(issuer: String, jwkSet: JWKSet): AuthProvider {
+            val jwk = JwkProvider { keyId ->
+                Jwk.fromValues(jwkSet.getKeyByKeyId(keyId).toJSONObject() ?: throw JwkException("JWK not found"))
+            }
+            return AuthProvider(issuer, jwk)
+        }
+    }
 }
 
 class AuthorizationServerProperties(

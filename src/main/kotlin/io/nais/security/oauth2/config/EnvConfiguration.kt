@@ -107,5 +107,5 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
         acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
         softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
             JWKSet.parse(it)
-        },
+        }
     )

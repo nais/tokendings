@@ -48,7 +48,7 @@ fun mockConfig(
             identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
             acceptedAudience = listOf("tokendings"),
             acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-            softwareStatementJwks = jwkSet(),
+            softwareStatementJwks = jwkSet()
         )
         else -> mockBearerTokenAuthenticationProperties()
     }
@@ -77,7 +77,7 @@ fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties 
 
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
     mockk<ClientRegistrationAuthProperties>().also {
-        every { it.wellKnown } returns wellKnown
+        every { it.issuer } returns wellKnown.issuer
         every { it.jwkProvider } returns jwkProvider
     }
 
