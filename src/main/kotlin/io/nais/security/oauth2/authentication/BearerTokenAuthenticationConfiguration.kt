@@ -2,45 +2,26 @@ package io.nais.security.oauth2.authentication
 
 import com.auth0.jwk.Jwk
 import com.auth0.jwk.JwkProvider
-import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.http.auth.*
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
+import io.ktor.http.auth.HttpAuthHeader
+import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.jwt.jwt
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
-import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_SELF_SIGNED
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
-import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
-import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
-import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
-import java.net.URL
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
-import java.util.concurrent.TimeUnit
 
 private val log = KotlinLogging.logger { }
 
 object BearerTokenAuth {
     const val CLIENT_REGISTRATION_AUTH = "CLIENT_REGISTRATION_AUTH"
-    const val CLIENT_REGISTRATION_SELF_SIGNED = "CLIENT_REGISTRATION_SELF_SIGNED"
     val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
-}
-
-fun AuthenticationConfig.clientRegistrationJWK(appConfig: AppConfiguration) {
-    jwt(CLIENT_REGISTRATION_SELF_SIGNED) {
-        val properties = appConfig.clientRegistrationSelfSignedProperties
-        realm = "BEARER_AUTH"
-        verifier { token ->
-            bearerTokenVerifier(properties, "",token)
-        }
-
-    }
 }
 
 fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
