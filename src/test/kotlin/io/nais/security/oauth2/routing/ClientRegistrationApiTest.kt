@@ -48,7 +48,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = emptyList(),
-                    softwareStatementJwks = jwkSet()
+                    softwareStatementJwks = jwkSet(),
                 )
             )
             testApplication {
@@ -66,7 +66,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = jwkSet()
+                    softwareStatementJwks = jwkSet(),
                 )
             )
             val token = this.issueToken(
@@ -97,7 +97,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueValidToken("client1")
@@ -136,7 +136,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueToken(
@@ -182,7 +182,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueToken(
@@ -229,7 +229,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueValidToken("client1")
@@ -267,7 +267,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueValidToken("client1")
@@ -307,7 +307,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = signingKeySet
+                    softwareStatementJwks = signingKeySet,
                 )
             )
             val token = this.issueValidToken("client1")
@@ -344,7 +344,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = jwkSet()
+                    softwareStatementJwks = jwkSet(),
                 )
             )
             val token = this.issueValidToken("client1")
@@ -366,7 +366,7 @@ internal class ClientRegistrationApiTest {
                 ClientRegistrationAuthProperties(
                     identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
                     acceptedAudience = listOf("correct_aud"),
-                    softwareStatementJwks = jwkSet()
+                    softwareStatementJwks = jwkSet(),
                 )
             )
             val client1 = config.clientRegistry.let { it as MockClientRegistry }.register("client1")

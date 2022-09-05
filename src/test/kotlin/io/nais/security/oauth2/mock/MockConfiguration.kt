@@ -13,7 +13,6 @@ import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
-import io.nais.security.oauth2.config.rotatingKeyStore
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.MockRotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStore
@@ -49,7 +48,7 @@ fun mockConfig(
             identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
             acceptedAudience = listOf("tokendings"),
             acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-            softwareStatementJwks = jwkSet()
+            softwareStatementJwks = jwkSet(),
         )
         else -> mockBearerTokenAuthenticationProperties()
     }

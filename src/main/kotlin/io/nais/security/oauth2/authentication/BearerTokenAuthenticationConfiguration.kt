@@ -7,11 +7,11 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
-import io.ktor.http.auth.HttpAuthHeader
-import io.ktor.server.auth.AuthenticationConfig
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.jwt.jwt
+import io.ktor.http.auth.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
+import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_SELF_SIGNED
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
@@ -28,19 +28,28 @@ private val log = KotlinLogging.logger { }
 
 object BearerTokenAuth {
     const val CLIENT_REGISTRATION_AUTH = "CLIENT_REGISTRATION_AUTH"
+    const val CLIENT_REGISTRATION_SELF_SIGNED = "CLIENT_REGISTRATION_SELF_SIGNED"
     val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
+}
+
+fun AuthenticationConfig.clientRegistrationJWK(appConfig: AppConfiguration) {
+    jwt(CLIENT_REGISTRATION_SELF_SIGNED) {
+        val properties = appConfig.clientRegistrationSelfSignedProperties
+        realm = "BEARER_AUTH"
+        verifier { token ->
+            bearerTokenVerifier(properties, "",token)
+        }
+
+    }
 }
 
 fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
-        val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))
-            .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-            .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-            .build()
+        val jwkProvider = properties.jwkProvider
         realm = "BEARER_AUTH"
         verifier { token ->
-            bearerTokenVerifier(jwkProvider, properties, token)
+            bearerTokenVerifier(jwkProvider, properties.issuer, token)
         }
         validate { credentials ->
             try {
@@ -78,7 +87,7 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
 
 internal fun bearerTokenVerifier(
     jwkProvider: JwkProvider,
-    properties: ClientRegistrationAuthProperties,
+    issuer: String,
     token: HttpAuthHeader
 ): JWTVerifier {
     return try {
@@ -88,7 +97,7 @@ internal fun bearerTokenVerifier(
 
         DelegatingJWTVerifier(
             JWT.require(algorithm)
-                .withIssuer(properties.wellKnown.issuer)
+                .withIssuer(issuer)
                 .build()
         )
     } catch (t: Throwable) {
