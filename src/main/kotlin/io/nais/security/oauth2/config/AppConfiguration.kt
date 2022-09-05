@@ -92,7 +92,7 @@ class AuthProvider(
         }
         fun fromSelfSigned(issuer: String, jwkSet: JWKSet): AuthProvider {
             val jwk = JwkProvider { keyId ->
-                Jwk.fromValues(jwkSet.getKeyByKeyId(keyId).toJSONObject() ?: throw JwkException("JWK not found"))
+                Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
             }
             return AuthProvider(issuer, jwk)
         }
