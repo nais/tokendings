@@ -13,8 +13,9 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PORT
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
-import io.nais.security.oauth2.config.EnvKey.AUTH_IDENTITY_PROVIDER
-import io.nais.security.oauth2.config.EnvKey.AUTH_JWKER_JWKS
+import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_ID
+import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_JWKS
+import io.nais.security.oauth2.config.EnvKey.AUTH_WELL_KNOWN_URL
 import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
 import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
@@ -33,6 +34,7 @@ enum class Profile {
     PROD
 }
 
+// TODO: UPDATE SECRET WITH JWKER JWKS TO AUTH_CLIENT_JWKS
 internal object EnvKey {
     const val APPLICATION_PROFILE = "APPLICATION_PROFILE"
     const val DB_HOST = "DB_HOST"
@@ -41,8 +43,9 @@ internal object EnvKey {
     const val DB_USERNAME = "DB_USERNAME"
     const val DB_PASSWORD = "DB_PASSWORD"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
-    const val AUTH_JWKER_JWKS = "AUTH_JWKER_JWKS"
-    const val AUTH_IDENTITY_PROVIDER = "AUTH_IDENTITY_PROVIDER"
+    const val AUTH_WELL_KNOWN_URL = "AUTH_WELL_KNOWN_URL"
+    const val AUTH_CLIENT_JWKS = "AUTH_CLIENT_JWKS"
+    const val AUTH_CLIENT_ID = "AUTH_CLIENT_ID"
     const val APPLICATION_PORT = "APPLICATION_PORT"
     const val TOKEN_EXPIRY_SECONDS = 900L
     const val ISSUER_URL = "ISSUER_URL"
@@ -65,7 +68,7 @@ object Configuration {
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
-        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
+        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties(authorizationServerProperties.clientRegistrationUrl())
         AppConfiguration(
             ServerProperties(konfig[Key(APPLICATION_PORT, intType)]),
             clientRegistry,
@@ -101,12 +104,24 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
-internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties =
-    ClientRegistrationAuthProperties(
-        identityProviderWellKnownUrl =konfig[Key(AUTH_IDENTITY_PROVIDER, stringType)],
-        acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-        acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-        softwareStatementJwks = konfig[Key(AUTH_JWKER_JWKS, stringType)].let {
-            JWKSet.parse(it)
-        }
-    )
+internal fun clientRegistrationAuthProperties(clientRegistrationUrl: String): ClientRegistrationAuthProperties {
+    val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
+    val jwks = konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }
+
+    return if (wellknownUrl != null) {
+        ClientRegistrationAuthProperties(
+            authProvider = AuthProvider.fromWellKnown(wellknownUrl),
+            acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
+            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+            softwareStatementJwks = jwks
+        )
+    } else {
+        val issuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
+        ClientRegistrationAuthProperties(
+            authProvider = AuthProvider.fromSelfSigned(issuer, jwks),
+            acceptedAudience = listOf(clientRegistrationUrl),
+            acceptedRoles = emptyList(),
+            softwareStatementJwks = jwks
+        )
+    }
+}

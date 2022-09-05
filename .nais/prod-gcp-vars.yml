@@ -10,7 +10,7 @@ env:
   APPLICATION_PROFILE: PROD
   ISSUER_URL: https://tokendings.prod-gcp.nais.io
   SUBJECT_TOKEN_ISSUERS: https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-  AUTH_IDENTITY_PROVIDER: https://login.microsoftonline.com/navno.onmicrosoft.com/v2.0/.well-known/openid-configuration
+  AUTH_WELL_KNOWN_URL: https://login.microsoftonline.com/navno.onmicrosoft.com/v2.0/.well-known/openid-configuration
   APPLICATION_PORT: 8080
 slack_alert_channel: "plattformsikkerhet-alerts-prod"
 sqlinstance_name: tokendings
