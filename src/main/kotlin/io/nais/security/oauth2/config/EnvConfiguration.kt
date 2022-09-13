@@ -68,7 +68,7 @@ object Configuration {
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
-        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties(authorizationServerProperties.clientRegistrationUrl())
+        val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
         AppConfiguration(
             ServerProperties(konfig[Key(APPLICATION_PORT, intType)]),
             clientRegistry,
@@ -104,7 +104,7 @@ internal fun databaseConfig(): DatabaseConfig {
     )
 }
 
-internal fun clientRegistrationAuthProperties(clientRegistrationUrl: String): ClientRegistrationAuthProperties {
+internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
     val jwks = konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }
 
@@ -119,7 +119,7 @@ internal fun clientRegistrationAuthProperties(clientRegistrationUrl: String): Cl
         val issuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
         ClientRegistrationAuthProperties(
             authProvider = AuthProvider.fromSelfSigned(issuer, jwks),
-            acceptedAudience = listOf(clientRegistrationUrl),
+            acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
             acceptedRoles = emptyList(),
             softwareStatementJwks = jwks
         )
