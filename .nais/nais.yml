@@ -71,4 +71,3 @@ spec:
 
   envFrom:
     - secret: {{app}}-bearerauth
-    - secret: {{app}}-private-jwks
