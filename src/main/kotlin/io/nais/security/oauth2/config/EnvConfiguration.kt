@@ -24,8 +24,10 @@ import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
 import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
 import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
+import mu.KotlinLogging
 import java.time.Duration
 
+private val log = KotlinLogging.logger {}
 val konfig = ConfigurationProperties.systemProperties() overriding
     EnvironmentVariables()
 
@@ -105,7 +107,9 @@ internal fun databaseConfig(): DatabaseConfig {
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
-    val jwks = konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }
+    val jwks = konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
+        log.info("Loaded ${jwkSet.keys.size} keys from JWKS with kids: ${jwkSet.keys.map { it.keyID }}")
+    }
 
     return if (wellknownUrl != null) {
         ClientRegistrationAuthProperties(
