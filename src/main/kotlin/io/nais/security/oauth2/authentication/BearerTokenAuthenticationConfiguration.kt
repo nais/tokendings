@@ -2,7 +2,6 @@ package io.nais.security.oauth2.authentication
 
 import com.auth0.jwk.Jwk
 import com.auth0.jwk.JwkProvider
-import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
@@ -13,16 +12,10 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
-import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
-import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
-import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
-import java.net.URL
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
-import java.util.concurrent.TimeUnit
 
 private val log = KotlinLogging.logger { }
 
@@ -34,13 +27,10 @@ object BearerTokenAuth {
 fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
-        val jwkProvider = JwkProviderBuilder(URL(properties.wellKnown.jwksUri))
-            .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-            .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-            .build()
+        val jwkProvider = properties.jwkProvider
         realm = "BEARER_AUTH"
         verifier { token ->
-            bearerTokenVerifier(jwkProvider, properties, token)
+            bearerTokenVerifier(jwkProvider, properties.issuer, token)
         }
         validate { credentials ->
             try {
@@ -52,14 +42,7 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
                         )
                     )
                 }
-                require(payload.claims.containsKey("roles")) {
-                    throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT.setDescription(
-                            "roles claim is not present"
-                        )
-                    )
-                }
-                val roles: List<String> = payload.getClaim("roles").asList(String::class.java)
+                val roles: MutableList<String> = payload.getClaim("roles") ?.asList(String::class.java) ?: mutableListOf()
                 require(roles.containsAll(properties.acceptedRoles)) {
                     throw OAuth2Exception(
                         OAuth2Error.INVALID_CLIENT.setDescription(
@@ -78,7 +61,7 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
 
 internal fun bearerTokenVerifier(
     jwkProvider: JwkProvider,
-    properties: ClientRegistrationAuthProperties,
+    issuer: String,
     token: HttpAuthHeader
 ): JWTVerifier {
     return try {
@@ -88,7 +71,7 @@ internal fun bearerTokenVerifier(
 
         DelegatingJWTVerifier(
             JWT.require(algorithm)
-                .withIssuer(properties.wellKnown.issuer)
+                .withIssuer(issuer)
                 .build()
         )
     } catch (t: Throwable) {

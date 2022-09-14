@@ -1,5 +1,7 @@
 package io.nais.security.oauth2.config
 
+import com.auth0.jwk.Jwk
+import com.auth0.jwk.JwkException
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.nimbusds.jose.jwk.JWKSet
@@ -50,21 +52,51 @@ data class ServerProperties(val port: Int)
 data class ClientRegistryProperties(
     val dataSource: DataSource
 )
-
 data class ClientRegistrationAuthProperties(
-    val identityProviderWellKnownUrl: String,
+    val authProvider: AuthProvider,
     val acceptedAudience: List<String>,
     val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
     val softwareStatementJwks: JWKSet
 ) {
-    val wellKnown: WellKnown = runBlocking {
-        log.info("getting OpenID Connect server metadata from well-known url=$identityProviderWellKnownUrl")
-        defaultHttpClient.get(identityProviderWellKnownUrl).body()
+    constructor(
+        identityProviderWellKnownUrl: String,
+        acceptedAudience: List<String>,
+        acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+        softwareStatementJwks: JWKSet
+    ) : this(
+        authProvider = AuthProvider.fromWellKnown(identityProviderWellKnownUrl),
+        acceptedAudience = acceptedAudience,
+        acceptedRoles = acceptedRoles,
+        softwareStatementJwks = softwareStatementJwks
+    )
+
+    val issuer = authProvider.issuer
+    val jwkProvider = authProvider.jwkProvider
+}
+
+class AuthProvider(
+    val issuer: String,
+    val jwkProvider: JwkProvider
+) {
+    companion object {
+        fun fromWellKnown(wellKnownUrl: String): AuthProvider {
+            val wellKnown: WellKnown = runBlocking {
+                log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
+                defaultHttpClient.get(wellKnownUrl).body()
+            }
+            val jwk = JwkProviderBuilder(URL(wellKnown.jwksUri))
+                .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+                .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+                .build()
+            return AuthProvider(wellKnown.issuer, jwk)
+        }
+        fun fromSelfSigned(issuer: String, jwkSet: JWKSet): AuthProvider {
+            val jwk = JwkProvider { keyId ->
+                Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
+            }
+            return AuthProvider(issuer, jwk)
+        }
     }
-    val jwkProvider: JwkProvider = JwkProviderBuilder(URL(wellKnown.jwksUri))
-        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-        .build()
 }
 
 class AuthorizationServerProperties(

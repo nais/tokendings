@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
 import io.nais.security.oauth2.authentication.BearerTokenAuth
+import io.nais.security.oauth2.config.AuthProvider
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.mock.MockClientRegistry
 import io.nais.security.oauth2.mock.mockConfig
@@ -32,6 +33,8 @@ import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.util.Date
 
 internal class ClientRegistrationApiTest {
 
@@ -84,6 +87,54 @@ internal class ClientRegistrationApiTest {
                 client.post("registration/client") {
                     header(HttpHeaders.Authorization, "Bearer $token")
                 }.status shouldBe HttpStatusCode.Unauthorized
+            }
+        }
+    }
+
+    @Test
+    fun `successful client registration call with self signed bearer token and signed software statement`() {
+        withMockOAuth2Server {
+            val signingKeySet = jwkSet()
+            val config = mockConfig(
+                this,
+                ClientRegistrationAuthProperties(
+                    authProvider = AuthProvider.fromSelfSigned("jwker", signingKeySet),
+                    acceptedAudience = listOf("http://localhost:8080/client/registration"),
+                    softwareStatementJwks = signingKeySet,
+                    acceptedRoles = emptyList()
+                )
+            )
+            val now = Instant.now()
+            val token = JWTClaimsSet.Builder()
+                .issuer("jwker")
+                .audience("http://localhost:8080/client/registration")
+                .issueTime(Date.from(now))
+                .expirationTime(Date.from(now.plusSeconds(60)))
+                .notBeforeTime(Date.from(now))
+                .subject("jwker")
+                .build().sign(signingKeySet.keys.first() as RSAKey).serialize()
+
+            testApplication {
+                application { tokenExchangeApp(config, DefaultRouting(config)) }
+                client.post("registration/client") {
+                    header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    setBody(
+                        ClientRegistrationRequest(
+                            clientName = "cluster1:ns1:client1",
+                            jwks = JsonWebKeys(jwkSet()),
+                            softwareStatementJwt = softwareStatementJwt(
+                                SoftwareStatement(
+                                    appId = "cluster1:ns1:client1",
+                                    accessPolicyInbound = listOf("cluster1:ns1:client2"),
+                                    accessPolicyOutbound = emptyList()
+                                ),
+                                signingKeySet.keys.first() as RSAKey
+                            )
+                        ).toJson()
+                    )
+                }.status shouldBe HttpStatusCode.Created
+                config.clientRegistry.findClient("cluster1:ns1:client1")?.clientId shouldBe "cluster1:ns1:client1"
             }
         }
     }

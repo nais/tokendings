@@ -13,7 +13,6 @@ import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
 import io.nais.security.oauth2.config.migrate
-import io.nais.security.oauth2.config.rotatingKeyStore
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.MockRotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStore
@@ -78,7 +77,7 @@ fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties 
 
 fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
     mockk<ClientRegistrationAuthProperties>().also {
-        every { it.wellKnown } returns wellKnown
+        every { it.issuer } returns wellKnown.issuer
         every { it.jwkProvider } returns jwkProvider
     }
 
