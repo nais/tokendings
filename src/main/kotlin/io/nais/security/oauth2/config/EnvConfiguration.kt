@@ -34,7 +34,6 @@ enum class Profile {
     PROD
 }
 
-// TODO: UPDATE SECRET WITH JWKER JWKS TO AUTH_CLIENT_JWKS
 internal object EnvKey {
     const val APPLICATION_PROFILE = "APPLICATION_PROFILE"
     const val DB_HOST = "DB_HOST"
