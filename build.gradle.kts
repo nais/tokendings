@@ -27,7 +27,6 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "1.7.10"
-    id("org.jmailen.kotlinter") version "3.12.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.github.ben-manes.versions") version "0.42.0"
 }
@@ -40,8 +39,6 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
-
-apply(plugin = "org.jmailen.kotlinter")
 
 repositories {
     mavenCentral()
@@ -96,9 +93,6 @@ dependencies {
 }
 
 tasks {
-    withType<org.jmailen.gradle.kotlinter.tasks.LintTask> {
-        dependsOn("formatKotlin")
-    }
     withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
         archiveBaseName.set("app")
         archiveClassifier.set("")
@@ -130,9 +124,5 @@ tasks {
 
     "build" {
         dependsOn("shadowJar")
-    }
-
-    kotlinter {
-        disabledRules = arrayOf("filename")
     }
 }
