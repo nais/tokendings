@@ -13,7 +13,7 @@ val kotlinVersion = "1.8.10"
 val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.2.3"
 val logbackVersion = "1.4.5"
-val logstashLogbackEncoderVersion = "7.2"
+val logstashLogbackEncoderVersion = "7.3"
 val micrometerRegistryPrometheusVersion = "1.10.4"
 val mockOAuth2ServerVersion = "0.5.7"
 val mockWebServerVersion = "4.10.0"
@@ -28,7 +28,7 @@ plugins {
     application
     kotlin("jvm") version "1.8.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    id("com.github.ben-manes.versions") version "0.45.0"
+    id("com.github.ben-manes.versions") version "0.46.0"
 }
 
 application {
@@ -119,7 +119,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.4.2"
+        gradleVersion = "8.0.2"
     }
 
     "build" {
