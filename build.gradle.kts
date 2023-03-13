@@ -1,3 +1,4 @@
+import org.cyclonedx.gradle.CycloneDxTask
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -29,6 +30,7 @@ plugins {
     kotlin("jvm") version "1.8.10"
     id("com.github.johnrengelman.shadow") version "8.1.0"
     id("com.github.ben-manes.versions") version "0.46.0"
+    id("org.cyclonedx.bom") version "1.7.4"
 }
 
 application {
@@ -120,6 +122,11 @@ tasks {
 
     withType<Wrapper> {
         gradleVersion = "8.0.2"
+    }
+
+    withType<CycloneDxTask> {
+        setOutputFormat("json")
+        setIncludeLicenseText(false)
     }
 
     "build" {
