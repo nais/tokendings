@@ -115,6 +115,26 @@ Find the newest version of gradle here: https://gradle.org/releases/
 Then run this command:
 ```./gradlew wrapper --gradle-version $gradleVersion```
 
+## Verifying the tokendings image and its contents
+
+The image is signed "keylessly" (is that a word?) using [Sigstore cosign](https://github.com/sigstore/cosign).
+To verify its authenticity run
+```
+cosign verify \
+--certificate-identity "https://github.com/nais/tokendings/.github/workflows/deploy.yml@refs/heads/master" \
+--certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+ghcr.io/nais/tokendings@sha256:<shasum>
+```
+
+The images are also attested with SBOMs in the [CycloneDX](https://cyclonedx.org/) format.
+You can verify these by running
+```
+cosign verify-attestation --type cyclonedx \
+--certificate-identity "https://github.com/nais/tokendings/.github/workflows/deploy.yml@refs/heads/master" \
+--certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+ghcr.io/nais/tokendings@sha256:<shasum>
+```
+
 
 ## 👥 Contact
 
