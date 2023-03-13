@@ -16,6 +16,10 @@ jobs:
   build:
     name: Build and push Docker container
     runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     steps:
       - name: Checkout latest code
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
