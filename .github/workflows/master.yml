@@ -33,7 +33,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
       - name: Install cosign
-        uses: sigstore/cosign-installer@bd2d1189b064bcddc3903176a807dcdba72d7fd0 # ratchet:sigstore/cosign-installer@main
+        uses: sigstore/cosign-installer@8348525c79cd67509c593a9352954618bdc3a862 # ratchet:sigstore/cosign-installer@main
         with:
           cosign-release: 'v2.0.0'
       - name: Verify distroless base image
