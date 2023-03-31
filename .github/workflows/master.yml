@@ -15,6 +15,8 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
+    outputs:
+      img_to_deploy: "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings@${{ steps.build-push.outputs.digest }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -89,12 +91,40 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          push: false
+          push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-dev-gcp:
+    name: Deploy to dev-gcp
+    needs: build_push_sign
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: nais/deploy/actions/deploy@fff9ae049178e5d3dca5c9600cf78acce63c0708 # ratchet:nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/nais.yml,.nais/alerts.yml
+          VARS: .nais/dev-gcp-vars.yml
+          IMAGE: ${{ needs.build_push_sign.outputs.img_to_deploy }}
+
+  deploy-prod-gcp:
+    name: Deploy to prod-gcp
+    needs: deploy-dev-gcp
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+      - uses: nais/deploy/actions/deploy@fff9ae049178e5d3dca5c9600cf78acce63c0708 # ratchet:nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/nais.yml,.nais/alerts.yml
+          VARS: .nais/prod-gcp-vars.yml
+          IMAGE: ${{ needs.build_push_sign.outputs.img_to_deploy }}
 
 
 
