@@ -79,7 +79,6 @@ jobs:
           # Docker tags based on the following events/attributes
           tags: |
             type=schedule
-            type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern=v{{version}}
             type=semver,pattern=v{{major}}.{{minor}}
@@ -97,6 +96,12 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Sign the container image
+        run: cosign sign --yes ${{ matrix.image }}@${{ steps.build-push.outputs.digest }}
+      - name: Create SBOM
+        run: ./gradlew cyclonedxBom
+      - name: Attest image
+        run: cosign attest --yes --predicate build/reports/bom.json --type cyclonedx ${{ matrix.image }}@${{ steps.build-push.outputs.digest }}
 
   deploy-dev-gcp:
     name: Deploy to dev-gcp
