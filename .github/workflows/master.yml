@@ -138,7 +138,7 @@ jobs:
       id-token: write
     needs: ["build_push_sign"]
     runs-on: fasit-deploy
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && ${{ contains(needs.build_push_sign.outputs.img_to_deploy, 'docker.pkg.dev') }}
     steps:
       - uses: nais/fasit-deploy@b2c0b6d049b53bef41b321eec406fe66938576fd # ratchet:nais/fasit-deploy@main
         with:
