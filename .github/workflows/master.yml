@@ -15,12 +15,13 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
+      packages: "write"
     outputs:
       img_to_deploy: "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings@${{ steps.build-push.outputs.digest }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings" ]
+        image: [ "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings", "ghcr.io/${{ github.repository }}" ]
     steps:
       - name: Checkout
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
@@ -119,7 +120,7 @@ jobs:
 
   deploy-prod-gcp:
     name: Deploy to prod-gcp
-    needs: deploy-dev-gcp
+    needs: [build_push_sign, deploy-dev-gcp]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
