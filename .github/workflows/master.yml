@@ -18,6 +18,7 @@ jobs:
       packages: "write"
     outputs:
       img_to_deploy: "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings@${{ steps.build-push.outputs.digest }}"
+      img_version: "${{ fromJSON(steps.metadata.outputs.json).labels['org.opencontainers.image.version'] }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -141,5 +142,5 @@ jobs:
     steps:
       - uses: nais/fasit-deploy@b2c0b6d049b53bef41b321eec406fe66938576fd # ratchet:nais/fasit-deploy@main
         with:
-          json: '{"image": {"tag": "${{ needs.build_push_sign.outputs.img_to_deploy }}"}}'
+          json: '{"image": {"tag": "${{ needs.build_push_sign.outputs.img_version }}"}}'
           feature_name: tokenx
