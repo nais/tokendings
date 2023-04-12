@@ -15,6 +15,7 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
+      packages: "write"
     outputs:
       img_to_deploy: "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings@${{ steps.build-push.outputs.digest }}"
     runs-on: ubuntu-latest
@@ -45,6 +46,7 @@ jobs:
           --certificate-oidc-issuer "https://accounts.google.com" \
           gcr.io/distroless/java17
       - name: Authenticate to Google Cloud
+        if: ${{ contains(matrix.image, 'docker.pkg.dev') }}
         id: googleauth
         uses: "google-github-actions/auth@ef5d53e30bbcd8d0836f4288f5e50ff3e086997d" # ratchet:google-github-actions/auth@v1.0.0
         with:
@@ -52,12 +54,14 @@ jobs:
           service_account: "gh-tokendings@nais-io.iam.gserviceaccount.com"
           token_format: "access_token"
       - name: Login to Google Artifact Registry
+        if: ${{ contains(matrix.image, 'docker.pkg.dev') }}
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # ratchet:docker/login-action@v2
         with:
           registry: ${{ env.GOOG_REGISTRY }}
           username: "oauth2accesstoken"
           password: "${{ steps.googleauth.outputs.access_token }}"
       - name: Login to GitHub Container Registry
+        if: ${{ contains(matrix.image, 'ghcr.io') }}
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # ratchet:docker/login-action@v2
         with:
           registry: ${{ env.GH_REGISTRY }}
@@ -116,7 +120,7 @@ jobs:
 
   deploy-prod-gcp:
     name: Deploy to prod-gcp
-    needs: deploy-dev-gcp
+    needs: [build_push_sign, deploy-dev-gcp]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
