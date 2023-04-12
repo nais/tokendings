@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [ "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings", "ghcr.io/${{ github.repository }}" ]
+        image: [ "europe-north1-docker.pkg.dev/nais-io/nais/images/tokendings" ]
     steps:
       - name: Checkout
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
