@@ -132,15 +132,3 @@ jobs:
           RESOURCE: .nais/nais.yml,.nais/alerts.yml
           VARS: .nais/prod-gcp-vars.yml
           IMAGE: ${{ needs.build_push_sign.outputs.img_to_deploy }}
-
-  rollout-to-fasit:
-    permissions:
-      id-token: write
-    needs: ["build_push_sign"]
-    runs-on: fasit-deploy
-    if: github.ref == 'refs/heads/master' && ${{ contains(needs.build_push_sign.outputs.img_to_deploy, 'docker.pkg.dev') }}
-    steps:
-      - uses: nais/fasit-deploy@b2c0b6d049b53bef41b321eec406fe66938576fd # ratchet:nais/fasit-deploy@main
-        with:
-          json: '{"image": {"tag": "${{ needs.build_push_sign.outputs.img_version }}"}}'
-          feature_name: tokenx
