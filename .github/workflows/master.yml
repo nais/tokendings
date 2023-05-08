@@ -49,7 +49,7 @@ jobs:
       - name: Authenticate to Google Cloud
         if: ${{ contains(matrix.image, 'docker.pkg.dev') }}
         id: googleauth
-        uses: "google-github-actions/auth@ef5d53e30bbcd8d0836f4288f5e50ff3e086997d" # ratchet:google-github-actions/auth@v1.0.0
+        uses: "google-github-actions/auth@e8df18b60c5dd38ba618c121b779307266153fbf" # ratchet:google-github-actions/auth@v1.0.0
         with:
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: "gh-tokendings@nais-io.iam.gserviceaccount.com"
@@ -75,7 +75,7 @@ jobs:
         uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # ratchet:docker/setup-buildx-action@v2
       - name: Docker meta
         id: metadata
-        uses: docker/metadata-action@507c2f2dc502c992ad446e3d7a5dfbe311567a96 # ratchet:docker/metadata-action@v4
+        uses: docker/metadata-action@c4ee3adeed93b1fa6a762f209fb01608c1a22f1e # ratchet:docker/metadata-action@v4
         with:
           images: ${{ matrix.image }}
           # Docker tags based on the following events/attributes
