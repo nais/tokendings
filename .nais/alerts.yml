@@ -12,7 +12,7 @@ spec:
     - name: tokendings-alerts
       rules:
         - alert: Antall restarts
-          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"tokendings"}[5m])) by (container) > 2
+          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"tokendings"}[5m])) by (container) > 10
           for: 5m
           annotations:
             description: |
