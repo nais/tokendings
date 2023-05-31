@@ -22,7 +22,7 @@ spec:
   replicas:
     min: {{replicas.min}}
     max: {{replicas.max}}
-    cpuThresholdPercentage: 50
+    cpuThresholdPercentage: 90
   liveness:
     path: /internal/isalive
     initialDelay: 5

@@ -12,11 +12,11 @@ spec:
     - name: tokendings-alerts
       rules:
         - alert: Antall restarts
-          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"tokendings"}[30m])) by (container) > 2
+          expr: sum(increase(kube_pod_container_status_restarts_total{container=~"tokendings"}[5m])) by (container) > 10
           for: 5m
           annotations:
             description: |
-              tokendings har restartet flere ganger siste halvtimen!
+              tokendings har restartet flere ganger de siste 5 minuttene!
             action: "Se `kubectl describe pod tokendings` for events, og `kubectl logs -l app=tokendings` for logger"
           labels:
             severity: warning
