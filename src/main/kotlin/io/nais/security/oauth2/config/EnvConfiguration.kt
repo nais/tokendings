@@ -6,6 +6,7 @@ import com.natpryce.konfig.Key
 import com.natpryce.konfig.enumType
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.listType
+import com.natpryce.konfig.longType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
@@ -21,6 +22,7 @@ import io.nais.security.oauth2.config.EnvKey.DB_HOST
 import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
 import io.nais.security.oauth2.config.EnvKey.DB_PORT
 import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.config.EnvKey.DEFAULT_TOKEN_EXPIRY_SECONDS
 import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
 import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
@@ -48,7 +50,8 @@ internal object EnvKey {
     const val AUTH_CLIENT_JWKS = "AUTH_CLIENT_JWKS"
     const val AUTH_CLIENT_ID = "AUTH_CLIENT_ID"
     const val APPLICATION_PORT = "APPLICATION_PORT"
-    const val TOKEN_EXPIRY_SECONDS = 900L
+    const val TOKEN_EXPIRY_SECONDS = "TOKEN_EXPIRY_SECONDS"
+    const val DEFAULT_TOKEN_EXPIRY_SECONDS = 900L
     const val ISSUER_URL = "ISSUER_URL"
     const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
 }
@@ -65,7 +68,7 @@ object Configuration {
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
             ),
-            tokenExpiry = TOKEN_EXPIRY_SECONDS
+            tokenExpiry = konfig.getOrElse(Key(TOKEN_EXPIRY_SECONDS, longType), DEFAULT_TOKEN_EXPIRY_SECONDS)
         )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)

@@ -10,7 +10,7 @@ val junitJupiterVersion = "5.9.3"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.6.1"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "1.8.20"
+val kotlinVersion = "1.8.21"
 val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.0"
 val logbackVersion = "1.4.7"
@@ -27,7 +27,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.8.20"
+    kotlin("jvm") version "1.8.21"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.46.0"
     id("org.cyclonedx.bom") version "1.7.4"
