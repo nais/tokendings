@@ -3,14 +3,14 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.24.2"
-val flywayVersion = "9.19.1"
+val flywayVersion = "9.19.4"
 val h2Version = "2.1.214"
 val hikaricpVersion = "5.0.1"
 val junitJupiterVersion = "5.9.3"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.6.2"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "1.8.21"
+val kotlinVersion = "1.8.22"
 val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.1"
 val logbackVersion = "1.4.7"
@@ -27,9 +27,9 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.8.21"
+    kotlin("jvm") version "1.8.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.46.0"
+    id("com.github.ben-manes.versions") version "0.47.0"
     id("org.cyclonedx.bom") version "1.7.4"
 }
 
