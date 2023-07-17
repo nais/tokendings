@@ -46,6 +46,7 @@ jobs:
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push_ghcr: true
           sbom: build/reports/bom.json
+          multi-platform: true
 
   deploy-dev-gcp:
     name: Deploy to dev-gcp
