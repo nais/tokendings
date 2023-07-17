@@ -42,6 +42,7 @@ jobs:
         uses: nais/platform-build-push-sign@main # ratchet:exclude
         id: build-push-sign
         with:
+          name: tokendings
           google_service_account: gh-tokendings
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push_ghcr: true
