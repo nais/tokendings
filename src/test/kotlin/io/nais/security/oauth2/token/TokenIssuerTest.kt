@@ -8,6 +8,7 @@ import io.nais.security.oauth2.keystore.MockRotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.mock.rotatingKeyStore
 import io.nais.security.oauth2.mock.withMockOAuth2Server
+import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
@@ -103,12 +104,172 @@ internal class TokenIssuerTest {
         }
     }
 
-    private fun MockOAuth2Server.createSubjectToken(subject: String, claims: Map<String, Any> = emptyMap()) =
+    @Test
+    fun `exchanged token should have new claim value if subjectTokenMappings is defined and has matching claim and claim value`() {
+        withMockOAuth2Server {
+            val subjectTokenIdp: String = this.issuerUrl("issuer1").toString()
+            val subjectToken = this.createSubjectToken(
+                "thesubject",
+                mapOf(
+                    "claim1" to "claim1value",
+                    "claim2" to "claim2value",
+                )
+            ).serialize()
+            val fakeKeyStore = MockRotatingKeyStore()
+            val subjectTokenMappings = subjectTokenMappings()
+
+            with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, subjectTokenMappings = subjectTokenMappings)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "yolo"
+                val issuedToken = issueTokenFor(
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken, tokenAudience)
+                )
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience)),
+                    Pair("claim1", "newclaim1value"),
+                    Pair("claim2", "newclaim2value"),
+                )
+            }
+
+            val subjectToken2 = this.createSubjectToken(
+                "thesubject",
+                mapOf(
+                    "claim1" to "claim1othervalue",
+                )
+            ).serialize()
+            with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, subjectTokenMappings = subjectTokenMappings)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "yolo"
+                val issuedToken = issueTokenFor(
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken2, tokenAudience)
+                )
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience)),
+                    Pair("claim1", "newclaim1othervalue"),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `exchanged token should preserve claims if subjectTokenMappings is undefined for the given subject token issuer`() {
+        withMockOAuth2Server {
+            val subjectTokenIdp: String = this.issuerUrl("issuer2").toString()
+            val subjectToken = this.createSubjectToken(
+                "thesubject",
+                mapOf(
+                    "claim1" to "claim1value",
+                    "claim2" to "claim2value",
+                ),
+                "issuer2"
+            ).serialize()
+            val fakeKeyStore = MockRotatingKeyStore()
+            val subjectTokenMappings = subjectTokenMappings()
+
+            with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, subjectTokenMappings = subjectTokenMappings)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "yolo"
+                val issuedToken = issueTokenFor(
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken, tokenAudience)
+                )
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience)),
+                    Pair("claim1", "claim1value"),
+                    Pair("claim2", "claim2value"),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `exchanged token should preserve claims if subjectTokenMappings is defined and has matching claim but not matching value`() {
+        withMockOAuth2Server {
+            val subjectTokenIdp: String = this.issuerUrl("issuer1").toString()
+            val subjectToken = this.createSubjectToken(
+                "thesubject",
+                mapOf(
+                    "claim1" to "nomatchingclaim1value",
+                    "claim2" to "nomatchingclaim2value",
+                )
+            ).serialize()
+            val fakeKeyStore = MockRotatingKeyStore()
+            val subjectTokenMappings = subjectTokenMappings()
+
+            with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, subjectTokenMappings = subjectTokenMappings)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "yolo"
+                val issuedToken = issueTokenFor(
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken, tokenAudience)
+                )
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience)),
+                    Pair("claim1", "nomatchingclaim1value"),
+                    Pair("claim2", "nomatchingclaim2value"),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `exchanged token should preserve claims if subjectTokenMappings is defined and has matching claim and claim value is not a String`() {
+        withMockOAuth2Server {
+            val subjectTokenIdp: String = this.issuerUrl("issuer1").toString()
+            val subjectToken = this.createSubjectToken(
+                "thesubject",
+                mapOf(
+                    "claim1" to listOf("claim1value"),
+                    "claim2" to false,
+                )
+            ).serialize()
+            val fakeKeyStore = MockRotatingKeyStore()
+            val subjectTokenMappings = subjectTokenMappings()
+
+            with(tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, subjectTokenMappings = subjectTokenMappings)) {
+                val oAuth2Client = oAuth2Client()
+                val tokenAudience = "yolo"
+                val issuedToken = issueTokenFor(
+                    oAuth2Client,
+                    tokenExchangeRequest(subjectToken, tokenAudience)
+                )
+                issuedToken.verifySignature(this.publicJwkSet()).claims shouldContainAll mapOf(
+                    Pair("sub", "thesubject"),
+                    Pair("client_id", oAuth2Client.clientId),
+                    Pair("idp", subjectTokenIdp),
+                    Pair("iss", ISSUER_URL),
+                    Pair("aud", listOf(tokenAudience)),
+                    Pair("claim1", listOf("claim1value")),
+                    Pair("claim2", false),
+                )
+            }
+        }
+    }
+
+    private fun MockOAuth2Server.createSubjectToken(subject: String, claims: Map<String, Any> = emptyMap(), issuer: String = "issuer1") =
         this.issueToken(
-            "issuer1",
+            issuer,
             "client_id_random",
             DefaultOAuth2TokenCallback(
-                issuerId = "issuer1",
+                issuerId = issuer,
                 subject = subject,
                 claims = claims
             )
@@ -127,29 +288,42 @@ internal class TokenIssuerTest {
             JsonWebKeys(jwkSet())
         )
 
-    private fun tokenIssuer(mockOAuth2Server: MockOAuth2Server? = null, rotatingKeyStore: RotatingKeyStore? = null) =
-        if (mockOAuth2Server != null) {
-            TokenIssuer(
-                AuthorizationServerProperties(
-                    ISSUER_URL,
-                    listOf(
-                        SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer1").toString()),
-                        SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
-                    ),
-                    300,
-                    rotatingKeyStore ?: rotatingKeyStore()
-                )
+    private fun tokenIssuer(
+        mockOAuth2Server: MockOAuth2Server? = null,
+        rotatingKeyStore: RotatingKeyStore? = null,
+        subjectTokenMappings: ClaimMappings = emptyMap()
+    ) = if (mockOAuth2Server != null) {
+        TokenIssuer(
+            AuthorizationServerProperties(
+                issuerUrl = ISSUER_URL,
+                subjectTokenIssuers = listOf(
+                    SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer1").toString(), subjectTokenMappings),
+                    SubjectTokenIssuer(mockOAuth2Server.wellKnownUrl("issuer2").toString())
+                ),
+                tokenExpiry = 300,
+                rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
             )
-        } else {
-            TokenIssuer(
-                AuthorizationServerProperties(
-                    ISSUER_URL,
-                    emptyList(),
-                    300,
-                    rotatingKeyStore ?: rotatingKeyStore()
-                )
+        )
+    } else {
+        TokenIssuer(
+            AuthorizationServerProperties(
+                issuerUrl = ISSUER_URL,
+                subjectTokenIssuers = emptyList(),
+                tokenExpiry = 300,
+                rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
             )
-        }
+        )
+    }
+
+    private fun subjectTokenMappings(): ClaimMappings = mapOf(
+        "claim1" to mapOf(
+            "claim1value" to "newclaim1value",
+            "claim1othervalue" to "newclaim1othervalue"
+        ),
+        "claim2" to mapOf(
+            "claim2value" to "newclaim2value",
+        ),
+    )
 
     companion object {
         private const val ISSUER_URL = "http://localhost/thisissuer"

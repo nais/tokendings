@@ -25,7 +25,10 @@ import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
 import io.nais.security.oauth2.config.EnvKey.DEFAULT_TOKEN_EXPIRY_SECONDS
 import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
+import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_MAPPINGS
 import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
+import io.nais.security.oauth2.model.IssuerClaimMappings
+import io.nais.security.oauth2.model.issuerClaimMappingsFromJson
 import mu.KotlinLogging
 import java.time.Duration
 
@@ -54,16 +57,20 @@ internal object EnvKey {
     const val DEFAULT_TOKEN_EXPIRY_SECONDS = 900L
     const val ISSUER_URL = "ISSUER_URL"
     const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
+    const val SUBJECT_TOKEN_MAPPINGS = "SUBJECT_TOKEN_MAPPINGS"
 }
 
 object Configuration {
     private val issuerUrl = konfig[Key(ISSUER_URL, stringType)]
     private val subjectTokenIssuers = konfig[Key(SUBJECT_TOKEN_ISSUERS, stringType)].split(",").map { it.trim() }
+    private val subjectTokenIssuerMappings: IssuerClaimMappings = konfig.getOrNull(Key(SUBJECT_TOKEN_MAPPINGS, stringType))?.let {
+        issuerClaimMappingsFromJson(it)
+    } ?: emptyMap()
     val instance by lazy {
         val databaseConfig = migrate(databaseConfig())
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = issuerUrl,
-            subjectTokenIssuers = subjectTokenIssuers.toConfiguration(),
+            subjectTokenIssuers = subjectTokenIssuers.toIssuerConfiguration(subjectTokenIssuerMappings),
             rotatingKeyStore = rotatingKeyStore(
                 dataSource = databaseConfig,
                 rotationInterval = Duration.ofDays(1)
@@ -83,9 +90,10 @@ object Configuration {
     }
 }
 
-fun List<String>.toConfiguration() = this.map { issuerWellKnown ->
-    SubjectTokenIssuer(issuerWellKnown)
-}
+fun List<String>.toIssuerConfiguration(subjectTokenIssuerMappings: IssuerClaimMappings) = this
+    .map { issuerWellKnown ->
+        SubjectTokenIssuer(issuerWellKnown, subjectTokenIssuerMappings[issuerWellKnown] ?: emptyMap())
+    }
 
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
