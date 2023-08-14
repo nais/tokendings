@@ -7,10 +7,11 @@ host:
   - navtestb2c.b2clogin.com
   - oidc-ver2.difi.no
   - fakedings.dev-gcp.nais.io
+  - test.idporten.no
 env:
   APPLICATION_PROFILE: NON_PROD
   ISSUER_URL: https://tokendings.dev-gcp.nais.io
-  SUBJECT_TOKEN_ISSUERS: https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1,https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration,https://fakedings.dev-gcp.nais.io/fake/.well-known/openid-configuration
+  SUBJECT_TOKEN_ISSUERS: https://navtestb2c.b2clogin.com/navtestb2c.onmicrosoft.com/v2.0/.well-known/openid-configuration?p=B2C_1A_idporten_ver1,https://oidc-ver2.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration,https://fakedings.dev-gcp.nais.io/default/.well-known/openid-configuration,https://fakedings.dev-gcp.nais.io/fake/.well-known/openid-configuration,https://test.idporten.no/.well-known/openid-configuration
   APPLICATION_PORT: 8080
   TOKEN_EXPIRY_SECONDS: 3600
 
