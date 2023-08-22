@@ -1,0 +1,22 @@
+name: Help Dependabot by submitting dependency graph
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.gradle.kts"
+      - "gradle.properties"
+  workflow_dispatch:
+jobs:
+  dependabot:
+    name: Monitor dependencies with Dependabot
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # ratchet:actions/checkout@v3
+      - name: Run snapshot action
+        uses: mikepenz/gradle-dependency-submission@aa82af7186ba17eb630a7d47c840ba8a3185ac91 # ratchet:mikepenz/gradle-dependency-submission@v0.8.6
+        with:
+          fail-on-error: true
+          gradle-dependency-path: "build.gradle.kts"
