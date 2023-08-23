@@ -4,6 +4,7 @@ import com.auth0.jwk.Jwk
 import com.auth0.jwk.JwkException
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.call.body
@@ -18,6 +19,7 @@ import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.CacheProperties
+import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
@@ -52,6 +54,7 @@ data class ServerProperties(val port: Int)
 data class ClientRegistryProperties(
     val dataSource: DataSource
 )
+
 data class ClientRegistrationAuthProperties(
     val authProvider: AuthProvider,
     val acceptedAudience: List<String>,
@@ -90,6 +93,7 @@ class AuthProvider(
                 .build()
             return AuthProvider(wellKnown.issuer, jwk)
         }
+
         fun fromSelfSigned(issuer: String, jwkSet: JWKSet): AuthProvider {
             val jwk = JwkProvider { keyId ->
                 Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
@@ -119,7 +123,7 @@ class AuthorizationServerProperties(
     }
 }
 
-class SubjectTokenIssuer(private val wellKnownUrl: String) {
+class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaimMappings: ClaimMappings = emptyMap()) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
         defaultHttpClient.get(wellKnownUrl).body()
@@ -131,6 +135,13 @@ class SubjectTokenIssuer(private val wellKnownUrl: String) {
         timeUnit = TimeUnit.MINUTES,
         jwksURL = URL(wellKnown.jwksUri)
     )
+
+    init {
+        if (subjectTokenClaimMappings.isNotEmpty()) {
+            val mappings = jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(subjectTokenClaimMappings)
+            log.info("loaded subject token claim mappings for issuer=$issuer: $mappings}")
+        }
+    }
 }
 
 data class KeyStoreProperties(
