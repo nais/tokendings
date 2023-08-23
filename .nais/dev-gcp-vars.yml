@@ -20,3 +20,4 @@ sqlinstance_name: tokendings
 replicas:
   min: 2
   max: 4
+mappingsEnabled: true
