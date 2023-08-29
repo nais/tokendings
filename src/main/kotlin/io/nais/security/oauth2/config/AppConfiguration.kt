@@ -98,6 +98,10 @@ class AuthProvider(
             val jwk = JwkProvider { keyId ->
                 Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
             }
+            jwkSet.keys.forEach { key ->
+                log.info("validate key with kid=${key.keyID} from JWKS")
+                jwk.get(key.keyID).publicKey
+            }
             return AuthProvider(issuer, jwk)
         }
     }
