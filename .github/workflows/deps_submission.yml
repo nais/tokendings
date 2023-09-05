@@ -2,7 +2,7 @@ name: Help Dependabot by submitting dependency graph
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - "**.gradle.kts"
       - "gradle.properties"
