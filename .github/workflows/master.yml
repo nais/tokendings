@@ -49,23 +49,9 @@ jobs:
           sbom: build/reports/bom.json
           multi-platform: true
 
-  deploy-dev-gcp:
-    name: Deploy to dev-gcp
-    needs: build_push_sign
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4 # ratchet:actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@913eb0f92e9d132dbe0cbba3390a340675849f30 # ratchet:nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: dev-gcp
-          RESOURCE: .nais/nais.yml,.nais/alerts.yml,.nais/configmap.yml
-          VARS: .nais/dev-gcp-vars.yml
-          IMAGE: ${{ needs.build_push_sign.outputs.img_to_deploy }}
-
   deploy-prod-gcp:
     name: Deploy to prod-gcp
-    needs: [build_push_sign, deploy-dev-gcp]
+    needs: [build_push_sign]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4 # ratchet:actions/checkout@v3
