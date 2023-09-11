@@ -8,7 +8,7 @@ val h2Version = "2.2.222"
 val hikaricpVersion = "5.0.1"
 val junitJupiterVersion = "5.10.0"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "5.7.1"
+val kotestVersion = "5.7.2"
 val kotlinLoggingVersion = "3.0.5"
 val kotlinVersion = "1.9.10"
 val kotliqueryVersion = "1.9.0"
@@ -29,7 +29,7 @@ plugins {
     application
     kotlin("jvm") version "1.9.10"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.47.0"
+    id("com.github.ben-manes.versions") version "0.48.0"
     id("org.cyclonedx.bom") version "1.7.4"
 }
 
