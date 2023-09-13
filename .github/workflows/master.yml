@@ -48,17 +48,3 @@ jobs:
           push_ghcr: true
           sbom: build/reports/bom.json
           multi-platform: true
-
-  deploy-prod-gcp:
-    name: Deploy to prod-gcp
-    needs: [build_push_sign]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4 # ratchet:actions/checkout@v3
-      - uses: nais/deploy/actions/deploy@da1c88ec48a36916fa72a7d1b5952319b3c95ae1 # ratchet:nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/nais.yml,.nais/alerts.yml
-          VARS: .nais/prod-gcp-vars.yml
-          IMAGE: ${{ needs.build_push_sign.outputs.img_to_deploy }}
