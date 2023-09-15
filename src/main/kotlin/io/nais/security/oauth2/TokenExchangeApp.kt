@@ -64,7 +64,7 @@ fun main() {
     try {
         val engine = server()
         engine.addShutdownHook {
-            engine.stop(3, 5, SECONDS)
+            engine.stop(10, 20, SECONDS)
         }
         engine.start(wait = true)
     } catch (t: Throwable) {
