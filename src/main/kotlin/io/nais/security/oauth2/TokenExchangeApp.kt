@@ -60,11 +60,14 @@ import kotlin.system.exitProcess
 
 private val log = KotlinLogging.logger { }
 
+const val shutdownGracePeriod = 10L
+const val shutdownMaxWait = 20L
+
 fun main() {
     try {
         val engine = server()
         engine.addShutdownHook {
-            engine.stop(10, 20, SECONDS)
+            engine.stop(shutdownGracePeriod, shutdownMaxWait, SECONDS)
         }
         engine.start(wait = true)
     } catch (t: Throwable) {

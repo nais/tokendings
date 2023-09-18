@@ -5,7 +5,14 @@ style:
     excludes: ['**/test/**', '**/*.Test.kt', '**/Mock*.kt']
   MagicNumber:
     active: true
-    ignoreNumbers: '-1,0,1,2,3,4,5'
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
     ignoreRanges: true
   ThrowsCount:
     active: true
