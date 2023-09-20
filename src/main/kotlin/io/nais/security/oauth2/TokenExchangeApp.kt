@@ -7,6 +7,7 @@ import com.nimbusds.oauth2.sdk.ErrorObject
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.jackson.jackson
@@ -57,9 +58,11 @@ import org.slf4j.event.Level
 import java.util.UUID
 import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.system.exitProcess
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 private val log = KotlinLogging.logger { }
 
+const val httpClientMaxRetries = 10
 const val shutdownGracePeriod = 10L
 const val shutdownMaxWait = 20L
 
@@ -141,12 +144,15 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                     val includeErrorDetails = isNonProd()
                     call.respondWithError(cause, includeErrorDetails)
                 }
+
                 is BadRequestException -> {
                     call.respond(HttpStatusCode.BadRequest, "invalid request content")
                 }
+
                 is JsonProcessingException -> {
                     call.respond(HttpStatusCode.BadRequest, "invalid request content")
                 }
+
                 else -> {
                     call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
                 }
@@ -195,10 +201,23 @@ private fun ErrorObject.toGeneric(): ErrorObject =
     )
 
 internal val defaultHttpClient = HttpClient(CIO) {
-    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+    install(ClientContentNegotiation) {
         jackson() {
             setSerializationInclusion(NON_NULL)
             configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
+    }
+}
+
+internal val retryingHttpClient = HttpClient(CIO) {
+    install(ClientContentNegotiation) {
+        jackson() {
+            setSerializationInclusion(NON_NULL)
+            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+        }
+    }
+    install(HttpRequestRetry) {
+        retryOnExceptionOrServerErrors(maxRetries = httpClientMaxRetries)
+        exponentialDelay()
     }
 }
