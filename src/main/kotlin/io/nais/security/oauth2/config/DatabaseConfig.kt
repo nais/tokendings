@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.HikariProperties.CONNECTION_TIMEOUT
 import io.nais.security.oauth2.config.HikariProperties.IDLE_TIMEOUT
+import io.nais.security.oauth2.config.HikariProperties.INITIALIZATION_FAIL_TIMEOUT
 import io.nais.security.oauth2.config.HikariProperties.MAX_LIFETIME
 import io.nais.security.oauth2.config.HikariProperties.MAX_POOL_SIZE
 import io.nais.security.oauth2.config.HikariProperties.MIN_IDLE_CONNECTIONS
@@ -36,6 +37,7 @@ private fun hikariConfig(databaseConfig: DatabaseConfig) =
         maxLifetime = MAX_LIFETIME
         username = databaseConfig.user
         password = databaseConfig.password
+        initializationFailTimeout = INITIALIZATION_FAIL_TIMEOUT
     }
 
 object HikariProperties {
@@ -44,4 +46,5 @@ object HikariProperties {
     const val MAX_LIFETIME = 30001L
     const val MAX_POOL_SIZE = 10
     const val MIN_IDLE_CONNECTIONS = 5
+    const val INITIALIZATION_FAIL_TIMEOUT = 10000L
 }
