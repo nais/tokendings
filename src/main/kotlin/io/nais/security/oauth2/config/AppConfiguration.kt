@@ -13,7 +13,6 @@ import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
 import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
 import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
-import io.nais.security.oauth2.defaultHttpClient
 import io.nais.security.oauth2.health.DatabaseHealthCheck
 import io.nais.security.oauth2.health.HealthCheck
 import io.nais.security.oauth2.keystore.RotatingKeyStore
@@ -23,6 +22,7 @@ import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
+import io.nais.security.oauth2.retryingHttpClient
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
@@ -85,7 +85,7 @@ class AuthProvider(
         fun fromWellKnown(wellKnownUrl: String): AuthProvider {
             val wellKnown: WellKnown = runBlocking {
                 log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
-                defaultHttpClient.get(wellKnownUrl).body()
+                retryingHttpClient.get(wellKnownUrl).body()
             }
             val jwk = JwkProviderBuilder(URL(wellKnown.jwksUri))
                 .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
@@ -130,7 +130,7 @@ class AuthorizationServerProperties(
 class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaimMappings: ClaimMappings = emptyMap()) {
     val wellKnown: WellKnown = runBlocking {
         log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
-        defaultHttpClient.get(wellKnownUrl).body()
+        retryingHttpClient.get(wellKnownUrl).body()
     }
     val issuer = wellKnown.issuer
     val cacheProperties = CacheProperties(
