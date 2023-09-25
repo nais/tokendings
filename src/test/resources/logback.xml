@@ -14,6 +14,10 @@
     <logger name="ktor.application" level="TRACE"/>
     <logger name="io.ktor" level="TRACE"/>
 
+    <!-- Disable mockk logging to prevent stdObjectAnswer MockKException when mocking time -->
+    <logger name="io.mockk.impl.instantiation.AbstractMockFactory" level="error"/>
+    <logger name="io.mockk.impl.recording.states.AnsweringState" level="error"/>
+
     <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
