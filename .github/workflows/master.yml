@@ -25,6 +25,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'gradle'
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@915a66c096a03101667f9df2e56c9efef558b165 # ratchet:gradle/gradle-build-action@v2
+        with:
+          dependency-graph: generate-and-submit
       - name: Verify Gradle wrapper checksum
         uses: gradle/wrapper-validation-action@8d49e559aae34d3e0eb16cde532684bc9702762b # ratchet:gradle/wrapper-validation-action@v1
       - name: Build with Gradle
