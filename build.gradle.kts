@@ -12,7 +12,7 @@ val kotestVersion = "5.8.0"
 val kotlinLoggingVersion = "3.0.5"
 val kotlinVersion = "1.9.20"
 val kotliqueryVersion = "1.9.0"
-val ktorVersion = "2.3.5"
+val ktorVersion = "2.3.6"
 val logbackVersion = "1.4.11"
 val logstashLogbackEncoderVersion = "7.4"
 val micrometerRegistryPrometheusVersion = "1.11.5"
@@ -30,7 +30,7 @@ plugins {
     kotlin("jvm") version "1.9.20"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.49.0"
-    id("org.cyclonedx.bom") version "1.8.0"
+    id("org.cyclonedx.bom") version "1.8.1"
 }
 
 application {
