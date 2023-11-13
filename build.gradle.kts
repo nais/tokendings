@@ -62,6 +62,7 @@ dependencies {
     implementation("com.zaxxer:HikariCP:$hikaricpVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("org.flywaydb:flyway-core:$flywayVersion")
+    implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
