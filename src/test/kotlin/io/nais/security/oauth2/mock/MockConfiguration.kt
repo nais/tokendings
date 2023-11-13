@@ -129,7 +129,7 @@ fun <R> withMockOAuth2Server(
 
 internal object PostgresContainer {
     val instance by lazy {
-        PostgreSQLContainer<Nothing>("postgres:11.2").apply {
+        PostgreSQLContainer<Nothing>("postgres:14").apply {
             start()
         }
     }
