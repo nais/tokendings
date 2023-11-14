@@ -32,7 +32,6 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         authorizationServerProperties.subjectTokenIssuers.associate {
             it.issuer to TokenValidator(
                 it.issuer,
-                URL(it.wellKnown.jwksUri),
                 it.cacheProperties
             )
         }

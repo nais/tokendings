@@ -30,6 +30,7 @@ import java.net.URL
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
+import kotlin.time.Duration.Companion.minutes
 
 private val log = KotlinLogging.logger {}
 
@@ -134,9 +135,8 @@ class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaim
     }
     val issuer = wellKnown.issuer
     val cacheProperties = CacheProperties(
-        lifeSpan = 180,
-        refreshTime = 60,
-        timeUnit = TimeUnit.MINUTES,
+        lifeSpan = 180.minutes,
+        refreshTime = 60.minutes,
         jwksURL = URL(wellKnown.jwksUri)
     )
 

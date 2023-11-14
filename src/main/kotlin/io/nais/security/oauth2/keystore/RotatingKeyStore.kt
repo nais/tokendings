@@ -5,7 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 
-interface RotatingKeyStore : JWKSource<SecurityContext?> {
+interface RotatingKeyStore : JWKSource<SecurityContext> {
 
     fun currentSigningKey(): RSAKey
 
