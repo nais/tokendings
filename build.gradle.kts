@@ -15,13 +15,13 @@ val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.6"
 val logbackVersion = "1.4.11"
 val logstashLogbackEncoderVersion = "7.4"
-val micrometerRegistryPrometheusVersion = "1.11.5"
+val micrometerRegistryPrometheusVersion = "1.12.0"
 val mockOAuth2ServerVersion = "2.0.0"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.8"
 val nimbusSdkVersion = "11.6"
 val postgresqlVersion = "42.6.0"
-val testcontainersPostgresVersion = "1.19.1"
+val testcontainersPostgresVersion = "1.19.2"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -29,7 +29,7 @@ plugins {
     application
     kotlin("jvm") version "1.9.20"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.49.0"
+    id("com.github.ben-manes.versions") version "0.50.0"
     id("org.cyclonedx.bom") version "1.8.1"
 }
 
