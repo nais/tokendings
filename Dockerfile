@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/java17
+FROM gcr.io/distroless/java21-debian12:nonroot
 
 COPY build/libs/app-*.jar /app/app.jar
 
