@@ -2,24 +2,24 @@ import org.cyclonedx.gradle.CycloneDxTask
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.24.2"
-val flywayVersion = "9.22.3"
+val assertjVersion = "3.25.0"
+val flywayVersion = "10.4.1"
 val h2Version = "2.2.224"
 val hikaricpVersion = "5.1.0"
 val junitJupiterVersion = "5.10.1"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.8.0"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "1.9.21"
+val kotlinVersion = "1.9.22"
 val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.7"
 val logbackVersion = "1.4.14"
 val logstashLogbackEncoderVersion = "7.4"
-val micrometerRegistryPrometheusVersion = "1.12.0"
-val mockOAuth2ServerVersion = "2.0.1"
+val micrometerRegistryPrometheusVersion = "1.12.1"
+val mockOAuth2ServerVersion = "2.1.0"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.8"
-val nimbusSdkVersion = "11.7.1"
+val nimbusSdkVersion = "11.9"
 val postgresqlVersion = "42.7.1"
 val testcontainersPostgresVersion = "1.19.3"
 
@@ -27,7 +27,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.50.0"
     id("org.cyclonedx.bom") version "1.8.1"
