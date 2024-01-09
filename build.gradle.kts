@@ -2,7 +2,7 @@ import org.cyclonedx.gradle.CycloneDxTask
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.25.0"
+val assertjVersion = "3.25.1"
 val flywayVersion = "9.22.3"
 val h2Version = "2.2.224"
 val hikaricpVersion = "5.1.0"
@@ -18,8 +18,8 @@ val logstashLogbackEncoderVersion = "7.4"
 val micrometerRegistryPrometheusVersion = "1.12.1"
 val mockOAuth2ServerVersion = "2.1.0"
 val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.13.8"
-val nimbusSdkVersion = "11.9"
+val mockkVersion = "1.13.9"
+val nimbusSdkVersion = "11.9.1"
 val postgresqlVersion = "42.7.1"
 val testcontainersPostgresVersion = "1.19.3"
 
