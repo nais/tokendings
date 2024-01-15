@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.25.1"
-val flywayVersion = "9.22.3"
+val flywayVersion = "10.5.0"
 val h2Version = "2.2.224"
 val hikaricpVersion = "5.1.0"
 val junitJupiterVersion = "5.10.1"
@@ -15,7 +15,7 @@ val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.7"
 val logbackVersion = "1.4.14"
 val logstashLogbackEncoderVersion = "7.4"
-val micrometerRegistryPrometheusVersion = "1.12.1"
+val micrometerRegistryPrometheusVersion = "1.12.2"
 val mockOAuth2ServerVersion = "2.1.0"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.9"
