@@ -16,7 +16,7 @@ val ktorVersion = "2.3.7"
 val logbackVersion = "1.4.14"
 val logstashLogbackEncoderVersion = "7.4"
 val micrometerRegistryPrometheusVersion = "1.12.2"
-val mockOAuth2ServerVersion = "2.1.0"
+val mockOAuth2ServerVersion = "2.1.1"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.9"
 val nimbusSdkVersion = "11.9.1"
@@ -30,7 +30,7 @@ plugins {
     kotlin("jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.50.0"
-    id("org.cyclonedx.bom") version "1.8.1"
+    id("org.cyclonedx.bom") version "1.8.2"
 }
 
 application {
