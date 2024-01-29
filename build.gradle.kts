@@ -2,7 +2,7 @@ import org.cyclonedx.gradle.CycloneDxTask
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.25.1"
+val assertjVersion = "3.25.2"
 val flywayVersion = "10.6.0"
 val h2Version = "2.2.224"
 val hikaricpVersion = "5.1.0"
@@ -21,7 +21,7 @@ val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.9"
 val nimbusSdkVersion = "11.9.1"
 val postgresqlVersion = "42.7.1"
-val testcontainersPostgresVersion = "1.19.3"
+val testcontainersPostgresVersion = "1.19.4"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -29,7 +29,7 @@ plugins {
     application
     kotlin("jvm") version "1.9.22"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.50.0"
+    id("com.github.ben-manes.versions") version "0.51.0"
     id("org.cyclonedx.bom") version "1.8.2"
 }
 
