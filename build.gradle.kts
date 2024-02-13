@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val assertjVersion = "3.25.3"
-val flywayVersion = "10.7.1"
+val flywayVersion = "10.7.2"
 val h2Version = "2.2.224"
 val hikaricpVersion = "5.1.0"
 val junitJupiterVersion = "5.10.2"
@@ -21,7 +21,7 @@ val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.9"
 val nimbusSdkVersion = "11.9.1"
 val postgresqlVersion = "42.7.1"
-val testcontainersPostgresVersion = "1.19.4"
+val testcontainersPostgresVersion = "1.19.5"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
