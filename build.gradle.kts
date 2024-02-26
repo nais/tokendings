@@ -19,9 +19,9 @@ val micrometerRegistryPrometheusVersion = "1.12.3"
 val mockOAuth2ServerVersion = "2.1.2"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.9"
-val nimbusSdkVersion = "11.10"
-val postgresqlVersion = "42.7.1"
-val testcontainersPostgresVersion = "1.19.5"
+val nimbusSdkVersion = "11.10.1"
+val postgresqlVersion = "42.7.2"
+val testcontainersPostgresVersion = "1.19.6"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
