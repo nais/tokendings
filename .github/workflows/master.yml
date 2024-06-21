@@ -31,8 +31,15 @@ jobs:
           dependency-graph: generate-and-submit
       - name: Verify Gradle wrapper checksum
         uses: gradle/wrapper-validation-action@8d49e559aae34d3e0eb16cde532684bc9702762b # ratchet:gradle/wrapper-validation-action@v1
-      - name: Build with Gradle
+
+      - name: Setup Gradle to generate and submit dependency graphs
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          dependency-graph: generate-and-submit
+
+      - name: Run the usual CI build (dependency-graph will be generated and submitted post-job)
         run: ./gradlew build
+
       - uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19 # ratchet:sigstore/cosign-installer@v3.1.2
       - name: Verify distroless base image
         run: |
