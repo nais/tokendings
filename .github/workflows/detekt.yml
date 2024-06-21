@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Detekt Codesmell
-        uses: natiginfo/action-detekt-all@1.23.1
+        uses: natiginfo/action-detekt-all@.23.6
         with:
           args: >
             -r sarif:reports/detekt.json
@@ -33,7 +33,7 @@ jobs:
             --build-upon-default-config
             --config .github/detekt/detekt-config.yml
       - name: Detekt results Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: reports/detekt.json
