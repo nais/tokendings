@@ -28,7 +28,7 @@ jobs:
         with:
           dependency-graph: generate-and-submit
       - name: Verify Gradle wrapper checksum
-        uses: gradle/actions/wrapper-validation@b3afdc78a7849557ab26e243ccf07548086da025 # ratchet:gradle/actions/wrapper-validation@v1
+        uses: gradle/actions/wrapper-validation@dbbdc275be76ac10734476cc723d82dfe7ec6eda # ratchet:gradle/actions/wrapper-validation@v1
       - name: Run the usual CI build (dependency-graph will be generated and submitted post-job)
         run: ./gradlew build
         env:

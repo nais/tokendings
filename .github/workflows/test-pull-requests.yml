@@ -19,10 +19,10 @@ jobs:
           cache: 'gradle'
 
       - name: Verify Gradle wrapper checksum
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v3.4.2
 
       - name: Setup Gradle to generate and submit dependency graphs
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v3.4.2
         with:
           dependency-graph: generate-and-submit
 
