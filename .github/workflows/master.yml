@@ -40,8 +40,7 @@ jobs:
           --certificate-identity "keyless@distroless.iam.gserviceaccount.com" \
           --certificate-oidc-issuer "https://accounts.google.com" \
           gcr.io/distroless/java21-debian12:nonroot
-      - name: Create SBOM
-        run: ./gradlew cyclonedxBom
+
       - name: "Build and push image"
         uses: nais/platform-build-push-sign@main # ratchet:exclude
         id: build-push-sign
@@ -50,5 +49,4 @@ jobs:
           google_service_account: gh-tokendings
           workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
           push_ghcr: true
-          sbom: build/reports/bom.json
           multi-platform: true

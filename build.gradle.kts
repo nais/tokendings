@@ -1,4 +1,3 @@
-import org.cyclonedx.gradle.CycloneDxTask
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -30,7 +29,6 @@ plugins {
     kotlin("jvm") version "2.0.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.51.0"
-    id("org.cyclonedx.bom") version "1.8.2"
 }
 
 application {
@@ -44,10 +42,6 @@ java {
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
-        name = "ktor-eap"
-    }
 }
 
 dependencies {
@@ -122,12 +116,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "8.5"
-    }
-
-    withType<CycloneDxTask> {
-        setOutputFormat("json")
-        setIncludeLicenseText(false)
+        gradleVersion = "8.8"
     }
 
     "build" {
