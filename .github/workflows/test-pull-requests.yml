@@ -5,6 +5,8 @@ on: pull_request
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: "write"
     steps:
       - name: Checkout latest code
         uses: actions/checkout@v4
@@ -26,3 +28,6 @@ jobs:
 
       - name: Run the usual CI build (dependency-graph will be generated and submitted post-job)
         run: ./gradlew build
+        env:
+          ORG_GRADLE_PROJECT_githubUser: x-access-token
+          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}

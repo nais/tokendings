@@ -10,7 +10,7 @@ on:
 jobs:
   build_push_sign:
     permissions:
-      contents: "read"
+      contents: "write"
       id-token: "write"
       packages: "write"
     outputs:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Run the usual CI build (dependency-graph will be generated and submitted post-job)
         run: ./gradlew build
+        env:
+          ORG_GRADLE_PROJECT_githubUser: x-access-token
+          ORG_GRADLE_PROJECT_githubPassword: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: sigstore/cosign-installer@11086d25041f77fe8fe7b9ea4e48e3b9192b8f19 # ratchet:sigstore/cosign-installer@v3.1.2
       - name: Verify distroless base image
