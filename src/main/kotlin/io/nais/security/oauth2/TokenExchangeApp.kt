@@ -62,15 +62,11 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientCon
 
 private val log = KotlinLogging.logger { }
 
-const val httpClientMaxRetries = 10
-const val shutdownGracePeriod = 10L
-const val shutdownMaxWait = 20L
-
 fun main() {
     try {
         val engine = server()
         engine.addShutdownHook {
-            engine.stop(shutdownGracePeriod, shutdownMaxWait, SECONDS)
+            engine.stop(gracePeriod = 10L, timeout = 20L, SECONDS)
         }
         engine.start(wait = true)
     } catch (t: Throwable) {
@@ -217,7 +213,7 @@ internal val retryingHttpClient = HttpClient(CIO) {
         }
     }
     install(HttpRequestRetry) {
-        retryOnExceptionOrServerErrors(maxRetries = httpClientMaxRetries)
+        retryOnExceptionOrServerErrors(maxRetries = 10)
         exponentialDelay()
     }
 }
