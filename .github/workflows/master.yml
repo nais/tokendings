@@ -24,11 +24,11 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Verify Gradle wrapper checksum
-        uses: gradle/actions/wrapper-validation@dbbdc275be76ac10734476cc723d82dfe7ec6eda # ratchet:gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/wrapper-validation@v3
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@dbbdc275be76ac10734476cc723d82dfe7ec6eda # ratchet:gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/setup-gradle@v3
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@dbbdc275be76ac10734476cc723d82dfe7ec6eda # ratchet:gradle/actions/dependency-submission@v3
+        uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/dependency-submission@v3
       - name: Gradle build
         run: ./gradlew build
       - uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # ratchet:sigstore/cosign-installer@v3
