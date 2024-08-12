@@ -1,32 +1,32 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val assertjVersion = "3.26.0"
-val flywayVersion = "10.15.0"
-val h2Version = "2.2.224"
+val assertjVersion = "3.26.3"
+val flywayVersion = "10.17.0"
+val h2Version = "2.3.230"
 val hikaricpVersion = "5.1.0"
-val junitJupiterVersion = "5.10.2"
+val junitJupiterVersion = "5.10.3"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.0.0"
+val kotlinVersion = "2.0.10"
 val kotliqueryVersion = "1.9.0"
 val ktorVersion = "2.3.12"
 val logbackVersion = "1.5.6"
-val logstashLogbackEncoderVersion = "7.4"
-val micrometerRegistryPrometheusVersion = "1.12.7"
-val mockOAuth2ServerVersion = "2.1.7"
+val logstashLogbackEncoderVersion = "8.0"
+val micrometerRegistryPrometheusVersion = "1.12.8"
+val mockOAuth2ServerVersion = "2.1.8"
 val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.13.11"
-val nimbusSdkVersion = "11.12"
+val mockkVersion = "1.13.12"
+val nimbusSdkVersion = "11.14"
 val postgresqlVersion = "42.7.3"
-val testcontainersPostgresVersion = "1.19.8"
+val testcontainersPostgresVersion = "1.20.1"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.0.0"
+    kotlin("jvm") version "2.0.10"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.51.0"
 }
