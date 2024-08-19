@@ -13,8 +13,6 @@ import org.flywaydb.core.api.output.MigrateResult
 
 data class DatabaseConfig(
     val url: String,
-    val user: String,
-    val password: String
 )
 
 fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource {
@@ -35,8 +33,6 @@ private fun hikariConfig(databaseConfig: DatabaseConfig) =
         idleTimeout = IDLE_TIMEOUT
         connectionTimeout = CONNECTION_TIMEOUT
         maxLifetime = MAX_LIFETIME
-        username = databaseConfig.user
-        password = databaseConfig.password
         initializationFailTimeout = INITIALIZATION_FAIL_TIMEOUT
     }
 

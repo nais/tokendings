@@ -17,11 +17,7 @@ import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_ID
 import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_JWKS
 import io.nais.security.oauth2.config.EnvKey.AUTH_WELL_KNOWN_URL
-import io.nais.security.oauth2.config.EnvKey.DB_DATABASE
-import io.nais.security.oauth2.config.EnvKey.DB_HOST
-import io.nais.security.oauth2.config.EnvKey.DB_PASSWORD
-import io.nais.security.oauth2.config.EnvKey.DB_PORT
-import io.nais.security.oauth2.config.EnvKey.DB_USERNAME
+import io.nais.security.oauth2.config.EnvKey.DB_JDBC_URL
 import io.nais.security.oauth2.config.EnvKey.DEFAULT_TOKEN_EXPIRY_SECONDS
 import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
@@ -43,11 +39,7 @@ enum class Profile {
 
 internal object EnvKey {
     const val APPLICATION_PROFILE = "APPLICATION_PROFILE"
-    const val DB_HOST = "DB_HOST"
-    const val DB_PORT = "DB_PORT"
-    const val DB_DATABASE = "DB_DATABASE"
-    const val DB_USERNAME = "DB_USERNAME"
-    const val DB_PASSWORD = "DB_PASSWORD"
+    const val DB_JDBC_URL = "DB_JDBC_URL"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_WELL_KNOWN_URL = "AUTH_WELL_KNOWN_URL"
     const val AUTH_CLIENT_JWKS = "AUTH_CLIENT_JWKS"
@@ -106,14 +98,7 @@ fun configByProfile(): AppConfiguration =
 fun isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
 internal fun databaseConfig(): DatabaseConfig {
-    val hostname = konfig[Key(DB_HOST, stringType)]
-    val port = konfig[Key(DB_PORT, stringType)]
-    val name = konfig[Key(DB_DATABASE, stringType)]
-    return DatabaseConfig(
-        "jdbc:postgresql://$hostname:$port/$name",
-        konfig[Key(DB_USERNAME, stringType)],
-        konfig[Key(DB_PASSWORD, stringType)]
-    )
+    return DatabaseConfig(konfig[Key(DB_JDBC_URL, stringType)])
 }
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
