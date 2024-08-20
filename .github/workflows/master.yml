@@ -18,20 +18,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
       - name: Set up JDK 21
-        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # ratchet:actions/setup-java@v4
+        uses: actions/setup-java@6a0805fcefea3d4657a47ac4c165951e33482018 # ratchet:actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: 'gradle'
-      - name: Verify Gradle wrapper checksum
-        uses: gradle/actions/wrapper-validation@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/wrapper-validation@v3
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/setup-gradle@v4
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/dependency-submission@v3
+        uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # ratchet:gradle/actions/dependency-submission@v4
       - name: Gradle build
         run: ./gradlew build
-      - uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 # ratchet:sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # ratchet:sigstore/cosign-installer@v3
       - name: Verify distroless base image
         run: |
           cosign verify \
