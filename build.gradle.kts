@@ -1,5 +1,7 @@
+
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.26.3"
 val flywayVersion = "10.17.1"
@@ -102,9 +104,9 @@ tasks {
         mergeServiceFiles()
     }
 
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
+    withType<KotlinJvmCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 
