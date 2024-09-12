@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.JWKSourceBuilder.DEFAULT_HTTP_CONNECT_TIMEOU
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder.DEFAULT_HTTP_READ_TIMEOUT
 import com.nimbusds.jose.jwk.source.JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT
 import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jose.util.DefaultResourceRetriever
 import java.net.URL
 import kotlin.time.Duration
 
@@ -17,9 +18,13 @@ data class CacheProperties(
     val readTimeOut: Int = DEFAULT_HTTP_READ_TIMEOUT,
     val sizeLimit: Int = DEFAULT_HTTP_SIZE_LIMIT
 ) {
-    private val foreverJwkSource = JWKSourceBuilder.create<SecurityContext>(jwksURL).cacheForever().build()
+    private val foreverJwkSource = JWKSourceBuilder
+        .create<SecurityContext>(jwksURL, DefaultResourceRetriever(connectionTimeout, readTimeOut, sizeLimit))
+        .cacheForever()
+        .build()
 
-    val jwkSource: JWKSource<SecurityContext> = JWKSourceBuilder.create<SecurityContext>(jwksURL)
+    val jwkSource: JWKSource<SecurityContext> = JWKSourceBuilder
+        .create<SecurityContext>(jwksURL, DefaultResourceRetriever(connectionTimeout, readTimeOut, sizeLimit))
         .cache(lifeSpan.inWholeMilliseconds, refreshTime.inWholeMilliseconds)
         .failover(foreverJwkSource)
         .rateLimited(false)
