@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.26.3"
-val flywayVersion = "10.18.0"
+val flywayVersion = "10.18.2"
 val h2Version = "2.3.232"
-val hikaricpVersion = "5.1.0"
-val junitJupiterVersion = "5.11.0"
+val hikaricpVersion = "6.0.0"
+val junitJupiterVersion = "5.11.1"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
@@ -20,7 +20,7 @@ val micrometerRegistryPrometheusVersion = "1.12.10"
 val mockOAuth2ServerVersion = "2.1.9"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.13.12"
-val nimbusSdkVersion = "11.19.1"
+val nimbusSdkVersion = "11.20"
 val postgresqlVersion = "42.7.4"
 val testcontainersPostgresVersion = "1.20.1"
 
