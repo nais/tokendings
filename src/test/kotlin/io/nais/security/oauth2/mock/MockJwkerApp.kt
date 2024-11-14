@@ -29,9 +29,7 @@ import io.ktor.http.contentType
 import io.ktor.http.parametersOf
 import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.install
-import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -71,13 +69,13 @@ data class ClientConfig(
 fun main() {
     embeddedServer(
         Netty,
-        applicationEngineEnvironment {
+        configure = {
             connector {
                 port = 8181
             }
-            module {
-                mockJwkerApp()
-            }
+        },
+        module = {
+            mockJwkerApp()
         }
     ).start()
 }

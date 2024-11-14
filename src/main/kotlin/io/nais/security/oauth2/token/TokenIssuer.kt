@@ -14,7 +14,6 @@ import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import mu.KotlinLogging
-import java.net.URL
 import java.text.ParseException
 import java.time.Instant
 import java.util.Date

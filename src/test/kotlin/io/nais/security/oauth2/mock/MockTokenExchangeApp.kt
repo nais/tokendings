@@ -1,7 +1,6 @@
 package io.nais.security.oauth2.mock
 
 import com.nimbusds.jose.jwk.JWKSet
-import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -35,14 +34,14 @@ fun main() {
 
     embeddedServer(
         Netty,
-        applicationEngineEnvironment {
+        configure = {
             connector {
                 port = config.serverProperties.port
             }
-            module {
-                tokenExchangeApp(config, DefaultRouting(config))
-            }
-        }
+        },
+        module = {
+            tokenExchangeApp(config, DefaultRouting(config))
+        },
     ).start(wait = true)
 }
 

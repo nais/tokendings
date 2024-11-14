@@ -15,24 +15,24 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.addShutdownHook
-import io.ktor.server.engine.applicationEngineEnvironment
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
-import io.ktor.server.engine.stop
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.callid.callIdMdc
-import io.ktor.server.plugins.callloging.CallLogging
+import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.doublereceive.DoubleReceive
 import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
+import io.ktor.server.routing.application
 import io.ktor.server.routing.routing
 import io.micrometer.core.instrument.Clock
 import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
@@ -56,8 +56,9 @@ import io.prometheus.client.CollectorRegistry
 import mu.KotlinLogging
 import org.slf4j.event.Level
 import java.util.UUID
-import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 private val log = KotlinLogging.logger { }
@@ -66,7 +67,10 @@ fun main() {
     try {
         val engine = server()
         engine.addShutdownHook {
-            engine.stop(gracePeriod = 10L, timeout = 20L, SECONDS)
+            engine.stop(
+                gracePeriodMillis = (10L).seconds.inWholeMilliseconds,
+                timeoutMillis = (20L).milliseconds.inWholeMilliseconds,
+            )
         }
         engine.start(wait = true)
     } catch (t: Throwable) {
@@ -75,23 +79,23 @@ fun main() {
     }
 }
 
-fun server(): NettyApplicationEngine =
-    embeddedServer(
+fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
+    val config = configByProfile()
+    return embeddedServer(
         Netty,
-        applicationEngineEnvironment {
-            val config = configByProfile()
+        configure = {
             connector {
                 port = config.serverProperties.port
             }
-            module {
-                tokenExchangeApp(config, DefaultRouting(config))
-            }
+            connectionGroupSize = 8
+            workerGroupSize = 8
+            callGroupSize = 16
+        },
+        module = {
+            tokenExchangeApp(config, DefaultRouting(config))
         }
-    ) {
-        connectionGroupSize = 8
-        workerGroupSize = 8
-        callGroupSize = 16
-    }
+    )
+}
 
 @Suppress("LongMethod")
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {

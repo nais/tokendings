@@ -2,7 +2,6 @@ package io.nais.security.oauth2.routing
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode.Companion.OK
-import io.ktor.server.application.call
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.response.respondTextWriter

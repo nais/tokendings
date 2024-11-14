@@ -4,31 +4,31 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.26.3"
-val flywayVersion = "10.18.0"
+val flywayVersion = "10.21.0"
 val h2Version = "2.3.232"
-val hikaricpVersion = "5.1.0"
-val junitJupiterVersion = "5.11.0"
+val hikaricpVersion = "6.1.0"
+val junitJupiterVersion = "5.11.3"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.0.20"
+val kotlinVersion = "2.0.21"
 val kotliqueryVersion = "1.9.0"
-val ktorVersion = "2.3.12"
+val ktorVersion = "3.0.1"
 val logbackVersion = "1.5.8"
 val logstashLogbackEncoderVersion = "8.0"
-val micrometerRegistryPrometheusVersion = "1.12.10"
-val mockOAuth2ServerVersion = "2.1.9"
+val micrometerRegistryPrometheusVersion = "1.14.0"
+val mockOAuth2ServerVersion = "2.1.10"
 val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.13.12"
-val nimbusSdkVersion = "11.19.1"
+val mockkVersion = "1.13.13"
+val nimbusSdkVersion = "11.20.1"
 val postgresqlVersion = "42.7.4"
-val testcontainersPostgresVersion = "1.20.1"
+val testcontainersPostgresVersion = "1.20.3"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.0.20"
+    kotlin("jvm") version "2.0.21"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.51.0"
 }
@@ -52,7 +52,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
     implementation("com.natpryce:konfig:$konfigVersion")
     implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
-    implementation("io.micrometer:micrometer-registry-prometheus:$micrometerRegistryPrometheusVersion")
+    implementation("io.micrometer:micrometer-registry-prometheus-simpleclient:$micrometerRegistryPrometheusVersion")
     implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
     implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
     implementation("com.zaxxer:HikariCP:$hikaricpVersion")

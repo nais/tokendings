@@ -7,7 +7,6 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.Parameters
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.auth.Credential
 import io.ktor.server.request.receiveParameters
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
@@ -116,7 +115,7 @@ class TokenRequestConfig internal constructor(
     }
 }
 
-data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) : Credential {
+data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) {
     val signedJWT: SignedJWT = when (clientAssertionType) {
         JWT_BEARER -> clientAssertion.toJwt()
         else -> throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": invalid client_assertion_type"))
