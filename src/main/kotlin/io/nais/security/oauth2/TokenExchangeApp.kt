@@ -87,7 +87,11 @@ fun server(): NettyApplicationEngine =
                 tokenExchangeApp(config, DefaultRouting(config))
             }
         }
-    )
+    ) {
+        connectionGroupSize = 8
+        workerGroupSize = 8
+        callGroupSize = 16
+    }
 
 @Suppress("LongMethod")
 fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
