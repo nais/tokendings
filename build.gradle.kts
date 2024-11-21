@@ -33,6 +33,11 @@ plugins {
     id("com.github.ben-manes.versions") version "0.51.0"
 }
 
+
+kotlin {
+    jvmToolchain(21)
+}
+
 application {
     mainClass.set(mainClassKt)
 }
@@ -72,6 +77,11 @@ dependencies {
     implementation("io.ktor:ktor-client-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
+
+    implementation("io.opentelemetry:opentelemetry-api:1.44.1")
+    implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.44.1")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.10.0")
+
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")

@@ -51,7 +51,7 @@ import io.nais.security.oauth2.metrics.Metrics
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
-import io.nais.security.oauth2.routing.observability
+import io.nais.security.oauth2.routing.meta
 import io.prometheus.client.CollectorRegistry
 import mu.KotlinLogging
 import org.slf4j.event.Level
@@ -172,7 +172,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     install(ForwardedHeaders)
 
     routing {
-        observability(config.databaseHealthCheck)
+        meta(config.databaseHealthCheck)
         routing.apiRouting(this.application)
     }
 }
