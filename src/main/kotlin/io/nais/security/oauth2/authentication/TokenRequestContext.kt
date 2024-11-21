@@ -14,6 +14,7 @@ import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.MDC
 
@@ -44,6 +45,7 @@ class TokenRequestContext private constructor(
                 MDC.put("client_id", client.clientId)
             }
 
+        @WithSpan
         private fun authenticateClient(
             config: TokenRequestConfig,
             clientAssertionCredential:
@@ -71,6 +73,7 @@ class TokenRequestContext private constructor(
                 )
             )
 
+        @WithSpan
         private fun authorizeTokenRequest(config: TokenRequestConfig, client: OAuth2Client): OAuth2TokenRequest =
             config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }
                 ?.authorize(parameters, client)

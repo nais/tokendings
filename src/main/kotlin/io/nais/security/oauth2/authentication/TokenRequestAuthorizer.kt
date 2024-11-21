@@ -10,6 +10,7 @@ import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.model.SubjectTokenType
 import io.nais.security.oauth2.registration.ClientRegistry
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.Logger
 
@@ -26,6 +27,7 @@ class TokenExchangeRequestAuthorizer(
 
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.TOKEN_EXCHANGE_GRANT
 
+    @WithSpan
     override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2TokenExchangeRequest {
         log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
         val tokenRequest = OAuth2TokenExchangeRequest(
