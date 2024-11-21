@@ -20,7 +20,9 @@ import io.nais.security.oauth2.model.GrantType
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.verifySoftwareStatement
+import io.opentelemetry.instrumentation.annotations.WithSpan
 
+@WithSpan
 internal fun Route.clientRegistrationApi(config: AppConfiguration) {
     authenticate(BearerTokenAuth.CLIENT_REGISTRATION_AUTH) {
         route("/registration/client") {

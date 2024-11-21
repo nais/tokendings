@@ -49,16 +49,6 @@ repositories {
 }
 
 dependencies {
-    // otel
-    implementation("io.opentelemetry:opentelemetry-api")
-    implementation("io.opentelemetry:opentelemetry-sdk")
-    implementation("io.opentelemetry:opentelemetry-exporter-logging")
-
-    // otel alpha modules
-    implementation("io.opentelemetry.semconv:opentelemetry-semconv")
-    implementation("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
-    implementation("io.opentelemetry:opentelemetry-api-incubator")
-
     // deps
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
@@ -85,6 +75,11 @@ dependencies {
     implementation("io.ktor:ktor-client-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
+
+    implementation("io.opentelemetry:opentelemetry-api:1.44.1")
+    implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.44.1")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.10.0")
+
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")

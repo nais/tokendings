@@ -22,10 +22,13 @@ import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.model.OAuth2TokenResponse
 import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.token.expiresIn
+import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger { }
 
+@WithSpan(kind = SpanKind.SERVER)
 internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     val tokenIssuer = config.tokenIssuer
 

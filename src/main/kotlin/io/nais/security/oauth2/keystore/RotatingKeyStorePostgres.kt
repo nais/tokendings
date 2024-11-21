@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.proc.SecurityContext
 import io.nais.security.oauth2.config.KeyStoreProperties
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.Logger
 import java.time.Duration
@@ -34,11 +35,13 @@ class RotatingKeyStorePostgres(keyStoreProperties: KeyStoreProperties) : Rotatin
         return if (rotatableKeys.expired()) getOrGenerateKeys() else rotatableKeys
     }
 
+    @WithSpan
     private fun getOrGenerateKeys(): RotatableKeys =
         with(keyStore.read() ?: generateKeysAndSave()) {
             return if (notExpired()) this else rotateKeysAndSave(this)
         }
 
+    @WithSpan
     private fun generateKeysAndSave(): RotatableKeys =
         RotatableKeys
             .generate(expiresIn = rotationInterval)

@@ -16,7 +16,7 @@ import kotlinx.coroutines.withTimeout
 
 private const val DB_TIMEOUT = 5000L
 
-internal fun Routing.observability(databaseHealthCheck: HealthCheck) {
+internal fun Routing.metaRoutes(databaseHealthCheck: HealthCheck) {
     route("/internal") {
         get("/isalive") {
             call.respondText("ALIVE", ContentType.Text.Plain)
