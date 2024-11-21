@@ -35,6 +35,10 @@ application {
     mainClass.set(mainClassKt)
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
@@ -45,6 +49,17 @@ repositories {
 }
 
 dependencies {
+    // otel
+    implementation("io.opentelemetry:opentelemetry-api")
+    implementation("io.opentelemetry:opentelemetry-sdk")
+    implementation("io.opentelemetry:opentelemetry-exporter-logging")
+
+    // otel alpha modules
+    implementation("io.opentelemetry.semconv:opentelemetry-semconv")
+    implementation("io.opentelemetry:opentelemetry-sdk-extension-autoconfigure")
+    implementation("io.opentelemetry:opentelemetry-api-incubator")
+
+    // deps
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
@@ -100,12 +115,6 @@ tasks {
             )
         }
         mergeServiceFiles()
-    }
-
-    withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "21"
-        }
     }
 
     withType<Test> {
