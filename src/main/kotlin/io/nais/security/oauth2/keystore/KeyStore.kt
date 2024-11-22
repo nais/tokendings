@@ -3,6 +3,7 @@ package io.nais.security.oauth2.keystore
 import io.nais.security.oauth2.token.toJSON
 import io.nais.security.oauth2.token.toRSAKey
 import io.nais.security.oauth2.utils.withTimer
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import kotliquery.Query
 import kotliquery.Row
 import kotliquery.queryOf
@@ -18,6 +19,7 @@ class KeyStore(private val dataSource: DataSource) {
         const val ID = 1L
     }
 
+    @WithSpan
     fun read(): RotatableKeys? = withTimer("readKeys") {
         using(sessionOf(dataSource)) { session ->
             session.run(

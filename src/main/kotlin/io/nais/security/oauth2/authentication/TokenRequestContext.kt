@@ -14,6 +14,7 @@ import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
+import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.MDC
@@ -134,6 +135,7 @@ data class ClientAssertionCredential(val clientAssertionType: String, val client
 private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean =
     this.expiresIn() <= lifetime
 
+@WithSpan(kind = SpanKind.CLIENT)
 suspend fun ApplicationCall.receiveTokenRequestContext(
     tokenEndpointUrl: TokenEndpointUrl,
     block: TokenRequestContext.From.() -> TokenRequestContext

@@ -62,6 +62,7 @@ class ClientCredentialsRequestAuthorizer : TokenRequestAuthorizer<OAuth2ClientCr
 
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.CLIENT_CREDENTIALS_GRANT
 
+    @WithSpan
     override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2ClientCredentialsTokenRequest {
         log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
         val tokenRequest = OAuth2ClientCredentialsTokenRequest(
