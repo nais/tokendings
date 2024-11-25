@@ -15,6 +15,7 @@ import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
 import io.opentelemetry.api.trace.SpanKind
+import io.opentelemetry.instrumentation.annotations.SpanAttribute
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.MDC
@@ -137,7 +138,7 @@ private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean =
 
 @WithSpan(kind = SpanKind.CLIENT)
 suspend fun ApplicationCall.receiveTokenRequestContext(
-    tokenEndpointUrl: TokenEndpointUrl,
+    @SpanAttribute tokenEndpointUrl: TokenEndpointUrl,
     block: TokenRequestContext.From.() -> TokenRequestContext
 ): TokenRequestContext = tokenRequestContext(tokenEndpointUrl, this.receiveParameters(), block)
 
