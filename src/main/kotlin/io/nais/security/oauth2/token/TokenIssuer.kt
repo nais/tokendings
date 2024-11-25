@@ -13,6 +13,8 @@ import io.nais.security.oauth2.model.ClaimValueMapping
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
+import io.opentelemetry.instrumentation.annotations.SpanAttribute
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import java.text.ParseException
 import java.time.Instant
@@ -43,6 +45,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
 
     fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet()
 
+    @WithSpan
     fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
         val subjectTokenJwt = tryOrInvalidSubjectToken {
@@ -87,7 +90,8 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
             }
         }
 
-    private fun JWTClaimsSet.Builder.mapSubjectTokenClaims(issuer: String?, subjectTokenClaims: JWTClaimsSet): JWTClaimsSet.Builder {
+    @WithSpan
+    private fun JWTClaimsSet.Builder.mapSubjectTokenClaims(@SpanAttribute issuer: String?, subjectTokenClaims: JWTClaimsSet): JWTClaimsSet.Builder {
         val mappings: ClaimMappings = issuer
             ?.let { issuerSubjectTokenMappings[issuer] }
             ?.takeIf { mapping -> mapping.isNotEmpty() }

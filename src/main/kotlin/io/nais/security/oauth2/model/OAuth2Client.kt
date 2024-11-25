@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.JWKSet
-import io.opentelemetry.instrumentation.annotations.SpanAttribute
 
 // JWKSet does not implement equals and cant be directly serialized as json
 data class JsonWebKeys(
@@ -37,7 +36,7 @@ data class JsonWebKeys(
 }
 
 data class OAuth2Client(
-    @SpanAttribute val clientId: ClientId,
+    val clientId: ClientId,
     val jwks: JsonWebKeys,
     val accessPolicyInbound: AccessPolicy = AccessPolicy(),
     val accessPolicyOutbound: AccessPolicy = AccessPolicy(),
