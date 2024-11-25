@@ -91,7 +91,10 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
         }
 
     @WithSpan
-    private fun JWTClaimsSet.Builder.mapSubjectTokenClaims(@SpanAttribute issuer: String?, subjectTokenClaims: JWTClaimsSet): JWTClaimsSet.Builder {
+    private fun JWTClaimsSet.Builder.mapSubjectTokenClaims(
+        @SpanAttribute issuer: String?,
+        subjectTokenClaims: JWTClaimsSet
+    ): JWTClaimsSet.Builder {
         val mappings: ClaimMappings = issuer
             ?.let { issuerSubjectTokenMappings[issuer] }
             ?.takeIf { mapping -> mapping.isNotEmpty() }
