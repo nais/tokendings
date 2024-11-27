@@ -30,6 +30,7 @@ class TokenRequestContext private constructor(
 
     class From(private val tokenEndpointUrl: TokenEndpointUrl, private val parameters: Parameters) {
 
+        @WithSpan
         fun authenticateAndAuthorize(configure: TokenRequestConfig.Configuration.() -> Unit): TokenRequestContext {
             val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply(configure))
             val credential = credential()

@@ -21,11 +21,13 @@ import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import com.nimbusds.oauth2.sdk.ParseException
 import io.nais.security.oauth2.model.OAuth2Exception
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.time.Duration
 import java.time.Instant
 
+@WithSpan
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
         JWSHeader.Builder(JWSAlgorithm.RS256)
@@ -40,6 +42,7 @@ fun SignedJWT.expiresIn(): Long =
     Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
+@WithSpan
 fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<SecurityContext?>): JWTClaimsSet {
     return verify(
         DefaultJWTClaimsVerifier(
@@ -55,6 +58,7 @@ fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<Sec
 }
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
+@WithSpan
 fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>, jwkSet: JWKSet): JWTClaimsSet {
     return verify(
         jwtClaimsSetVerifier,
@@ -66,6 +70,7 @@ fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?
 }
 
 @Throws(OAuth2Exception::class)
+@WithSpan
 fun SignedJWT.verify(
     jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
     keySelector: JWSVerificationKeySelector<SecurityContext?>
