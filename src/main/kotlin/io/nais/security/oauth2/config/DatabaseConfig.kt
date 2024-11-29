@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.config
 
+import com.codahale.metrics.MetricRegistry
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.nais.security.oauth2.config.HikariProperties.CONNECTION_TIMEOUT
@@ -8,11 +9,14 @@ import io.nais.security.oauth2.config.HikariProperties.INITIALIZATION_FAIL_TIMEO
 import io.nais.security.oauth2.config.HikariProperties.MAX_LIFETIME
 import io.nais.security.oauth2.config.HikariProperties.MAX_POOL_SIZE
 import io.nais.security.oauth2.config.HikariProperties.MIN_IDLE_CONNECTIONS
+import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.dropwizard.DropwizardExports
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 
 data class DatabaseConfig(
     val url: String,
+    val metricRegistry: MetricRegistry,
 )
 
 fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource {
@@ -34,6 +38,9 @@ private fun hikariConfig(databaseConfig: DatabaseConfig) =
         connectionTimeout = CONNECTION_TIMEOUT
         maxLifetime = MAX_LIFETIME
         initializationFailTimeout = INITIALIZATION_FAIL_TIMEOUT
+        metricRegistry = databaseConfig.metricRegistry
+    }.also {
+        CollectorRegistry.defaultRegistry.register(DropwizardExports(databaseConfig.metricRegistry))
     }
 
 object HikariProperties {

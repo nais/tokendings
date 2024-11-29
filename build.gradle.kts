@@ -1,4 +1,3 @@
-
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -23,6 +22,10 @@ val mockkVersion = "1.13.13"
 val nimbusSdkVersion = "11.20.1"
 val postgresqlVersion = "42.7.4"
 val testcontainersPostgresVersion = "1.20.4"
+val openTelemetryVersion = "1.44.1"
+val openTelemetryAnnotationsVersion = "2.10.0"
+val dropWizardVersion = "4.2.29"
+val prometheusDropWizardVersion = "0.16.0"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -78,9 +81,11 @@ dependencies {
     implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
 
-    implementation("io.opentelemetry:opentelemetry-api:1.44.1")
-    implementation("io.opentelemetry:opentelemetry-extension-kotlin:1.44.1")
-    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.10.0")
+    implementation("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
+    implementation("io.opentelemetry:opentelemetry-extension-kotlin:$openTelemetryVersion")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$openTelemetryAnnotationsVersion")
+    implementation("io.prometheus:simpleclient_dropwizard:$prometheusDropWizardVersion")
+    implementation("io.dropwizard.metrics:metrics-core:$dropWizardVersion")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")

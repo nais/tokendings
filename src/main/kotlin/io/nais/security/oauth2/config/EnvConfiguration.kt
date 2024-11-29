@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.config
 
+import com.codahale.metrics.MetricRegistry
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
@@ -59,7 +60,8 @@ object Configuration {
         issuerClaimMappingsFromJson(it)
     } ?: emptyMap()
     val instance by lazy {
-        val databaseConfig = migrate(databaseConfig())
+        val metricRegistry = MetricRegistry()
+        val databaseConfig = migrate(databaseConfig(metricRegistry))
         val authorizationServerProperties = AuthorizationServerProperties(
             issuerUrl = issuerUrl,
             subjectTokenIssuers = subjectTokenIssuers.toIssuerConfiguration(subjectTokenIssuerMappings),
@@ -97,8 +99,11 @@ fun configByProfile(): AppConfiguration =
 @Suppress("unused")
 fun isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
-internal fun databaseConfig(): DatabaseConfig {
-    return DatabaseConfig(konfig[Key(DB_JDBC_URL, stringType)])
+internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig {
+    return DatabaseConfig(
+        konfig[Key(DB_JDBC_URL, stringType)],
+        metricRegistry
+    )
 }
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
