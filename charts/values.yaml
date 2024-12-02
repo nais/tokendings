@@ -2,10 +2,6 @@ repository: europe-north1-docker.pkg.dev/nais-io/nais/images
 
 team: nais
 
-networkPolicy:
-  enabled: false
-  apiServerCIDR:
-
 tokendings:
   enabled: true
   replicas:
