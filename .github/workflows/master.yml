@@ -81,7 +81,7 @@ jobs:
 
   rollout:
     needs:
-      - build_and_push
+      - build-push-sign
     runs-on: fasit-deploy
     permissions:
       id-token: write
@@ -89,4 +89,4 @@ jobs:
       - uses: nais/fasit-deploy@v2
         with:
           chart: ${{ env.FEATURE_REPOSITORY }}/tokendings
-          version: ${{ needs.build_and_push.outputs.version }}
+          version: ${{ needs.build-push-sign.outputs.version }}
