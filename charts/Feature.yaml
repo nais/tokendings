@@ -1,0 +1,96 @@
+dependencies:
+  - allOf:
+      - naiserator
+environmentKinds:
+  - tenant
+  - onprem
+  - legacy
+values:
+  networkPolicy.apiServerCIDR:
+    computed:
+      template: '"{{ .Env.apiserver_endpoint }}/32"'
+    ignoreKind:
+      - onprem
+  networkPolicy.enabled:
+    computed:
+      template: '{{ne .Kind "onprem"}}'
+  tokendings.database.diskSize:
+    description: The disk size of the database instance
+    config:
+      type: int
+    ignoreKind:
+      - onprem
+  tokendings.database.highAvailability:
+    description: Enable high availability for the database instance
+    config:
+      type: bool
+    ignoreKind:
+      - onprem
+  tokendings.database.tier:
+    description: The tier of the database instance
+    required: true
+    config:
+      type: string
+    ignoreKind:
+      - onprem
+  tokendings.database.sqlinstance_name:
+    description: The name of the database instance
+    config:
+      type: string
+    ignoreKind:
+      - onprem
+  tokendings.enabled:
+    description: Enable tokendings
+    computed:
+      template: '{{ne .Kind "onprem"}}'
+    config:
+      type: bool
+  tokendings.env.APPLICATION_PROFILE:
+    description: Tokendings application profile. One of [PROD, NON_PROD]
+    required: true
+    config:
+      type: string
+  tokendings.env.AUTH_CLIENT_JWKS:
+    description: The public JWKS (JWK key set) used to verify client assertions from Jwker.
+    required: true
+    config:
+      type: string
+  tokendings.env.SUBJECT_TOKEN_ISSUERS:
+    description: Comma-separated list of well-known urls to trusted token issuers in a token exchange
+    required: true
+    config:
+      type: string
+  tokendings.env.TOKEN_EXPIRY_SECONDS:
+    description: Number of seconds for token expiry for tokens issued by Tokendings.
+    config:
+      type: int
+  tokendings.mapSubjectTokenClaims:
+    description: Enable mapping of subject token claims for Tokendings
+    config:
+      type: bool
+    ignoreKind:
+      - onprem
+  tokendings.host:
+    description: Setting this overrides the mapping value (only needed for legacy/onprem environments)
+    required: true
+    computed:
+      template: '"{{ subdomain . "tokenx" }}"'
+    config:
+      type: string
+  tokendings.outbound:
+    description: List of hosts that Tokendings needs outbound access policies for
+    required: true
+    config:
+      type: string_array
+  tokendings.tag:
+    description: Image tag for tokendings
+    config:
+      type: string
+  tokendings.replicas.min:
+    description: Minimum number of replicas for tokendings
+    config:
+      type: int
+  tokendings.replicas.max:
+    description: Maximum number of replicas for tokendings
+    config:
+      type: int

@@ -1,0 +1,35 @@
+{{ if .Values.networkPolicy.enabled }}
+{{ if .Values.tokendings.enabled }}
+---
+apiVersion: nais.io/v1
+kind: ReplicationConfig
+metadata:
+  name: {{ .Release.Name }}-tokendings-egress
+spec:
+  namespaceSelector:
+    matchExpressions:
+      - key: team
+        operator: Exists
+  resources:
+    - template: |
+        apiVersion: networking.gke.io/v1alpha3
+        kind: FQDNNetworkPolicy
+        metadata:
+          name: {{ .Release.Name }}-tokendings-egress
+          annotations:
+            fqdnnetworkpolicies.networking.gke.io/aaaa-lookups: "skip"
+        spec:
+          egress:
+            - ports:
+                - port: 443
+                  protocol: TCP
+              to:
+                - fqdns:
+                    - {{ .Values.tokendings.host }}
+          podSelector:
+            matchLabels:
+              tokenx: enabled
+          policyTypes:
+            - Egress
+{{ end }} # .Values.tokendings.enabled
+{{ end }} # .Values.networkPolicy.enabled

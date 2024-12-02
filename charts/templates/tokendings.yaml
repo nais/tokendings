@@ -1,0 +1,79 @@
+{{ if .Values.tokendings.enabled }}
+apiVersion: nais.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ include "tokenx.fullname" . }}-tokendings
+  labels:
+    {{- include "tokenx.tokendings.labels" . | nindent 4 }}
+    team: {{ .Values.team }}
+spec:
+  image: "{{ .Values.repository }}/{{ .Values.tokendings.image}}:{{ .Values.tokendings.tag}}"
+  port: 8080
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  replicas:
+    min: {{.Values.tokendings.replicas.min}}
+    max: {{.Values.tokendings.replicas.max}}
+    cpuThresholdPercentage: 80
+  startup:
+    initialDelay: 10
+    failureThreshold: 30 # allow up to 1 minute (30 attempts * 2 second period) for the application to start
+    path: /internal/isalive
+    periodSeconds: 2
+  liveness:
+    failureThreshold: 6
+    path: /internal/isalive
+    periodSeconds: 10
+  readiness:
+    failureThreshold: 6
+    path: /internal/isready
+    periodSeconds: 5
+  prometheus:
+    enabled: true
+    path: /internal/metrics
+  resources:
+    {{- toYaml .Values.tokendings.resources | nindent 4}}
+  accessPolicy:
+    inbound:
+      rules:
+        - application: {{ include "tokenx.fullname" . }}-jwker
+    {{ if .Values.tokendings.outbound }}
+    outbound:
+      external:
+      {{ range .Values.tokendings.outbound }}
+        - host: {{ . }}
+      {{ end }}
+    {{ end }}
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_14
+        name: {{ .Values.tokendings.database.sqlinstance_name }}
+        diskSize: {{ .Values.tokendings.database.diskSize }}
+        highAvailability: {{ .Values.tokendings.database.highAvailability }}
+        tier: {{ .Values.tokendings.database.tier | required ".Values.tokendings.database.tier is required." }}
+        autoBackupHour: 2
+        maintenance:
+          day: 1
+          hour: 1
+        databases:
+          - name: tokendings
+            envVarPrefix: DB
+  ingresses:
+    - "{{- include "tokenx.tokendings.URL" . }}"
+  {{- if .Values.tokendings.mapSubjectTokenClaims }}
+  envFrom:
+    - configmap: {{ include "tokenx.fullname" . }}-tokendings-mappings
+  {{- end }}
+  env:
+  {{ range $key,$value:= .Values.tokendings.env }}
+    - name: "{{ $key}}"
+      value: {{ $value | quote }}
+  {{ end }}
+    - name: "ISSUER_URL"
+      value: "{{- include "tokenx.tokendings.URL" . }}"
+    - name: "AUTH_ACCEPTED_AUDIENCE"
+      value: "{{- include "tokenx.tokendings.URL" . }}/registration/client"
+  skipCaBundle: true
+{{ end }}

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: tokenx
+description: TokenX chart
+type: application
+version: 0.4.5
+appVersion: "1.16.0"
+sources:
+  - https://github.com/nais/helm-charts/tree/main/features/tokenx
