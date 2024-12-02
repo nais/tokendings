@@ -16,6 +16,8 @@ jobs:
       packages: "write"
     outputs:
       img_to_deploy: ${{ steps.build-push-sign.outputs.tag }}
+      version: ${{ steps.build-push-sign.outputs.version }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
