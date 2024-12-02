@@ -1,0 +1,24 @@
+{{- if .Values.tokendings.mapSubjectTokenClaims }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tokenx.fullname" . }}-tokendings-mappings
+  labels:
+    {{- include "tokenx.tokendings.labels" . | nindent 4 }}
+data:
+  SUBJECT_TOKEN_MAPPINGS: |
+    {
+      "https://test.idporten.no/.well-known/openid-configuration": {
+        "acr": {
+            "idporten-loa-substantial": "Level3",
+            "idporten-loa-high": "Level4"
+        }
+      },
+      "https://idporten.no/.well-known/openid-configuration": {
+        "acr": {
+            "idporten-loa-substantial": "Level3",
+            "idporten-loa-high": "Level4"
+        }
+      }
+    }
+{{- end }}

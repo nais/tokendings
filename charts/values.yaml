@@ -1,0 +1,32 @@
+repository: europe-north1-docker.pkg.dev/nais-io/nais/images
+
+team: nais
+
+tokendings:
+  enabled: true
+  replicas:
+    min: 2
+    max: 4
+  resources:
+    limits:
+      memory: 4Gi
+    requests:
+      memory: 512Mi
+      cpu: 400m
+  image: tokendings
+  tag: 2024-11-29-135451-017e5e7
+  env:
+    APPLICATION_PROFILE: "PROD"
+    SUBJECT_TOKEN_ISSUERS: ""
+    APPLICATION_PORT: "8080"
+    AUTH_CLIENT_ID: "jwker"
+    AUTH_CLIENT_JWKS: ""
+    TOKEN_EXPIRY_SECONDS: 900
+  outbound: []
+  database:
+    diskSize: 10
+    highAvailability: true
+    tier:
+    sqlinstance_name: tokendings
+  host:
+  mapSubjectTokenClaims: false
