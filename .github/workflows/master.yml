@@ -77,7 +77,7 @@ jobs:
 
       - name: Push Chart
         run: |-
-          helm push tokendings*.tgz ${{ env.FEATURE_REPOSITORY }}
+          helm push tokendings.*.tgz ${{ env.FEATURE_REPOSITORY }}
 
   rollout:
     needs:
