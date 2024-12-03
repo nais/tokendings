@@ -6,11 +6,6 @@ environmentKinds:
   - onprem
   - legacy
 values:
-  networkPolicy.apiServerCIDR:
-    computed:
-      template: '"{{ .Env.apiserver_endpoint }}/32"'
-    ignoreKind:
-      - onprem
   networkPolicy.enabled:
     computed:
       template: '{{ne .Kind "onprem"}}'
@@ -39,12 +34,6 @@ values:
       type: string
     ignoreKind:
       - onprem
-  tokendings.enabled:
-    description: Enable tokendings
-    computed:
-      template: '{{ne .Kind "onprem"}}'
-    config:
-      type: bool
   tokendings.env.APPLICATION_PROFILE:
     description: Tokendings application profile. One of [PROD, NON_PROD]
     required: true

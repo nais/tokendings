@@ -1,6 +1,4 @@
 {{ if .Values.networkPolicy.enabled }}
-{{ if .Values.tokendings.enabled }}
----
 apiVersion: nais.io/v1
 kind: ReplicationConfig
 metadata:
@@ -31,5 +29,4 @@ spec:
               tokenx: enabled
           policyTypes:
             - Egress
-{{ end }} # .Values.tokendings.enabled
-{{ end }} # .Values.networkPolicy.enabled
+{{ end }}
