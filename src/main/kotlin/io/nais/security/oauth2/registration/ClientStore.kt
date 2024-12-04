@@ -27,11 +27,12 @@ class ClientStore(private val dataSource: DataSource) {
     private fun upsertQuery(oAuth2Client: OAuth2Client): Query {
         return queryOf(
             """
-            INSERT INTO $TABLE_NAME(client_id, data) values (:client_id, :data)
-            ON CONFLICT (client_id)
-                DO UPDATE SET
-                data=:data;
-            """.trimMargin(),
+        INSERT INTO $TABLE_NAME(client_id, data) values (:client_id, :data)
+        ON CONFLICT (client_id) 
+            DO UPDATE SET 
+            data = EXCLUDED.data
+        WHERE clients.data IS DISTINCT FROM EXCLUDED.data;
+        """.trimMargin(),
             mapOf(
                 "client_id" to oAuth2Client.clientId,
                 "data" to PGobject().also {
@@ -53,11 +54,24 @@ class ClientStore(private val dataSource: DataSource) {
         withTimer("find") {
             using(sessionOf(dataSource)) { session ->
                 session.run(
-                    queryOf("""SELECT * FROM $TABLE_NAME WHERE client_id=?""", clientId)
+                    queryOf("""SELECT data FROM $TABLE_NAME WHERE client_id=?""", clientId)
                         .map {
                             it.mapToOAuth2Client()
                         }.asSingle
                 )
+            }
+        }
+
+    fun findClients(clientIds: List<String>): Map<String, OAuth2Client> =
+        withTimer("findClients") {
+            if (clientIds.isEmpty()) return emptyMap()
+            val placeholders = clientIds.joinToString(",") { "?" }
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("""SELECT data FROM $TABLE_NAME WHERE client_id IN ($placeholders)""", *clientIds.toTypedArray())
+                        .map { it.mapToOAuth2Client() }
+                        .asList
+                ).associateBy { it.clientId }
             }
         }
 
