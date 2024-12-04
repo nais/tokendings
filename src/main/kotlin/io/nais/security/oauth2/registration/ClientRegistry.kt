@@ -9,6 +9,8 @@ interface ClientRegistry {
     @WithSpan
     fun findClient(@SpanAttribute clientId: ClientId): OAuth2Client?
 
+    fun findClients(@SpanAttribute clientIds: List<String>): Map<String, OAuth2Client>
+
     fun registerClient(client: OAuth2Client): OAuth2Client
 
     fun findAll(): List<OAuth2Client>

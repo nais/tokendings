@@ -31,8 +31,13 @@ class TokenRequestContext private constructor(
     class From(private val tokenEndpointUrl: TokenEndpointUrl, private val parameters: Parameters) {
 
         @WithSpan
-        fun authenticateAndAuthorize(configure: TokenRequestConfig.Configuration.() -> Unit): TokenRequestContext {
-            val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply(configure))
+        fun authenticateAndAuthorize(
+            configure: TokenRequestConfig.Configuration.() -> Unit
+        ): TokenRequestContext {
+            val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply {
+                this.params = parameters // Set parameters for later use
+                configure()
+            })
             val credential = credential()
             val client: OAuth2Client = authenticateClient(config, credential)
             val tokenRequest = authorizeTokenRequest(config, client)
@@ -96,6 +101,7 @@ class TokenRequestConfig internal constructor(
     internal val clientAssertionMaxLifetime = configuration.clientAssertionMaxLifetime
 
     class Configuration {
+        internal lateinit var params: Parameters
         internal var clientFinder: (ClientAssertionCredential) -> OAuth2Client? = {
             throw NotImplementedError("clientFinder function not implemented")
         }
