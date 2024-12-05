@@ -90,7 +90,6 @@ fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Conf
             connector {
                 port = config.serverProperties.port
             }
-            // Balanced network handling with full CPU utilization for I/O and prioritize application logic
             connectionGroupSize = maxOf(1, processors / 2)
             workerGroupSize = processors
             callGroupSize = maxOf(1, minOf(processors * 2, maxConnectionPool))
