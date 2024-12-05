@@ -41,8 +41,8 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
-import io.micrometer.prometheus.PrometheusConfig
-import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.micrometer.prometheusmetrics.PrometheusConfig
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.configByProfile
@@ -52,7 +52,7 @@ import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.routing.ApiRouting
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.routing.meta
-import io.prometheus.client.CollectorRegistry
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 import mu.KotlinLogging
 import org.slf4j.event.Level
 import java.util.UUID
@@ -120,7 +120,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     install(MicrometerMetrics) {
         registry = PrometheusMeterRegistry(
             PrometheusConfig.DEFAULT,
-            CollectorRegistry.defaultRegistry,
+            PrometheusRegistry.defaultRegistry,
             Clock.SYSTEM
         )
         meterBinders = listOf(
