@@ -87,9 +87,9 @@ fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Conf
             connector {
                 port = config.serverProperties.port
             }
-            connectionGroupSize = 8
-            workerGroupSize = 8
-            callGroupSize = 16
+            connectionGroupSize = Runtime.getRuntime().availableProcessors()
+            workerGroupSize = Runtime.getRuntime().availableProcessors() * 2
+            callGroupSize = Runtime.getRuntime().availableProcessors() * 2
         },
         module = {
             tokenExchangeApp(config, DefaultRouting(config))
@@ -148,15 +148,9 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                     val includeErrorDetails = isNonProd()
                     call.respondWithError(cause, includeErrorDetails)
                 }
-
-                is BadRequestException -> {
+                is BadRequestException, is JsonProcessingException -> {
                     call.respond(HttpStatusCode.BadRequest, "invalid request content")
                 }
-
-                is JsonProcessingException -> {
-                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
-                }
-
                 else -> {
                     call.respond(HttpStatusCode.InternalServerError, "unknown internal server error")
                 }
