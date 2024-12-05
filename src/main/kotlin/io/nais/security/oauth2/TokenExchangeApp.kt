@@ -81,15 +81,17 @@ fun main() {
 
 fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
     val config = configByProfile()
+    val processors = Runtime.getRuntime().availableProcessors()
     return embeddedServer(
         Netty,
         configure = {
             connector {
                 port = config.serverProperties.port
             }
-            connectionGroupSize = Runtime.getRuntime().availableProcessors()
-            workerGroupSize = Runtime.getRuntime().availableProcessors() * 2
-            callGroupSize = Runtime.getRuntime().availableProcessors() * 2
+            // Balanced network handling with full CPU utilization for I/O and prioritize application logic
+            connectionGroupSize = processors / 2
+            workerGroupSize = processors
+            callGroupSize = processors * 2
         },
         module = {
             tokenExchangeApp(config, DefaultRouting(config))
