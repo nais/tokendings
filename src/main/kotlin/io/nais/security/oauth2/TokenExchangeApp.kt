@@ -41,6 +41,7 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig
 import io.micrometer.prometheusmetrics.PrometheusConfig
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
@@ -55,6 +56,7 @@ import io.nais.security.oauth2.routing.meta
 import io.prometheus.metrics.model.registry.PrometheusRegistry
 import mu.KotlinLogging
 import org.slf4j.event.Level
+import java.time.Duration
 import java.util.UUID
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.milliseconds
@@ -117,12 +119,17 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
         disableDefaultColors()
     }
 
+    val prometheusRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry, Clock.SYSTEM)
     install(MicrometerMetrics) {
-        registry = PrometheusMeterRegistry(
-            PrometheusConfig.DEFAULT,
-            PrometheusRegistry.defaultRegistry,
-            Clock.SYSTEM
-        )
+        registry = prometheusRegistry
+        distributionStatisticConfig = DistributionStatisticConfig.Builder()
+            .percentilesHistogram(true)
+            .maximumExpectedValue(Duration.ofSeconds(20).toNanos().toDouble())
+            .serviceLevelObjectives(
+                Duration.ofMillis(100).toNanos().toDouble(),
+                Duration.ofMillis(500).toNanos().toDouble()
+            )
+            .build()
         meterBinders = listOf(
             ClassLoaderMetrics(),
             JvmMemoryMetrics(),
@@ -172,7 +179,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     install(ForwardedHeaders)
 
     routing {
-        meta(config.databaseHealthCheck)
+        meta(config.databaseHealthCheck, prometheusRegistry)
         routing.apiRouting(this.application)
     }
 }
