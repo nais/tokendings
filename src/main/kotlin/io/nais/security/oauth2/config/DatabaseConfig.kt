@@ -60,8 +60,8 @@ object HikariProperties {
     const val IDLE_TIMEOUT_PROD = 300000L
     const val CONNECTION_TIMEOUT_PROD = 5000L
     const val MAX_LIFETIME_PROD = 1800000L
-    const val MAX_POOL_SIZE_PROD = 10
-    const val MIN_IDLE_CONNECTIONS_PROD = 5
+    const val MAX_POOL_SIZE_PROD = 20
+    const val MIN_IDLE_CONNECTIONS_PROD = 10
 
     // Non-production-specific
     const val IDLE_TIMEOUT_NON_PROD = 600000L
