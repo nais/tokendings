@@ -45,6 +45,7 @@ import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.HikariProperties
 import io.nais.security.oauth2.config.configByProfile
 import io.nais.security.oauth2.config.isNonProd
 import io.nais.security.oauth2.metrics.Metrics
@@ -81,15 +82,17 @@ fun main() {
 
 fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> {
     val config = configByProfile()
+    val processors = Runtime.getRuntime().availableProcessors()
+    val maxConnectionPool = if (isNonProd()) HikariProperties.MAX_POOL_SIZE_NON_PROD else HikariProperties.MAX_POOL_SIZE_PROD
     return embeddedServer(
         Netty,
         configure = {
             connector {
                 port = config.serverProperties.port
             }
-            connectionGroupSize = 8
-            workerGroupSize = 8
-            callGroupSize = 16
+            connectionGroupSize = maxOf(1, processors / 2)
+            workerGroupSize = processors
+            callGroupSize = maxOf(1, minOf(processors * 2, maxConnectionPool))
         },
         module = {
             tokenExchangeApp(config, DefaultRouting(config))
@@ -149,11 +152,7 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
                     call.respondWithError(cause, includeErrorDetails)
                 }
 
-                is BadRequestException -> {
-                    call.respond(HttpStatusCode.BadRequest, "invalid request content")
-                }
-
-                is JsonProcessingException -> {
+                is BadRequestException, is JsonProcessingException -> {
                     call.respond(HttpStatusCode.BadRequest, "invalid request content")
                 }
 
