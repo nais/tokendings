@@ -109,7 +109,6 @@ class TokenRequestConfig internal constructor(
     internal val clientAssertionMaxLifetime = configuration.clientAssertionMaxLifetime
 
     class Configuration {
-        internal lateinit var params: Parameters
         internal var clientFinder: (ClientAssertionCredential) -> OAuth2Client? = {
             throw NotImplementedError("clientFinder function not implemented")
         }
