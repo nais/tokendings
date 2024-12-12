@@ -61,7 +61,7 @@ spec:
             envVarPrefix: DB
         flags:
           - name: max_connections
-            value: "200"
+            value: "300"
   ingresses:
     - "{{- include "tokenx.tokendings.URL" . }}"
   {{- if .Values.tokendings.mapSubjectTokenClaims }}
