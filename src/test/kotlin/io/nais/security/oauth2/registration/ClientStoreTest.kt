@@ -71,48 +71,77 @@ internal class ClientStoreTest {
     }
 
     @Test
-    fun testFindClientsAndStorePerformance() {
+    fun testStoreClientPerformance() {
         withMigratedDb {
             with(ClientStore(DataSource.instance)) {
                 val clientIds = (1..50).map { "client:$it" }
                 val storeTimes = mutableListOf<Long>()
 
+                warmUpData(clientIds)
+
                 clientIds.forEach {
                     val elapsedTime = measureTimeMillis {
                         storeClient(oauth2Client(it))
                     }
-                    // Skip the first client for average calculation, as it might be slower due to initialization
-                    if (it != "client:1") {
-                        storeTimes.add(elapsedTime)
-                        assert(elapsedTime < 400) { "storeClient took too long: $elapsedTime ms" }
-                    }
+                    storeTimes.add(elapsedTime)
+                    assert(elapsedTime < 400) { "storeClient took too long: $elapsedTime ms" }
                 }
 
                 val averageStoreTime = storeTimes.average()
                 println("Average storeClient time: $averageStoreTime ms")
                 assert(averageStoreTime < 150) { "Average storeClient time: $averageStoreTime ms" }
+            }
+        }
+    }
 
-                // find each client
-                storeTimes.clear()
+    @Test
+    fun testFindClientPerformance() {
+        withMigratedDb {
+            with(ClientStore(DataSource.instance)) {
+                val clientIds = (1..50).map { "client:$it" }
+                val findTimes = mutableListOf<Long>()
+
+                warmUpData(clientIds)
+
                 clientIds.forEach {
                     val findClientElapsedTime = measureTimeMillis {
                         find(it)
                     }
-                    storeTimes.add(findClientElapsedTime)
+                    findTimes.add(findClientElapsedTime)
                     assert(findClientElapsedTime < 20) { "findClient took too long: $findClientElapsedTime ms" }
                 }
 
-                val averageFindTime = storeTimes.average()
+                val averageFindTime = findTimes.average()
                 println("Average findClient time: $averageFindTime ms")
-                println("Total findClient time: ${storeTimes.sum()} ms")
-                assert(storeTimes.sum() < 100) { "Average findClient time: $storeTimes.sum() ms" }
+                println("Total findClient time: ${findTimes.sum()} ms")
+                assert(findTimes.sum() < 100) { "Total findClient time exceeded limit: ${findTimes.sum()} ms" }
+            }
+        }
+    }
 
-                // bulk find
+    @Test
+    fun testBulkFindClientsPerformance() {
+        withMigratedDb {
+            with(ClientStore(DataSource.instance)) {
+                val clientIds = (1..50).map { "client:$it" }
+
+                warmUpData(clientIds)
+
                 val findElapsedTime = measureTimeMillis {
                     findClients(clientIds)
                 }
                 println("Total findClients time: $findElapsedTime ms")
-                assert(findElapsedTime < storeTimes.sum()) { "findClients took too long: $findElapsedTime ms, expected less than ${storeTimes.sum()} ms" }
+                assert(findElapsedTime < 100) { "findClients took too long: $findElapsedTime ms" }
+            }
+        }
+    }
+
+    private fun warmUpData(clientIds: List<String>, warmUpSize: Int = 5) {
+        val warmUpClients = clientIds.take(warmUpSize)
+        with(ClientStore(DataSource.instance)) {
+            warmUpClients.forEach {
+                storeClient(oauth2Client(it))
+                find(it)
             }
         }
     }

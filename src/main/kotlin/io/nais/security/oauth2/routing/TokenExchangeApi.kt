@@ -15,7 +15,6 @@ import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jw
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.tokenPath
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
 import io.nais.security.oauth2.config.path
-import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
@@ -52,20 +51,9 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
         post {
             log.debug("received call to token endpoint.")
             val tokenRequestContext = call.receiveTokenRequestContext(config.authorizationServerProperties.tokenEndpointUrl()) {
-                authenticateAndAuthorize {
-                    val clientMap = mutableMapOf<String, OAuth2Client>()
-
-                    clientFinder = { clientAssertionCredential ->
-                        val audience = params["audience"]
-                        val clientIds = listOfNotNull(audience, clientAssertionCredential.clientId).distinct()
-
-                        // Populate clientMap dynamically if not already populated
-                        if (clientMap.isEmpty()) {
-                            val fetchedClients = config.clientRegistry.findClients(clientIds)
-                            clientMap.putAll(fetchedClients)
-                        }
-                        clientMap[clientAssertionCredential.clientId]
-                    }
+                authenticateAndAuthorize { clientIds ->
+                    val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
+                    clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
 
                     authorizers = listOf(
                         TokenExchangeRequestAuthorizer(clientMap)

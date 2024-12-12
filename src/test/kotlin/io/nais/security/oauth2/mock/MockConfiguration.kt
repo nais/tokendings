@@ -98,8 +98,8 @@ class MockClientRegistry : ClientRegistry {
 
     override fun findClient(clientId: ClientId): OAuth2Client? = clients[clientId]
 
-    override fun findClients(clientIds: List<ClientId>): Map<ClientId, OAuth2Client> =
-        clients.filterKeys { it in clientIds }
+    override fun findClients(clientIDs: List<ClientId>): Map<ClientId, OAuth2Client> =
+        clients.filterKeys { it in clientIDs }
 
     override fun registerClient(client: OAuth2Client) = client.apply { clients[clientId] = this }
 
