@@ -21,7 +21,7 @@ interface TokenRequestAuthorizer<T : OAuth2TokenRequest> {
 }
 
 class TokenExchangeRequestAuthorizer(
-    private val preloadedClients: Map<String, OAuth2Client>
+    private val targetClients: Map<String, OAuth2Client>
 ) : TokenRequestAuthorizer<OAuth2TokenExchangeRequest> {
 
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.TOKEN_EXCHANGE_GRANT
@@ -37,7 +37,7 @@ class TokenExchangeRequestAuthorizer(
             parameters["scope"]
         )
 
-        val targetClient = preloadedClients[tokenRequest.audience]
+        val targetClient = targetClients[tokenRequest.audience]
             ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
                     "token exchange audience ${tokenRequest.audience} is invalid"
