@@ -11,8 +11,9 @@ import java.nio.charset.Charset
 
 private val log = KotlinLogging.logger { }
 
-internal class DelegatingJWTVerifier(private val verifier: JWTVerifier) : JWTVerifier {
-
+internal class DelegatingJWTVerifier(
+    private val verifier: JWTVerifier,
+) : JWTVerifier {
     override fun verify(token: String?): DecodedJWT =
         logVerificationException {
             verifier.verify(token)

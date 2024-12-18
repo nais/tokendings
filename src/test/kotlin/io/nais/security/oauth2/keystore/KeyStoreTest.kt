@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class KeyStoreTest {
-
     @Test
     fun `keyStore save() should insert or update new record`() {
         withMigratedDb {
@@ -34,6 +33,6 @@ class KeyStoreTest {
             generateRsaKey(),
             generateRsaKey(),
             generateRsaKey(),
-            LocalDateTime.now()
+            LocalDateTime.now(),
         )
 }

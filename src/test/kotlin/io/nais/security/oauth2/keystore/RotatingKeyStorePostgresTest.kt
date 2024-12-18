@@ -12,7 +12,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
 class RotatingKeyStorePostgresTest {
-
     @Test
     fun `signing key should not be rotated`() {
         withMigratedDb {

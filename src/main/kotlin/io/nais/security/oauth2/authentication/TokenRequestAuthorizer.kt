@@ -17,68 +17,81 @@ private val log: Logger = KotlinLogging.logger { }
 
 interface TokenRequestAuthorizer<T : OAuth2TokenRequest> {
     fun supportsGrantType(grantType: String?): Boolean
-    fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): T
+
+    fun authorize(
+        parameters: Parameters,
+        oauth2Client: OAuth2Client?,
+    ): T
 }
 
 class TokenExchangeRequestAuthorizer(
-    private val targetClients: Map<String, OAuth2Client>
+    private val targetClients: Map<String, OAuth2Client>,
 ) : TokenRequestAuthorizer<OAuth2TokenExchangeRequest> {
-
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.TOKEN_EXCHANGE_GRANT
 
     @WithSpan
-    override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2TokenExchangeRequest {
+    override fun authorize(
+        parameters: Parameters,
+        oauth2Client: OAuth2Client?,
+    ): OAuth2TokenExchangeRequest {
         log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
-        val tokenRequest = OAuth2TokenExchangeRequest(
-            parameters.require("subject_token_type", SubjectTokenType.TOKEN_TYPE_JWT),
-            parameters.require("subject_token"),
-            parameters.require("audience"),
-            parameters["resource"],
-            parameters["scope"]
-        )
+        val tokenRequest =
+            OAuth2TokenExchangeRequest(
+                parameters.require("subject_token_type", SubjectTokenType.TOKEN_TYPE_JWT),
+                parameters.require("subject_token"),
+                parameters.require("audience"),
+                parameters["resource"],
+                parameters["scope"],
+            )
 
-        val targetClient = targetClients[tokenRequest.audience]
-            ?: throw OAuth2Exception(
-                OAuth2Error.INVALID_REQUEST.setDescription(
-                    "token exchange audience ${tokenRequest.audience} is invalid"
+        val targetClient =
+            targetClients[tokenRequest.audience]
+                ?: throw OAuth2Exception(
+                    OAuth2Error.INVALID_REQUEST.setDescription(
+                        "token exchange audience ${tokenRequest.audience} is invalid",
+                    ),
                 )
-            )
 
-        val authenticatedClient = oauth2Client
-            ?: throw OAuth2Exception(
-                OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated")
-            )
+        val authenticatedClient =
+            oauth2Client
+                ?: throw OAuth2Exception(
+                    OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"),
+                )
 
         return when {
             targetClient.accessPolicyInbound.contains(authenticatedClient.clientId) -> tokenRequest
             else -> throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
-                    "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${targetClient.clientId}"
-                )
+                    "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${targetClient.clientId}",
+                ),
             )
         }
     }
 }
 
 class ClientCredentialsRequestAuthorizer : TokenRequestAuthorizer<OAuth2ClientCredentialsTokenRequest> {
-
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.CLIENT_CREDENTIALS_GRANT
 
     @WithSpan
-    override fun authorize(parameters: Parameters, oauth2Client: OAuth2Client?): OAuth2ClientCredentialsTokenRequest {
+    override fun authorize(
+        parameters: Parameters,
+        oauth2Client: OAuth2Client?,
+    ): OAuth2ClientCredentialsTokenRequest {
         log.debug("authorize request with parameters=$parameters for principal=$oauth2Client")
-        val tokenRequest = OAuth2ClientCredentialsTokenRequest(
-            parameters.require("scope")
-        )
-        val authenticatedClient: OAuth2Client = oauth2Client
-            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"))
+        val tokenRequest =
+            OAuth2ClientCredentialsTokenRequest(
+                parameters.require("scope"),
+            )
+        val authenticatedClient: OAuth2Client =
+            oauth2Client
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"))
 
         return when {
             authenticatedClient.allowedScopes.contains(tokenRequest.scope) -> tokenRequest
             else -> throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
-                    "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${tokenRequest.scope}"
-                )
+                    "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${tokenRequest.scope}",
+                ),
             )
         }
     }

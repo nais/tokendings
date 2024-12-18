@@ -12,24 +12,26 @@ import kotliquery.using
 import java.time.LocalDateTime
 import javax.sql.DataSource
 
-class KeyStore(private val dataSource: DataSource) {
-
+class KeyStore(
+    private val dataSource: DataSource,
+) {
     companion object {
         private const val TABLE_NAME = "rotatable_keys"
         const val ID = 1L
     }
 
     @WithSpan
-    fun read(): RotatableKeys? = withTimer("readKeys") {
-        using(sessionOf(dataSource)) { session ->
-            session.run(
-                queryOf("""SELECT * FROM $TABLE_NAME""")
-                    .map {
-                        it.mapToRsaKeys()
-                    }.asSingle
-            )
+    fun read(): RotatableKeys? =
+        withTimer("readKeys") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf("""SELECT * FROM $TABLE_NAME""")
+                        .map {
+                            it.mapToRsaKeys()
+                        }.asSingle,
+                )
+            }
         }
-    }
 
     fun save(rotatableKeys: RotatableKeys) =
         using(sessionOf(dataSource)) { session ->
@@ -39,17 +41,16 @@ class KeyStore(private val dataSource: DataSource) {
             }
         }
 
-    private fun Row.mapToRsaKeys(): RotatableKeys {
-        return RotatableKeys(
+    private fun Row.mapToRsaKeys(): RotatableKeys =
+        RotatableKeys(
             currentKey = this.string("current_key").toRSAKey(),
             previousKey = this.string("previous_key").toRSAKey(),
             nextKey = this.string("next_key").toRSAKey(),
-            expiry = LocalDateTime.parse(this.string("expiry"))
+            expiry = LocalDateTime.parse(this.string("expiry")),
         )
-    }
 
-    private fun modify(rotatableKeys: RotatableKeys): Query {
-        return queryOf(
+    private fun modify(rotatableKeys: RotatableKeys): Query =
+        queryOf(
             """
             INSERT INTO $TABLE_NAME(id, current_key, previous_key, next_key, expiry) VALUES 
             (:id, :current_key, :previous_key, :next_key, :expiry)
@@ -62,8 +63,7 @@ class KeyStore(private val dataSource: DataSource) {
                 "current_key" to rotatableKeys.currentKey.toJSON(),
                 "previous_key" to rotatableKeys.previousKey.toJSON(),
                 "next_key" to rotatableKeys.nextKey.toJSON(),
-                "expiry" to rotatableKeys.expiry.toString()
-            )
+                "expiry" to rotatableKeys.expiry.toString(),
+            ),
         )
-    }
 }

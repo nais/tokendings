@@ -16,19 +16,21 @@ import java.net.URL
 
 val log = KotlinLogging.logger { }
 
-private val jwkerJwks = "jwker-jwks.json".asResource().readText().let {
-    JWKSet.parse(it)
-}
+private val jwkerJwks =
+    "jwker-jwks.json".asResource().readText().let {
+        JWKSet.parse(it)
+    }
 
 fun main() {
     val mockOAuth2Server: MockOAuth2Server = startMockOAuth2Server()
 
-    val clientRegistrationAuthProps = ClientRegistrationAuthProperties(
-        identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
-        acceptedAudience = listOf("tokendings"),
-        acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-        softwareStatementJwks = jwkerJwks
-    )
+    val clientRegistrationAuthProps =
+        ClientRegistrationAuthProperties(
+            identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
+            acceptedAudience = listOf("tokendings"),
+            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+            softwareStatementJwks = jwkerJwks,
+        )
 
     val config: AppConfiguration = mockConfig(mockOAuth2Server, clientRegistrationAuthProps)
 
@@ -48,8 +50,8 @@ fun main() {
 private fun startMockOAuth2Server(): MockOAuth2Server =
     MockOAuth2Server(
         OAuth2Config(
-            interactiveLogin = true
-        )
+            interactiveLogin = true,
+        ),
     ).apply {
         this.start(1111)
     }

@@ -10,10 +10,10 @@ import io.ktor.server.routing.route
 import io.nais.security.oauth2.authentication.TokenExchangeRequestAuthorizer
 import io.nais.security.oauth2.authentication.receiveTokenRequestContext
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.authorizationPath
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.tokenPath
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.AUTHORIZATION_PATH
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.JWKS_PATH
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.TOKEN_PATH
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.WELL_KNOWN_PATH
 import io.nais.security.oauth2.config.path
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
@@ -31,36 +31,38 @@ private val log = KotlinLogging.logger { }
 internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     val tokenIssuer = config.tokenIssuer
 
-    get(wellKnownPath) {
+    get(WELL_KNOWN_PATH) {
         val issuerUrl: String = config.authorizationServerProperties.issuerUrl
         call.respond(
             WellKnown(
                 issuer = issuerUrl,
-                authorizationEndpoint = issuerUrl.path(authorizationPath),
-                tokenEndpoint = issuerUrl.path(tokenPath),
-                jwksUri = issuerUrl.path(jwksPath)
-            )
+                authorizationEndpoint = issuerUrl.path(AUTHORIZATION_PATH),
+                tokenEndpoint = issuerUrl.path(TOKEN_PATH),
+                jwksUri = issuerUrl.path(JWKS_PATH),
+            ),
         )
     }
 
-    get(jwksPath) {
+    get(JWKS_PATH) {
         call.respond(tokenIssuer.publicJwkSet().toJSONObject())
     }
 
-    route(tokenPath) {
+    route(TOKEN_PATH) {
         post {
             log.debug("received call to token endpoint.")
-            val tokenRequestContext = call.receiveTokenRequestContext(config.authorizationServerProperties.tokenEndpointUrl()) {
-                authenticateAndAuthorize { clientIds ->
-                    val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
-                    clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
+            val tokenRequestContext =
+                call.receiveTokenRequestContext(config.authorizationServerProperties.tokenEndpointUrl()) {
+                    authenticateAndAuthorize { clientIds ->
+                        val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
+                        clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
 
-                    authorizers = listOf(
-                        TokenExchangeRequestAuthorizer(clientMap)
-                    )
-                    clientAssertionMaxLifetime = config.authorizationServerProperties.clientAssertionMaxExpiry
+                        authorizers =
+                            listOf(
+                                TokenExchangeRequestAuthorizer(clientMap),
+                            )
+                        clientAssertionMaxLifetime = config.authorizationServerProperties.clientAssertionMaxExpiry
+                    }
                 }
-            }
             when (val tokenRequest: OAuth2TokenRequest = tokenRequestContext.oauth2TokenRequest) {
                 is OAuth2TokenExchangeRequest -> {
                     val token: SignedJWT = tokenIssuer.issueTokenFor(tokenRequestContext.oauth2Client, tokenRequest)
@@ -68,14 +70,14 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
                         OAuth2TokenResponse(
                             accessToken = token.serialize(),
                             expiresIn = token.expiresIn(),
-                            scope = tokenRequest.scope
-                        )
+                            scope = tokenRequest.scope,
+                        ),
                     )
                 }
                 else -> throw OAuth2Exception(
                     OAuth2Error.INVALID_GRANT.setDescription(
-                        "grant_type=${tokenRequest.grantType} is not supported"
-                    )
+                        "grant_type=${tokenRequest.grantType} is not supported",
+                    ),
                 )
             }
         }

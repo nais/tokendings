@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test
 import kotlin.system.measureTimeMillis
 
 internal class ClientStoreTest {
-
     @Test
     fun `storeClient should insert record or update if already present`() {
         withMigratedDb {
@@ -62,10 +61,11 @@ internal class ClientStoreTest {
                 val testclient2 = oauth2Client("testclient2")
                 storeClient(testclient)
                 storeClient(testclient2)
-                findClients(listOf("testclient", "testclient2")) shouldBe mapOf(
-                    "testclient" to testclient,
-                    "testclient2" to testclient2
-                )
+                findClients(listOf("testclient", "testclient2")) shouldBe
+                    mapOf(
+                        "testclient" to testclient,
+                        "testclient2" to testclient2,
+                    )
             }
         }
     }
@@ -80,9 +80,10 @@ internal class ClientStoreTest {
                 warmUpData(clientIds)
 
                 clientIds.forEach {
-                    val elapsedTime = measureTimeMillis {
-                        storeClient(oauth2Client(it))
-                    }
+                    val elapsedTime =
+                        measureTimeMillis {
+                            storeClient(oauth2Client(it))
+                        }
                     storeTimes.add(elapsedTime)
                     assert(elapsedTime < 400) { "storeClient took too long: $elapsedTime ms" }
                 }
@@ -104,9 +105,10 @@ internal class ClientStoreTest {
                 warmUpData(clientIds)
 
                 clientIds.forEach {
-                    val findClientElapsedTime = measureTimeMillis {
-                        find(it)
-                    }
+                    val findClientElapsedTime =
+                        measureTimeMillis {
+                            find(it)
+                        }
                     findTimes.add(findClientElapsedTime)
                     assert(findClientElapsedTime < 20) { "findClient took too long: $findClientElapsedTime ms" }
                 }
@@ -127,16 +129,20 @@ internal class ClientStoreTest {
 
                 warmUpData(clientIds)
 
-                val findElapsedTime = measureTimeMillis {
-                    findClients(clientIds)
-                }
+                val findElapsedTime =
+                    measureTimeMillis {
+                        findClients(clientIds)
+                    }
                 println("Total findClients time: $findElapsedTime ms")
                 assert(findElapsedTime < 100) { "findClients took too long: $findElapsedTime ms" }
             }
         }
     }
 
-    private fun warmUpData(clientIds: List<String>, warmUpSize: Int = 5) {
+    private fun warmUpData(
+        clientIds: List<String>,
+        warmUpSize: Int = 5,
+    ) {
         val warmUpClients = clientIds.take(warmUpSize)
         with(ClientStore(DataSource.instance)) {
             warmUpClients.forEach {

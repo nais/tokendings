@@ -29,13 +29,16 @@ internal fun Routing.meta(databaseHealthCheck: HealthCheck) {
         }
 
         get("/metrics") {
-            val names = call.request.queryParameters.getAll("name[]")?.toSet() ?: emptySet()
+            val names =
+                call.request.queryParameters
+                    .getAll("name[]")
+                    ?.toSet() ?: emptySet()
             call.respondTextWriter(ContentType.parse(TextFormat.CONTENT_TYPE_004)) {
                 TextFormat.write004(
                     this,
                     CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(
-                        names
-                    )
+                        names,
+                    ),
                 )
             }
         }
