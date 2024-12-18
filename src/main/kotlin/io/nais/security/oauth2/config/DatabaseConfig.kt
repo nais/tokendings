@@ -23,37 +23,49 @@ data class DatabaseConfig(
     val metricRegistry: MetricRegistry,
 )
 
-fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource {
-    return HikariDataSource(hikariConfig(databaseConfig))
-}
+fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource = HikariDataSource(hikariConfig(databaseConfig))
 
-internal fun migrate(dataSource: HikariDataSource, initSql: String = ""): MigrateResult? =
-    Flyway.configure().dataSource(dataSource).initSql(initSql).load().migrate()
+internal fun migrate(
+    dataSource: HikariDataSource,
+    initSql: String = "",
+): MigrateResult? =
+    Flyway
+        .configure()
+        .dataSource(dataSource)
+        .initSql(initSql)
+        .load()
+        .migrate()
 
 internal fun clean(dataSource: HikariDataSource) =
-    Flyway.configure().cleanDisabled(false).dataSource(dataSource).load().clean()
+    Flyway
+        .configure()
+        .cleanDisabled(false)
+        .dataSource(dataSource)
+        .load()
+        .clean()
 
 private fun hikariConfig(databaseConfig: DatabaseConfig) =
-    HikariConfig().apply {
-        jdbcUrl = databaseConfig.url
-        if (isNonProd()) {
-            maximumPoolSize = MAX_POOL_SIZE_NON_PROD
-            minimumIdle = MIN_IDLE_CONNECTIONS_NON_PROD
-            idleTimeout = IDLE_TIMEOUT_NON_PROD
-            connectionTimeout = CONNECTION_TIMEOUT_NON_PROD
-            maxLifetime = MAX_LIFETIME_NON_PROD
-        } else {
-            maximumPoolSize = MAX_POOL_SIZE_PROD
-            minimumIdle = MIN_IDLE_CONNECTIONS_PROD
-            idleTimeout = IDLE_TIMEOUT_PROD
-            connectionTimeout = CONNECTION_TIMEOUT_PROD
-            maxLifetime = MAX_LIFETIME_PROD
+    HikariConfig()
+        .apply {
+            jdbcUrl = databaseConfig.url
+            if (isNonProd()) {
+                maximumPoolSize = MAX_POOL_SIZE_NON_PROD
+                minimumIdle = MIN_IDLE_CONNECTIONS_NON_PROD
+                idleTimeout = IDLE_TIMEOUT_NON_PROD
+                connectionTimeout = CONNECTION_TIMEOUT_NON_PROD
+                maxLifetime = MAX_LIFETIME_NON_PROD
+            } else {
+                maximumPoolSize = MAX_POOL_SIZE_PROD
+                minimumIdle = MIN_IDLE_CONNECTIONS_PROD
+                idleTimeout = IDLE_TIMEOUT_PROD
+                connectionTimeout = CONNECTION_TIMEOUT_PROD
+                maxLifetime = MAX_LIFETIME_PROD
+            }
+            initializationFailTimeout = HikariProperties.INITIALIZATION_FAIL_TIMEOUT
+            metricRegistry = databaseConfig.metricRegistry
+        }.also {
+            CollectorRegistry.defaultRegistry.register(DropwizardExports(databaseConfig.metricRegistry))
         }
-        initializationFailTimeout = HikariProperties.INITIALIZATION_FAIL_TIMEOUT
-        metricRegistry = databaseConfig.metricRegistry
-    }.also {
-        CollectorRegistry.defaultRegistry.register(DropwizardExports(databaseConfig.metricRegistry))
-    }
 
 object HikariProperties {
     // Production-specific

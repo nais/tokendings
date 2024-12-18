@@ -9,7 +9,7 @@ data class RotatableKeys(
     val currentKey: RSAKey,
     val previousKey: RSAKey,
     val nextKey: RSAKey,
-    val expiry: LocalDateTime
+    val expiry: LocalDateTime,
 ) {
     fun rotate(expiresIn: Duration): RotatableKeys {
         val newKey = generateRsaKey()
@@ -17,7 +17,7 @@ data class RotatableKeys(
             previousKey = this.currentKey,
             currentKey = this.nextKey,
             nextKey = newKey,
-            expiry = LocalDateTime.now().plus(expiresIn)
+            expiry = LocalDateTime.now().plus(expiresIn),
         )
     }
 
@@ -26,11 +26,12 @@ data class RotatableKeys(
     fun notExpired(now: LocalDateTime = LocalDateTime.now()) = !expired(now)
 
     companion object {
-        fun generate(expiresIn: Duration): RotatableKeys = RotatableKeys(
-            currentKey = generateRsaKey(),
-            previousKey = generateRsaKey(),
-            nextKey = generateRsaKey(),
-            expiry = LocalDateTime.now().plus(expiresIn)
-        )
+        fun generate(expiresIn: Duration): RotatableKeys =
+            RotatableKeys(
+                currentKey = generateRsaKey(),
+                previousKey = generateRsaKey(),
+                nextKey = generateRsaKey(),
+                expiry = LocalDateTime.now().plus(expiresIn),
+            )
     }
 }

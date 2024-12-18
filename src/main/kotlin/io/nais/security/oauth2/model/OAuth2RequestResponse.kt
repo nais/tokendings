@@ -18,7 +18,7 @@ object SubjectTokenType {
 
 abstract class OAuth2TokenRequest(
     @JsonProperty("grant_type")
-    val grantType: String
+    val grantType: String,
 )
 
 // actually form-url-encoded
@@ -29,11 +29,11 @@ data class OAuth2TokenExchangeRequest(
     val subjectToken: String,
     val audience: String,
     val resource: String? = null,
-    val scope: String? = null
+    val scope: String? = null,
 ) : OAuth2TokenRequest(TOKEN_EXCHANGE_GRANT)
 
 data class OAuth2ClientCredentialsTokenRequest(
-    val scope: String
+    val scope: String,
 ) : OAuth2TokenRequest(CLIENT_CREDENTIALS_GRANT)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -49,7 +49,7 @@ data class OAuth2TokenResponse(
     @JsonProperty("scope")
     val scope: String? = null,
     @JsonProperty("refresh_token")
-    val refreshToken: String? = null
+    val refreshToken: String? = null,
 )
 
 data class WellKnown(
@@ -67,5 +67,5 @@ data class WellKnown(
     @JsonProperty("token_endpoint_auth_signing_alg_values_supported")
     val tokenEndpointAuthSigningAlgValuesSupported: List<String> = listOf("RS256"),
     @JsonProperty("subject_types_supported")
-    val subjectTypesSupported: List<String> = listOf("public")
+    val subjectTypesSupported: List<String> = listOf("public"),
 )

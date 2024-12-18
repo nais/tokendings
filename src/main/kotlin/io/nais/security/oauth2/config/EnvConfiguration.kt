@@ -30,12 +30,13 @@ import mu.KotlinLogging
 import java.time.Duration
 
 private val log = KotlinLogging.logger {}
-val konfig = ConfigurationProperties.systemProperties() overriding
-    EnvironmentVariables()
+val konfig =
+    ConfigurationProperties.systemProperties() overriding
+        EnvironmentVariables()
 
 enum class Profile {
     NON_PROD,
-    PROD
+    PROD,
 }
 
 internal object EnvKey {
@@ -56,21 +57,24 @@ internal object EnvKey {
 object Configuration {
     private val issuerUrl = konfig[Key(ISSUER_URL, stringType)]
     private val subjectTokenIssuers = konfig[Key(SUBJECT_TOKEN_ISSUERS, stringType)].split(",").map { it.trim() }
-    private val subjectTokenIssuerMappings: IssuerClaimMappings = konfig.getOrNull(Key(SUBJECT_TOKEN_MAPPINGS, stringType))?.let {
-        issuerClaimMappingsFromJson(it)
-    } ?: emptyMap()
+    private val subjectTokenIssuerMappings: IssuerClaimMappings =
+        konfig.getOrNull(Key(SUBJECT_TOKEN_MAPPINGS, stringType))?.let {
+            issuerClaimMappingsFromJson(it)
+        } ?: emptyMap()
     val instance by lazy {
         val metricRegistry = MetricRegistry()
         val databaseConfig = migrate(databaseConfig(metricRegistry))
-        val authorizationServerProperties = AuthorizationServerProperties(
-            issuerUrl = issuerUrl,
-            subjectTokenIssuers = subjectTokenIssuers.toIssuerConfiguration(subjectTokenIssuerMappings),
-            rotatingKeyStore = rotatingKeyStore(
-                dataSource = databaseConfig,
-                rotationInterval = Duration.ofDays(1)
-            ),
-            tokenExpiry = konfig.getOrElse(Key(TOKEN_EXPIRY_SECONDS, longType), DEFAULT_TOKEN_EXPIRY_SECONDS)
-        )
+        val authorizationServerProperties =
+            AuthorizationServerProperties(
+                issuerUrl = issuerUrl,
+                subjectTokenIssuers = subjectTokenIssuers.toIssuerConfiguration(subjectTokenIssuerMappings),
+                rotatingKeyStore =
+                    rotatingKeyStore(
+                        dataSource = databaseConfig,
+                        rotationInterval = Duration.ofDays(1),
+                    ),
+                tokenExpiry = konfig.getOrElse(Key(TOKEN_EXPIRY_SECONDS, longType), DEFAULT_TOKEN_EXPIRY_SECONDS),
+            )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)
         val bearerTokenAuthenticationProperties = clientRegistrationAuthProperties()
@@ -79,15 +83,16 @@ object Configuration {
             clientRegistry,
             authorizationServerProperties,
             bearerTokenAuthenticationProperties,
-            databaseHealthCheck
+            databaseHealthCheck,
         )
     }
 }
 
-fun List<String>.toIssuerConfiguration(subjectTokenIssuerMappings: IssuerClaimMappings) = this
-    .map { issuerWellKnown ->
-        SubjectTokenIssuer(issuerWellKnown, subjectTokenIssuerMappings[issuerWellKnown] ?: emptyMap())
-    }
+fun List<String>.toIssuerConfiguration(subjectTokenIssuerMappings: IssuerClaimMappings) =
+    this
+        .map { issuerWellKnown ->
+            SubjectTokenIssuer(issuerWellKnown, subjectTokenIssuerMappings[issuerWellKnown] ?: emptyMap())
+        }
 
 fun configByProfile(): AppConfiguration =
     when (konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))) {
@@ -99,25 +104,25 @@ fun configByProfile(): AppConfiguration =
 @Suppress("unused")
 fun isNonProd() = Profile.PROD != konfig.getOrNull(Key(APPLICATION_PROFILE, enumType<Profile>()))
 
-internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig {
-    return DatabaseConfig(
+internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig =
+    DatabaseConfig(
         konfig[Key(DB_JDBC_URL, stringType)],
-        metricRegistry
+        metricRegistry,
     )
-}
 
 internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
-    val jwks = konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
-        log.info("Loaded ${jwkSet.keys.size} keys from JWKS with kids: ${jwkSet.keys.map { it.keyID }}")
-    }
+    val jwks =
+        konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
+            log.info("Loaded ${jwkSet.keys.size} keys from JWKS with kids: ${jwkSet.keys.map { it.keyID }}")
+        }
 
     return if (wellknownUrl != null) {
         ClientRegistrationAuthProperties(
             authProvider = AuthProvider.fromWellKnown(wellknownUrl),
             acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
             acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-            softwareStatementJwks = jwks
+            softwareStatementJwks = jwks,
         )
     } else {
         val issuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
@@ -125,7 +130,7 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
             authProvider = AuthProvider.fromSelfSigned(issuer, jwks),
             acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
             acceptedRoles = emptyList(),
-            softwareStatementJwks = jwks
+            softwareStatementJwks = jwks,
         )
     }
 }

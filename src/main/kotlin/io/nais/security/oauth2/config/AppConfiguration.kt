@@ -46,33 +46,35 @@ data class AppConfiguration(
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
     val clientRegistrationAuthProperties: ClientRegistrationAuthProperties,
-    val databaseHealthCheck: HealthCheck
+    val databaseHealthCheck: HealthCheck,
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
 }
 
-data class ServerProperties(val port: Int)
+data class ServerProperties(
+    val port: Int,
+)
 
 data class ClientRegistryProperties(
-    val dataSource: DataSource
+    val dataSource: DataSource,
 )
 
 data class ClientRegistrationAuthProperties(
     val authProvider: AuthProvider,
     val acceptedAudience: List<String>,
     val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-    val softwareStatementJwks: JWKSet
+    val softwareStatementJwks: JWKSet,
 ) {
     constructor(
         identityProviderWellKnownUrl: String,
         acceptedAudience: List<String>,
         acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-        softwareStatementJwks: JWKSet
+        softwareStatementJwks: JWKSet,
     ) : this(
         authProvider = AuthProvider.fromWellKnown(identityProviderWellKnownUrl),
         acceptedAudience = acceptedAudience,
         acceptedRoles = acceptedRoles,
-        softwareStatementJwks = softwareStatementJwks
+        softwareStatementJwks = softwareStatementJwks,
     )
 
     val issuer = authProvider.issuer
@@ -81,25 +83,31 @@ data class ClientRegistrationAuthProperties(
 
 class AuthProvider(
     val issuer: String,
-    val jwkProvider: JwkProvider
+    val jwkProvider: JwkProvider,
 ) {
     companion object {
         fun fromWellKnown(wellKnownUrl: String): AuthProvider {
-            val wellKnown: WellKnown = runBlocking {
-                log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
-                retryingHttpClient.get(wellKnownUrl).body()
-            }
-            val jwk = JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
-                .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-                .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-                .build()
+            val wellKnown: WellKnown =
+                runBlocking {
+                    log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
+                    retryingHttpClient.get(wellKnownUrl).body()
+                }
+            val jwk =
+                JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
+                    .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+                    .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+                    .build()
             return AuthProvider(wellKnown.issuer, jwk)
         }
 
-        fun fromSelfSigned(issuer: String, jwkSet: JWKSet): AuthProvider {
-            val jwk = JwkProvider { keyId ->
-                Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
-            }
+        fun fromSelfSigned(
+            issuer: String,
+            jwkSet: JWKSet,
+        ): AuthProvider {
+            val jwk =
+                JwkProvider { keyId ->
+                    Jwk.fromValues(jwkSet.getKeyByKeyId(keyId)?.toJSONObject() ?: throw JwkException("JWK not found"))
+                }
             jwkSet.keys.forEach { key ->
                 log.info("validate key with kid=${key.keyID} from JWKS")
                 jwk.get(key.keyID).publicKey
@@ -114,34 +122,39 @@ class AuthorizationServerProperties(
     val subjectTokenIssuers: List<SubjectTokenIssuer>,
     val tokenExpiry: Long = 300,
     val rotatingKeyStore: RotatingKeyStore,
-    val clientAssertionMaxExpiry: Long = 120
+    val clientAssertionMaxExpiry: Long = 120,
 ) {
+    fun tokenEndpointUrl() = issuerUrl.path(TOKEN_PATH)
 
-    fun tokenEndpointUrl() = issuerUrl.path(tokenPath)
-    fun clientRegistrationUrl() = issuerUrl.path(registrationPath)
+    fun clientRegistrationUrl() = issuerUrl.path(REGISTRATION_PATH)
 
     companion object {
-        const val wellKnownPath = "/.well-known/oauth-authorization-server"
-        const val authorizationPath = "/authorization"
-        const val tokenPath = "/token"
-        const val jwksPath = "/jwks"
-        const val registrationPath = "/registration/client"
+        const val WELL_KNOWN_PATH = "/.well-known/oauth-authorization-server"
+        const val AUTHORIZATION_PATH = "/authorization"
+        const val TOKEN_PATH = "/token"
+        const val JWKS_PATH = "/jwks"
+        const val REGISTRATION_PATH = "/registration/client"
     }
 }
 
-class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaimMappings: ClaimMappings = emptyMap()) {
-    val wellKnown: WellKnown = runBlocking {
-        log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
-        retryingHttpClient.get(wellKnownUrl).body()
-    }
+class SubjectTokenIssuer(
+    private val wellKnownUrl: String,
+    val subjectTokenClaimMappings: ClaimMappings = emptyMap(),
+) {
+    val wellKnown: WellKnown =
+        runBlocking {
+            log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
+            retryingHttpClient.get(wellKnownUrl).body()
+        }
     val issuer = wellKnown.issuer
-    val cacheProperties = CacheProperties(
-        timeToLive = 6.hours,
-        jwksURL = URI(wellKnown.jwksUri).toURL(),
-        connectionTimeout = 5.seconds,
-        readTimeout = 5.seconds,
-        refreshAheadTime = 1.hours,
-    )
+    val cacheProperties =
+        CacheProperties(
+            timeToLive = 6.hours,
+            jwksURL = URI(wellKnown.jwksUri).toURL(),
+            connectionTimeout = 5.seconds,
+            readTimeout = 5.seconds,
+            refreshAheadTime = 1.hours,
+        )
 
     init {
         if (subjectTokenClaimMappings.isNotEmpty()) {
@@ -153,24 +166,27 @@ class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaim
 
 data class KeyStoreProperties(
     val dataSource: DataSource,
-    val rotationInterval: Duration
+    val rotationInterval: Duration,
 )
 
 fun String.path(path: String) = "${this.removeSuffix("/")}/${path.removePrefix("/")}"
 
-fun rotatingKeyStore(dataSource: DataSource, rotationInterval: Duration = Duration.ofDays(1)): RotatingKeyStorePostgres =
+fun rotatingKeyStore(
+    dataSource: DataSource,
+    rotationInterval: Duration = Duration.ofDays(1),
+): RotatingKeyStorePostgres =
     RotatingKeyStorePostgres(
         KeyStoreProperties(
             dataSource = dataSource,
-            rotationInterval = rotationInterval
-        )
+            rotationInterval = rotationInterval,
+        ),
     )
 
 internal fun clientRegistry(dataSource: HikariDataSource): ClientRegistryPostgres =
     ClientRegistryPostgres(
         ClientRegistryProperties(
-            dataSource
-        )
+            dataSource,
+        ),
     )
 
 internal fun migrate(databaseConfig: DatabaseConfig) =
@@ -178,5 +194,4 @@ internal fun migrate(databaseConfig: DatabaseConfig) =
         migrate(this)
     }
 
-internal fun databaseHealthCheck(dataSource: HikariDataSource) =
-    DatabaseHealthCheck(dataSource)
+internal fun databaseHealthCheck(dataSource: HikariDataSource) = DatabaseHealthCheck(dataSource)

@@ -32,18 +32,20 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 val acceptedSignatureKeys = config.clientRegistrationAuthProperties.softwareStatementJwks
                 val softwareStatement = request.verifySoftwareStatement(acceptedSignatureKeys)
 
-                val grantTypes: List<String> = when {
-                    request.grantTypes.isEmpty() -> listOf(GrantType.TOKEN_EXCHANGE_GRANT)
-                    else -> request.grantTypes
-                }
-                val clientToRegister = OAuth2Client(
-                    softwareStatement.appId,
-                    request.jwks,
-                    AccessPolicy(softwareStatement.accessPolicyInbound),
-                    AccessPolicy(softwareStatement.accessPolicyOutbound),
-                    request.scopes,
-                    grantTypes
-                )
+                val grantTypes: List<String> =
+                    when {
+                        request.grantTypes.isEmpty() -> listOf(GrantType.TOKEN_EXCHANGE_GRANT)
+                        else -> request.grantTypes
+                    }
+                val clientToRegister =
+                    OAuth2Client(
+                        softwareStatement.appId,
+                        request.jwks,
+                        AccessPolicy(softwareStatement.accessPolicyInbound),
+                        AccessPolicy(softwareStatement.accessPolicyOutbound),
+                        request.scopes,
+                        grantTypes,
+                    )
                 config.clientRegistry.registerClient(clientToRegister)
                 call.respond(
                     HttpStatusCode.Created,
@@ -52,8 +54,8 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                         clientToRegister.jwks,
                         request.softwareStatementJwt,
                         clientToRegister.allowedGrantTypes,
-                        "private_key_jwt"
-                    )
+                        "private_key_jwt",
+                    ),
                 )
             }
             delete("/{clientId}") {
@@ -66,8 +68,9 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 call.respond(config.clientRegistry.findAll())
             }
             get("/{clientId}") {
-                val client: OAuth2Client? = call.parameters["clientId"]
-                    ?.let { config.clientRegistry.findClient(it) }
+                val client: OAuth2Client? =
+                    call.parameters["clientId"]
+                        ?.let { config.clientRegistry.findClient(it) }
                 when (client) {
                     null -> call.respond(HttpStatusCode.NotFound, "client not found")
                     else -> call.respond(client)

@@ -8,7 +8,7 @@ import mu.KotlinLogging
 private val log = KotlinLogging.logger {}
 
 open class ClientRegistryPostgres(
-    clientRegistryProperties: ClientRegistryProperties
+    clientRegistryProperties: ClientRegistryProperties,
 ) : ClientRegistry {
     private val clientStore = ClientStore(clientRegistryProperties.dataSource)
 

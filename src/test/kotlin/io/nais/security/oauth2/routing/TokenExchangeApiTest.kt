@@ -19,8 +19,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.testApplication
 import io.nais.security.oauth2.config.AppConfiguration
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.jwksPath
-import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.wellKnownPath
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.JWKS_PATH
+import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.WELL_KNOWN_PATH
 import io.nais.security.oauth2.mock.MockClientRegistry
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
@@ -59,7 +59,7 @@ internal class TokenExchangeApiTest {
             val mockConfig = mockConfig(this)
             testApplication {
                 application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
-                with(client.get(wellKnownPath)) {
+                with(client.get(WELL_KNOWN_PATH)) {
                     assertThat(status).isEqualTo(HttpStatusCode.OK)
                     val wellKnown: WellKnown = mapper.readValue(bodyAsText())
                     assertThat(wellKnown.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
@@ -74,7 +74,7 @@ internal class TokenExchangeApiTest {
             val mockConfig = mockConfig(this)
             testApplication {
                 application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
-                with(client.get(jwksPath)) {
+                with(client.get(JWKS_PATH)) {
                     assertThat(status).isEqualTo(HttpStatusCode.OK)
                     val jwkSet: JWKSet = JWKSet.parse(bodyAsText())
                     assertThat(jwkSet.keys).isNotEmpty
@@ -98,19 +98,20 @@ internal class TokenExchangeApiTest {
 
             testApplication {
                 application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
-                val response = client.post("/token") {
-                    header(ContentType, FormUrlEncoded.toString())
-                    setBody(
-                        listOf(
-                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-                            "client_assertion" to clientAssertion,
-                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
-                            "audience" to client2.clientId,
-                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
-                    )
-                }
+                val response =
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize(),
+                            ).formUrlEncode(),
+                        )
+                    }
                 assertThat(response.status).isEqualTo(HttpStatusCode.OK)
                 val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.bodyAsText())
                 assertThat(accessTokenResponse.accessToken).isNotBlank
@@ -143,11 +144,12 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken.serialize(),
+                        ).formUrlEncode(),
                     )
-                } shouldBeObject OAuth2Error.INVALID_REQUEST
-                    .setDescription("client '${client1.clientId}' is not authorized to get token with aud=${client2.clientId}")
+                } shouldBeObject
+                    OAuth2Error.INVALID_REQUEST
+                        .setDescription("client '${client1.clientId}' is not authorized to get token with aud=${client2.clientId}")
             }
         }
     }
@@ -169,8 +171,8 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to "client2",
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
+                            "subject_token" to "sometoken",
+                        ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_CLIENT.setDescription("invalid client authentication for client_id=unknown, client not registered.")
             }
@@ -195,11 +197,12 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to "client2",
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
+                            "subject_token" to "sometoken",
+                        ).formUrlEncode(),
                     )
-                } shouldBeObject OAuth2Error.INVALID_REQUEST
-                    .setDescription("token verification failed: Signed+JWT+rejected%3A+Another+algorithm+expected%2C+or+no+matching+key%28s%29+found")
+                } shouldBeObject
+                    OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: Signed+JWT+rejected%3A+Another+algorithm+expected%2C+or+no+matching+key%28s%29+found")
             }
         }
     }
@@ -225,11 +228,12 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to "client2",
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to "sometoken"
-                        ).formUrlEncode()
+                            "subject_token" to "sometoken",
+                        ).formUrlEncode(),
                     )
-                } shouldBeObject OAuth2Error.INVALID_REQUEST
-                    .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+%5B$expectedAudience%5D")
+                } shouldBeObject
+                    OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+%5B$expectedAudience%5D")
             }
         }
     }
@@ -255,14 +259,15 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken.serialize(),
+                        ).formUrlEncode(),
                     )
-                } shouldBeObject OAuth2Error.INVALID_CLIENT
-                    .setDescription(
-                        "invalid client authentication for client_id=${client1.clientId}, client assertion exceeded " +
-                            "max lifetime (${mockConfig.authorizationServerProperties.clientAssertionMaxExpiry}s)."
-                    )
+                } shouldBeObject
+                    OAuth2Error.INVALID_CLIENT
+                        .setDescription(
+                            "invalid client authentication for client_id=${client1.clientId}, client assertion exceeded " +
+                                "max lifetime (${mockConfig.authorizationServerProperties.clientAssertionMaxExpiry}s).",
+                        )
             }
         }
     }
@@ -274,10 +279,11 @@ internal class TokenExchangeApiTest {
 
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
-            val clientAssertion = client1.createClientAssertion(
-                audience = mockConfig.authorizationServerProperties.tokenEndpointUrl(),
-                issueTime = Date.from(Instant.now().plusSeconds(62))
-            )
+            val clientAssertion =
+                client1.createClientAssertion(
+                    audience = mockConfig.authorizationServerProperties.tokenEndpointUrl(),
+                    issueTime = Date.from(Instant.now().plusSeconds(62)),
+                )
             val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
 
             testApplication {
@@ -291,8 +297,8 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken.serialize(),
+                        ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_REQUEST.setDescription("token verification failed: JWT+before+use+time")
             }
@@ -306,16 +312,18 @@ internal class TokenExchangeApiTest {
 
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
-            val clientAssertion = PlainJWT(
-                JWTClaimsSet.Builder()
-                    .issuer(this.issuerUrl("mock1").toString())
-                    .subject("oloy")
-                    .audience("yolo")
-                    .issueTime(Date.from(Instant.now()))
-                    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-                    .jwtID(UUID.randomUUID().toString())
-                    .build()
-            ).serialize()
+            val clientAssertion =
+                PlainJWT(
+                    JWTClaimsSet
+                        .Builder()
+                        .issuer(this.issuerUrl("mock1").toString())
+                        .subject("oloy")
+                        .audience("yolo")
+                        .issueTime(Date.from(Instant.now()))
+                        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                        .jwtID(UUID.randomUUID().toString())
+                        .build(),
+                ).serialize()
             val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
 
             testApplication {
@@ -329,8 +337,8 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken.serialize(),
+                        ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token")
             }
@@ -358,11 +366,12 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectTokenSerialized
-                        ).formUrlEncode()
+                            "subject_token" to subjectTokenSerialized,
+                        ).formUrlEncode(),
                     )
-                } shouldBeObject OAuth2Error.INVALID_REQUEST
-                    .setDescription("invalid subject_token: invalid request, cannot validate token from issuer=${subjectToken.jwtClaimsSet.issuer}")
+                } shouldBeObject
+                    OAuth2Error.INVALID_REQUEST
+                        .setDescription("invalid subject_token: invalid request, cannot validate token from issuer=${subjectToken.jwtClaimsSet.issuer}")
             }
         }
     }
@@ -374,16 +383,18 @@ internal class TokenExchangeApiTest {
             val client1 = mockConfig.mockClientRegistry().register("client1")
             val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf(client1.clientId)))
             val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
-            val subjectToken = PlainJWT(
-                JWTClaimsSet.Builder()
-                    .issuer(this.issuerUrl("mock1").toString())
-                    .subject("oloy")
-                    .audience("yolo")
-                    .issueTime(Date.from(Instant.now()))
-                    .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-                    .jwtID(UUID.randomUUID().toString())
-                    .build()
-            ).serialize()
+            val subjectToken =
+                PlainJWT(
+                    JWTClaimsSet
+                        .Builder()
+                        .issuer(this.issuerUrl("mock1").toString())
+                        .subject("oloy")
+                        .audience("yolo")
+                        .issueTime(Date.from(Instant.now()))
+                        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                        .jwtID(UUID.randomUUID().toString())
+                        .build(),
+                ).serialize()
 
             testApplication {
                 application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
@@ -396,8 +407,8 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken,
+                        ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_REQUEST.setDescription("invalid subject_token: invalid request, cannot parse token")
             }
@@ -426,8 +437,8 @@ internal class TokenExchangeApiTest {
                             "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
                             "audience" to client2.clientId,
                             "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
-                            "subject_token" to subjectToken.serialize()
-                        ).formUrlEncode()
+                            "subject_token" to subjectToken.serialize(),
+                        ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_REQUEST.setDescription("invalid subject_token: token verification failed: Expired+JWT")
             }
@@ -438,24 +449,23 @@ internal class TokenExchangeApiTest {
 
     private fun oAuth2Client(clientId: ClientId = "unknown") = OAuth2Client(clientId, JsonWebKeys(jwkSet()))
 
-    private fun OAuth2Client.createClientAssertionInvalidKeys(audience: String) =
-        createClientAssertion(audience = audience, jwkSet = jwkSet())
+    private fun OAuth2Client.createClientAssertionInvalidKeys(audience: String) = createClientAssertion(audience = audience, jwkSet = jwkSet())
 
     private fun OAuth2Client.createClientAssertion(
         audience: String,
         lifetime: Long = 119,
         jwkSet: JWKSet = this.jwkSet,
-        issueTime: Date = Date.from(Instant.now())
-    ) =
-        JWTClaimsSet.Builder()
-            .issuer(clientId)
-            .subject(clientId)
-            .audience(audience)
-            .issueTime(issueTime)
-            .expirationTime(Date.from(Instant.now().plusSeconds(lifetime)))
-            .notBeforeTime(issueTime)
-            .jwtID(UUID.randomUUID().toString())
-            .build()
-            .sign(jwkSet.keys.first() as RSAKey)
-            .serialize()
+        issueTime: Date = Date.from(Instant.now()),
+    ) = JWTClaimsSet
+        .Builder()
+        .issuer(clientId)
+        .subject(clientId)
+        .audience(audience)
+        .issueTime(issueTime)
+        .expirationTime(Date.from(Instant.now().plusSeconds(lifetime)))
+        .notBeforeTime(issueTime)
+        .jwtID(UUID.randomUUID().toString())
+        .build()
+        .sign(jwkSet.keys.first() as RSAKey)
+        .serialize()
 }

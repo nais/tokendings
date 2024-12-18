@@ -9,17 +9,17 @@ import com.nimbusds.jwt.SignedJWT
 import io.nais.security.oauth2.model.CacheProperties
 import io.opentelemetry.instrumentation.annotations.WithSpan
 
-class TokenValidator(private val issuer: String, jwkSource: JWKSource<SecurityContext>) {
-
+class TokenValidator(
+    private val issuer: String,
+    jwkSource: JWKSource<SecurityContext>,
+) {
     constructor(issuer: String, cacheProperties: CacheProperties) : this(
         issuer,
-        cacheProperties.jwkSource
+        cacheProperties.jwkSource,
     )
 
     private val keySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, jwkSource)
 
     @WithSpan
-    fun validate(token: SignedJWT): JWTClaimsSet {
-        return token.verify(issuer, keySelector)
-    }
+    fun validate(token: SignedJWT): JWTClaimsSet = token.verify(issuer, keySelector)
 }

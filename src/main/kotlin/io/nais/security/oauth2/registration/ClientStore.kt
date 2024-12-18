@@ -11,8 +11,9 @@ import kotliquery.using
 import org.postgresql.util.PGobject
 import javax.sql.DataSource
 
-class ClientStore(private val dataSource: DataSource) {
-
+class ClientStore(
+    private val dataSource: DataSource,
+) {
     companion object {
         private const val TABLE_NAME = "clients"
     }
@@ -24,24 +25,24 @@ class ClientStore(private val dataSource: DataSource) {
             }
         }
 
-    private fun upsertQuery(oAuth2Client: OAuth2Client): Query {
-        return queryOf(
+    private fun upsertQuery(oAuth2Client: OAuth2Client): Query =
+        queryOf(
             """
         INSERT INTO $TABLE_NAME(client_id, data) values (:client_id, :data)
         ON CONFLICT (client_id) 
             DO UPDATE SET 
             data = EXCLUDED.data
         WHERE clients.data IS DISTINCT FROM EXCLUDED.data;
-        """.trimMargin(),
+            """.trimMargin(),
             mapOf(
                 "client_id" to oAuth2Client.clientId,
-                "data" to PGobject().also {
-                    it.type = "jsonb"
-                    it.value = oAuth2Client.toJson()
-                }
-            )
+                "data" to
+                    PGobject().also {
+                        it.type = "jsonb"
+                        it.value = oAuth2Client.toJson()
+                    },
+            ),
         )
-    }
 
     fun delete(clientId: ClientId) =
         withTimer("delete") {
@@ -57,7 +58,7 @@ class ClientStore(private val dataSource: DataSource) {
                     queryOf("""SELECT data FROM $TABLE_NAME WHERE client_id=?""", clientId)
                         .map {
                             it.mapToOAuth2Client()
-                        }.asSingle
+                        }.asSingle,
                 )
             }
         }
@@ -67,11 +68,12 @@ class ClientStore(private val dataSource: DataSource) {
             if (clientIds.isEmpty()) return emptyMap()
             val placeholders = clientIds.joinToString(",") { "?" }
             using(sessionOf(dataSource)) { session ->
-                session.run(
-                    queryOf("""SELECT data FROM $TABLE_NAME WHERE client_id IN ($placeholders)""", *clientIds.toTypedArray())
-                        .map { it.mapToOAuth2Client() }
-                        .asList
-                ).associateBy { it.clientId }
+                session
+                    .run(
+                        queryOf("""SELECT data FROM $TABLE_NAME WHERE client_id IN ($placeholders)""", *clientIds.toTypedArray())
+                            .map { it.mapToOAuth2Client() }
+                            .asList,
+                    ).associateBy { it.clientId }
             }
         }
 
@@ -82,12 +84,10 @@ class ClientStore(private val dataSource: DataSource) {
                     queryOf("""SELECT * FROM $TABLE_NAME""")
                         .map {
                             it.mapToOAuth2Client()
-                        }.asList
+                        }.asList,
                 )
             }
         }
 
-    private fun Row.mapToOAuth2Client(): OAuth2Client {
-        return OAuth2Client.fromJson(this.string("data"))
-    }
+    private fun Row.mapToOAuth2Client(): OAuth2Client = OAuth2Client.fromJson(this.string("data"))
 }
