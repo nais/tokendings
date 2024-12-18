@@ -46,14 +46,17 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
     get(jwksPath) {
         call.respond(tokenIssuer.publicJwkSet().toJSONObject())
     }
+
     route(tokenPath) {
         post {
             log.debug("received call to token endpoint.")
             val tokenRequestContext = call.receiveTokenRequestContext(config.authorizationServerProperties.tokenEndpointUrl()) {
-                authenticateAndAuthorize {
-                    clientFinder = { config.clientRegistry.findClient(it.clientId) }
+                authenticateAndAuthorize { clientIds ->
+                    val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
+                    clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
+
                     authorizers = listOf(
-                        TokenExchangeRequestAuthorizer(config.clientRegistry)
+                        TokenExchangeRequestAuthorizer(clientMap)
                     )
                     clientAssertionMaxLifetime = config.authorizationServerProperties.clientAssertionMaxExpiry
                 }

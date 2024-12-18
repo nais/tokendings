@@ -9,7 +9,6 @@ import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.OAuth2TokenRequest
 import io.nais.security.oauth2.model.SubjectTokenType
-import io.nais.security.oauth2.registration.ClientRegistry
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.Logger
@@ -22,7 +21,7 @@ interface TokenRequestAuthorizer<T : OAuth2TokenRequest> {
 }
 
 class TokenExchangeRequestAuthorizer(
-    private val clientRegistry: ClientRegistry
+    private val targetClients: Map<String, OAuth2Client>
 ) : TokenRequestAuthorizer<OAuth2TokenExchangeRequest> {
 
     override fun supportsGrantType(grantType: String?): Boolean = grantType == GrantType.TOKEN_EXCHANGE_GRANT
@@ -37,15 +36,18 @@ class TokenExchangeRequestAuthorizer(
             parameters["resource"],
             parameters["scope"]
         )
-        val targetClient: OAuth2Client = clientRegistry.findClient(tokenRequest.audience)
+
+        val targetClient = targetClients[tokenRequest.audience]
             ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
                     "token exchange audience ${tokenRequest.audience} is invalid"
                 )
             )
-        log.debug("principal: $oauth2Client")
-        val authenticatedClient: OAuth2Client = oauth2Client
-            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated"))
+
+        val authenticatedClient = oauth2Client
+            ?: throw OAuth2Exception(
+                OAuth2Error.INVALID_REQUEST.setDescription("client is not authenticated")
+            )
 
         return when {
             targetClient.accessPolicyInbound.contains(authenticatedClient.clientId) -> tokenRequest

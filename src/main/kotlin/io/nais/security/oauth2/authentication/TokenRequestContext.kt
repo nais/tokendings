@@ -28,12 +28,25 @@ class TokenRequestContext private constructor(
     val oauth2TokenRequest: OAuth2TokenRequest
 ) {
 
+    data class ClientIDs(
+        val client: String,
+        val target: String
+    )
+
     class From(private val tokenEndpointUrl: TokenEndpointUrl, private val parameters: Parameters) {
 
         @WithSpan
-        fun authenticateAndAuthorize(configure: TokenRequestConfig.Configuration.() -> Unit): TokenRequestContext {
-            val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply(configure))
+        fun authenticateAndAuthorize(
+            configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit
+        ): TokenRequestContext {
             val credential = credential()
+            val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply {
+                val clientIds = ClientIDs(
+                    client = credential.clientId,
+                    target = parameters.require("audience"),
+                )
+                configure(clientIds)
+            })
             val client: OAuth2Client = authenticateClient(config, credential)
             val tokenRequest = authorizeTokenRequest(config, client)
             return TokenRequestContext(client, tokenRequest)
@@ -51,7 +64,7 @@ class TokenRequestContext private constructor(
         private fun authenticateClient(
             config: TokenRequestConfig,
             clientAssertionCredential:
-                ClientAssertionCredential
+            ClientAssertionCredential
         ): OAuth2Client =
             config.clientFinder.invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->

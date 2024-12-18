@@ -26,7 +26,7 @@ import io.nais.security.oauth2.retryingHttpClient
 import io.nais.security.oauth2.token.TokenIssuer
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
-import java.net.URL
+import java.net.URI
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
@@ -89,7 +89,7 @@ class AuthProvider(
                 log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
                 retryingHttpClient.get(wellKnownUrl).body()
             }
-            val jwk = JwkProviderBuilder(URL(wellKnown.jwksUri))
+            val jwk = JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
                 .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
                 .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
                 .build()
@@ -137,7 +137,7 @@ class SubjectTokenIssuer(private val wellKnownUrl: String, val subjectTokenClaim
     val issuer = wellKnown.issuer
     val cacheProperties = CacheProperties(
         timeToLive = 6.hours,
-        jwksURL = URL(wellKnown.jwksUri),
+        jwksURL = URI(wellKnown.jwksUri).toURL(),
         connectionTimeout = 5.seconds,
         readTimeout = 5.seconds,
         refreshAheadTime = 1.hours,
