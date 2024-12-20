@@ -32,37 +32,42 @@ import java.time.Duration
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
     clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null,
-    failHealthCheck: Boolean = false
+    failHealthCheck: Boolean = false,
 ): AppConfiguration {
     val issuerUrl = "http://localhost:8080"
-    val authorizationServerProperties = AuthorizationServerProperties(
-        issuerUrl = issuerUrl,
-        subjectTokenIssuers = mockOAuth2Server?.let {
-            listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
-        } ?: emptyList(),
-        rotatingKeyStore = rotatingKeyStore()
-    )
-    val clientRegAuthProperties = when {
-        clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
-        mockOAuth2Server != null -> ClientRegistrationAuthProperties(
-            identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
-            acceptedAudience = listOf("tokendings"),
-            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-            softwareStatementJwks = jwkSet()
+    val authorizationServerProperties =
+        AuthorizationServerProperties(
+            issuerUrl = issuerUrl,
+            subjectTokenIssuers =
+                mockOAuth2Server?.let {
+                    listOf(SubjectTokenIssuer(it.wellKnownUrl("mock1").toString()))
+                } ?: emptyList(),
+            rotatingKeyStore = rotatingKeyStore(),
         )
-        else -> mockBearerTokenAuthenticationProperties()
-    }
+    val clientRegAuthProperties =
+        when {
+            clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
+            mockOAuth2Server != null ->
+                ClientRegistrationAuthProperties(
+                    identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
+                    acceptedAudience = listOf("tokendings"),
+                    acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+                    softwareStatementJwks = jwkSet(),
+                )
+            else -> mockBearerTokenAuthenticationProperties()
+        }
 
     val clientRegistry = MockClientRegistry()
-    val mockDatabaseHealthCheck = object : HealthCheck {
-        override fun ping() = if (failHealthCheck) throw RuntimeException("oh noes") else "pong"
-    }
+    val mockDatabaseHealthCheck =
+        object : HealthCheck {
+            override fun ping() = if (failHealthCheck) throw RuntimeException("oh noes") else "pong"
+        }
     return AppConfiguration(
         ServerProperties(8080),
         clientRegistry,
         authorizationServerProperties,
         clientRegAuthProperties,
-        mockDatabaseHealthCheck
+        mockDatabaseHealthCheck,
     )
 }
 
@@ -72,10 +77,13 @@ fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties 
             every { it.jwksUri } returns "http://na"
             every { it.issuer } returns "http://na"
         },
-        mockk()
+        mockk(),
     )
 
-fun mockBearerTokenAuthenticationProperties(wellKnown: WellKnown, jwkProvider: JwkProvider): ClientRegistrationAuthProperties =
+fun mockBearerTokenAuthenticationProperties(
+    wellKnown: WellKnown,
+    jwkProvider: JwkProvider,
+): ClientRegistrationAuthProperties =
     mockk<ClientRegistrationAuthProperties>().also {
         every { it.issuer } returns wellKnown.issuer
         every { it.jwkProvider } returns jwkProvider
@@ -85,21 +93,17 @@ fun rotatingKeyStore(): RotatingKeyStore = MockRotatingKeyStore()
 
 fun rotatingKeyStore(rotationInterval: Duration): RotatingKeyStore = MockRotatingKeyStore(rotationInterval)
 
-fun MockApp(
-    config: AppConfiguration = mockConfig()
-): Application.() -> Unit {
-    return fun Application.() {
+fun mockApp(config: AppConfiguration = mockConfig()): Application.() -> Unit =
+    fun Application.() {
         tokenExchangeApp(config, DefaultRouting(config))
     }
-}
 
 class MockClientRegistry : ClientRegistry {
     private val clients: MutableMap<ClientId, OAuth2Client> = mutableMapOf()
 
     override fun findClient(clientId: ClientId): OAuth2Client? = clients[clientId]
 
-    override fun findClients(clientIDs: List<ClientId>): Map<ClientId, OAuth2Client> =
-        clients.filterKeys { it in clientIDs }
+    override fun findClients(clientIDs: List<ClientId>): Map<ClientId, OAuth2Client> = clients.filterKeys { it in clientIDs }
 
     override fun registerClient(client: OAuth2Client) = client.apply { clients[clientId] = this }
 
@@ -107,20 +111,20 @@ class MockClientRegistry : ClientRegistry {
 
     override fun deleteClient(clientId: ClientId) = clients.remove(clientId)?.let { 1 } ?: 0
 
-    fun register(clientId: ClientId, accessPolicy: AccessPolicy = AccessPolicy()) =
-        OAuth2Client(
-            clientId,
-            JsonWebKeys(jwkSet()),
-            accessPolicy,
-            accessPolicy,
-            emptyList(),
-            emptyList()
-        ).let { registerClient(it) }
+    fun register(
+        clientId: ClientId,
+        accessPolicy: AccessPolicy = AccessPolicy(),
+    ) = OAuth2Client(
+        clientId,
+        JsonWebKeys(jwkSet()),
+        accessPolicy,
+        accessPolicy,
+        emptyList(),
+        emptyList(),
+    ).let { registerClient(it) }
 }
 
-fun <R> withMockOAuth2Server(
-    test: MockOAuth2Server.() -> R
-): R {
+fun <R> withMockOAuth2Server(test: MockOAuth2Server.() -> R): R {
     val server = MockOAuth2Server()
     server.start()
     try {
@@ -152,4 +156,7 @@ internal object DataSource {
 internal fun withCleanDb(test: () -> Unit) = DataSource.instance.also { clean(it) }.run { test() }
 
 internal fun withMigratedDb(test: () -> Unit) =
-    DataSource.instance.also { clean(it) }.also { migrate(it) }.run { test() }
+    DataSource.instance
+        .also { clean(it) }
+        .also { migrate(it) }
+        .run { test() }

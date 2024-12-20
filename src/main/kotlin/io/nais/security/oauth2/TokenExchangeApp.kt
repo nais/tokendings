@@ -96,12 +96,15 @@ fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Conf
         },
         module = {
             tokenExchangeApp(config, DefaultRouting(config))
-        }
+        },
     )
 }
 
 @Suppress("LongMethod")
-fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) {
+fun Application.tokenExchangeApp(
+    config: AppConfiguration,
+    routing: ApiRouting,
+) {
     install(CallId) {
         header(HttpHeaders.XCorrelationId)
         generate { UUID.randomUUID().toString() }
@@ -121,23 +124,25 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 
     install(MicrometerMetrics) {
-        registry = PrometheusMeterRegistry(
-            PrometheusConfig.DEFAULT,
-            CollectorRegistry.defaultRegistry,
-            Clock.SYSTEM
-        )
-        meterBinders = listOf(
-            ClassLoaderMetrics(),
-            JvmMemoryMetrics(),
-            JvmGcMetrics(),
-            ProcessorMetrics(),
-            JvmThreadMetrics(),
-            LogbackMetrics()
-        )
+        registry =
+            PrometheusMeterRegistry(
+                PrometheusConfig.DEFAULT,
+                CollectorRegistry.defaultRegistry,
+                Clock.SYSTEM,
+            )
+        meterBinders =
+            listOf(
+                ClassLoaderMetrics(),
+                JvmMemoryMetrics(),
+                JvmGcMetrics(),
+                ProcessorMetrics(),
+                JvmThreadMetrics(),
+                LogbackMetrics(),
+            )
     }
 
     install(ContentNegotiation) {
-        jackson() {
+        jackson {
             configure(FAIL_ON_UNKNOWN_PROPERTIES, true)
             setSerializationInclusion(NON_NULL)
         }
@@ -176,7 +181,10 @@ fun Application.tokenExchangeApp(config: AppConfiguration, routing: ApiRouting) 
     }
 }
 
-private suspend fun ApplicationCall.respondWithError(exception: OAuth2Exception, includeErrorDetails: Boolean) {
+private suspend fun ApplicationCall.respondWithError(
+    exception: OAuth2Exception,
+    includeErrorDetails: Boolean,
+) {
     val errorObject = exception.toErrorObject(includeErrorDetails)
     Metrics.oauth2ErrorCounter.labels(errorObject.code).inc()
     this.respond(HttpStatusCode.fromValue(errorObject.httpStatusCode), errorObject.toJSONObject())
@@ -200,27 +208,29 @@ private fun ErrorObject.toGeneric(): ErrorObject =
             else -> "unexpected error"
         },
         this.httpStatusCode,
-        this.uri
+        this.uri,
     )
 
-internal val defaultHttpClient = HttpClient(CIO) {
-    install(ClientContentNegotiation) {
-        jackson() {
-            setSerializationInclusion(NON_NULL)
-            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+internal val defaultHttpClient =
+    HttpClient(CIO) {
+        install(ClientContentNegotiation) {
+            jackson {
+                setSerializationInclusion(NON_NULL)
+                configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
         }
     }
-}
 
-internal val retryingHttpClient = HttpClient(CIO) {
-    install(ClientContentNegotiation) {
-        jackson() {
-            setSerializationInclusion(NON_NULL)
-            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+internal val retryingHttpClient =
+    HttpClient(CIO) {
+        install(ClientContentNegotiation) {
+            jackson {
+                setSerializationInclusion(NON_NULL)
+                configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
+        }
+        install(HttpRequestRetry) {
+            retryOnExceptionOrServerErrors(maxRetries = 10)
+            exponentialDelay()
         }
     }
-    install(HttpRequestRetry) {
-        retryOnExceptionOrServerErrors(maxRetries = 10)
-        exponentialDelay()
-    }
-}

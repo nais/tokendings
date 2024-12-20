@@ -8,16 +8,16 @@ import java.time.Duration
 import java.time.LocalDateTime
 
 internal class RotatableKeysTest {
-
     @Test
     fun `rotated keys should move current to previous, next to current and generated to next`() {
         val expiry = LocalDateTime.now()
-        val initial = RotatableKeys(
-            currentKey = generateRsaKey(),
-            previousKey = generateRsaKey(),
-            nextKey = generateRsaKey(),
-            expiry = expiry
-        )
+        val initial =
+            RotatableKeys(
+                currentKey = generateRsaKey(),
+                previousKey = generateRsaKey(),
+                nextKey = generateRsaKey(),
+                expiry = expiry,
+            )
         val rotated = initial.rotate(Duration.ofDays(1))
         rotated.previousKey shouldBe initial.currentKey
         rotated.currentKey shouldBe initial.nextKey

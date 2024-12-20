@@ -18,20 +18,25 @@ import com.nimbusds.jose.jwk.JWKSet
 data class JsonWebKeys(
     @JsonSerialize(using = JWKListSerializer::class)
     @JsonDeserialize(using = JWKListDeserializer::class)
-    val keys: List<JWK>
+    val keys: List<JWK>,
 ) {
     constructor(jwkSet: JWKSet) : this(jwkSet.keys)
 
     class JWKListSerializer : JsonSerializer<List<JWK>>() {
-        override fun serialize(value: List<JWK>, gen: JsonGenerator, serializers: SerializerProvider) {
+        override fun serialize(
+            value: List<JWK>,
+            gen: JsonGenerator,
+            serializers: SerializerProvider,
+        ) {
             gen.writeObject(value.map { it.toJSONObject() }.toList())
         }
     }
 
     class JWKListDeserializer : JsonDeserializer<List<JWK>>() {
-        override fun deserialize(p: JsonParser, ctxt: DeserializationContext): List<JWK> {
-            return p.readValueAsTree<JsonNode>().map { JWK.parse(it.toString()) }
-        }
+        override fun deserialize(
+            p: JsonParser,
+            ctxt: DeserializationContext,
+        ): List<JWK> = p.readValueAsTree<JsonNode>().map { JWK.parse(it.toString()) }
     }
 }
 
@@ -41,7 +46,7 @@ data class OAuth2Client(
     val accessPolicyInbound: AccessPolicy = AccessPolicy(),
     val accessPolicyOutbound: AccessPolicy = AccessPolicy(),
     val allowedScopes: List<String> = emptyList(),
-    val allowedGrantTypes: List<String> = emptyList()
+    val allowedGrantTypes: List<String> = emptyList(),
 ) {
     @JsonIgnore
     val jwkSet: JWKSet = JWKSet(jwks.keys)
@@ -49,7 +54,9 @@ data class OAuth2Client(
     companion object Mapper {
         private val reader = jacksonObjectMapper().readerFor(OAuth2Client::class.java)
         private val writer = jacksonObjectMapper().writerFor(OAuth2Client::class.java)
+
         fun toJson(oAuth2Client: OAuth2Client): String = writer.writeValueAsString(oAuth2Client)
+
         fun fromJson(json: String): OAuth2Client = reader.readValue(json)
     }
 
@@ -57,7 +64,7 @@ data class OAuth2Client(
 }
 
 data class AccessPolicy(
-    val clients: List<String> = emptyList()
+    val clients: List<String> = emptyList(),
 ) {
     fun contains(clientId: String?): Boolean = clients.contains(clientId)
 }

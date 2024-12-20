@@ -23,18 +23,20 @@ import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
-class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) {
-
+class TokenIssuer(
+    authorizationServerProperties: AuthorizationServerProperties,
+) {
     private val issuerUrl: String = authorizationServerProperties.issuerUrl
     private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
     private val rotatingKeyStore: RotatingKeyStore = authorizationServerProperties.rotatingKeyStore
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
-            it.issuer to TokenValidator(
-                it.issuer,
-                it.cacheProperties
-            )
+            it.issuer to
+                TokenValidator(
+                    it.issuer,
+                    it.cacheProperties,
+                )
         }
 
     private val internalTokenValidator: TokenValidator = TokenValidator(issuerUrl, rotatingKeyStore)
@@ -46,18 +48,24 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
     fun publicJwkSet(): JWKSet = rotatingKeyStore.publicJWKSet()
 
     @WithSpan
-    fun issueTokenFor(oAuth2Client: OAuth2Client, tokenExchangeRequest: OAuth2TokenExchangeRequest): SignedJWT {
+    fun issueTokenFor(
+        oAuth2Client: OAuth2Client,
+        tokenExchangeRequest: OAuth2TokenExchangeRequest,
+    ): SignedJWT {
         val targetAudience: String = tokenExchangeRequest.audience
-        val subjectTokenJwt = tryOrInvalidSubjectToken {
-            tokenExchangeRequest.subjectToken.toJwt()
-        }
+        val subjectTokenJwt =
+            tryOrInvalidSubjectToken {
+                tokenExchangeRequest.subjectToken.toJwt()
+            }
         val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
-        val subjectTokenClaims = tryOrInvalidSubjectToken {
-            validator(issuer).validate(subjectTokenJwt)
-        }
+        val subjectTokenClaims =
+            tryOrInvalidSubjectToken {
+                validator(issuer).validate(subjectTokenJwt)
+            }
 
         val now = Instant.now()
-        return JWTClaimsSet.Builder(subjectTokenClaims)
+        return JWTClaimsSet
+            .Builder(subjectTokenClaims)
             .issuer(issuerUrl)
             .expirationTime(Date.from(now.plusSeconds(tokenExpiry)))
             .notBeforeTime(Date.from(now))
@@ -69,9 +77,9 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
                 if (!subjectTokenClaims.claims.containsKey("idp")) {
                     subjectTokenClaims.issuer?.let { claim("idp", it) }
                 }
-            }
-            .mapSubjectTokenClaims(issuer, subjectTokenClaims)
-            .build().sign(rotatingKeyStore.currentSigningKey())
+            }.mapSubjectTokenClaims(issuer, subjectTokenClaims)
+            .build()
+            .sign(rotatingKeyStore.currentSigningKey())
             .also {
                 issuedTokensCounter.labels(targetAudience).inc()
             }
@@ -84,8 +92,8 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
                 issuer?.let { tokenValidators[it] }
                     ?: throw OAuth2Exception(
                         OAuth2Error.INVALID_REQUEST.setDescription(
-                            "invalid request, cannot validate token from issuer=$issuer"
-                        )
+                            "invalid request, cannot validate token from issuer=$issuer",
+                        ),
                     )
             }
         }
@@ -93,12 +101,13 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
     @WithSpan
     private fun JWTClaimsSet.Builder.mapSubjectTokenClaims(
         @SpanAttribute issuer: String?,
-        subjectTokenClaims: JWTClaimsSet
+        subjectTokenClaims: JWTClaimsSet,
     ): JWTClaimsSet.Builder {
-        val mappings: ClaimMappings = issuer
-            ?.let { issuerSubjectTokenMappings[issuer] }
-            ?.takeIf { mapping -> mapping.isNotEmpty() }
-            ?: return this
+        val mappings: ClaimMappings =
+            issuer
+                ?.let { issuerSubjectTokenMappings[issuer] }
+                ?.takeIf { mapping -> mapping.isNotEmpty() }
+                ?: return this
 
         for ((claim, mapping) in mappings) {
             try {
@@ -115,7 +124,7 @@ class TokenIssuer(authorizationServerProperties: AuthorizationServerProperties) 
     private fun JWTClaimsSet.Builder.mapSubjectTokenClaim(
         claim: Claim,
         mapping: ClaimValueMapping,
-        subjectTokenClaims: JWTClaimsSet
+        subjectTokenClaims: JWTClaimsSet,
     ): JWTClaimsSet.Builder {
         if (!subjectTokenClaims.claims.containsKey(claim)) {
             return this

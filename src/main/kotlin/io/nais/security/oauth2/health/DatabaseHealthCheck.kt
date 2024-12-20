@@ -9,14 +9,16 @@ interface HealthCheck {
     fun ping(): String
 }
 
-class DatabaseHealthCheck(private val dataSource: DataSource) : HealthCheck {
+class DatabaseHealthCheck(
+    private val dataSource: DataSource,
+) : HealthCheck {
     override fun ping(): String =
         using(sessionOf(dataSource)) { session ->
             session.run(
                 queryOf("SELECT now()")
                     .map {
                         "pong"
-                    }.asSingle
+                    }.asSingle,
             ) ?: "pong"
         }
 }

@@ -38,16 +38,16 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
                 require(payload.audience.containsAll(properties.acceptedAudience)) {
                     throw OAuth2Exception(
                         OAuth2Error.INVALID_CLIENT.setDescription(
-                            "audience claim does not contain accepted audience (${properties.acceptedAudience})"
-                        )
+                            "audience claim does not contain accepted audience (${properties.acceptedAudience})",
+                        ),
                     )
                 }
                 val roles: MutableList<String> = payload.getClaim("roles") ?.asList(String::class.java) ?: mutableListOf()
                 require(roles.containsAll(properties.acceptedRoles)) {
                     throw OAuth2Exception(
                         OAuth2Error.INVALID_CLIENT.setDescription(
-                            "roles claim does not contain accepted roles (${properties.acceptedRoles}"
-                        )
+                            "roles claim does not contain accepted roles (${properties.acceptedRoles}",
+                        ),
                     )
                 }
                 JWTPrincipal(credentials.payload)
@@ -62,36 +62,39 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
 internal fun bearerTokenVerifier(
     jwkProvider: JwkProvider,
     issuer: String,
-    token: HttpAuthHeader
-): JWTVerifier {
-    return try {
-        val jwk = token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
-            ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
+    token: HttpAuthHeader,
+): JWTVerifier =
+    try {
+        val jwk =
+            token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
         val algorithm = jwk.makeAlgorithm()
 
         DelegatingJWTVerifier(
-            JWT.require(algorithm)
+            JWT
+                .require(algorithm)
                 .withIssuer(issuer)
-                .build()
+                .build(),
         )
     } catch (t: Throwable) {
         log.error("received exception when validating token, message: ${t.message}", t)
         throw t
     }
-}
 
-private fun HttpAuthHeader.getBlob(): String? = when {
-    this is HttpAuthHeader.Single && authScheme.lowercase() in listOf("bearer") -> blob
-    else -> null
-}
+private fun HttpAuthHeader.getBlob(): String? =
+    when {
+        this is HttpAuthHeader.Single && authScheme.lowercase() in listOf("bearer") -> blob
+        else -> null
+    }
 
-private fun Jwk.makeAlgorithm(): Algorithm = when (algorithm) {
-    "RS256" -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
-    "RS384" -> Algorithm.RSA384(publicKey as RSAPublicKey, null)
-    "RS512" -> Algorithm.RSA512(publicKey as RSAPublicKey, null)
-    "ES256" -> Algorithm.ECDSA256(publicKey as ECPublicKey, null)
-    "ES384" -> Algorithm.ECDSA384(publicKey as ECPublicKey, null)
-    "ES512" -> Algorithm.ECDSA512(publicKey as ECPublicKey, null)
-    null -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
-    else -> throw IllegalArgumentException("Unsupported algorithm $algorithm")
-}
+private fun Jwk.makeAlgorithm(): Algorithm =
+    when (algorithm) {
+        "RS256" -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
+        "RS384" -> Algorithm.RSA384(publicKey as RSAPublicKey, null)
+        "RS512" -> Algorithm.RSA512(publicKey as RSAPublicKey, null)
+        "ES256" -> Algorithm.ECDSA256(publicKey as ECPublicKey, null)
+        "ES384" -> Algorithm.ECDSA384(publicKey as ECPublicKey, null)
+        "ES512" -> Algorithm.ECDSA512(publicKey as ECPublicKey, null)
+        null -> Algorithm.RSA256(publicKey as RSAPublicKey, null)
+        else -> throw IllegalArgumentException("Unsupported algorithm $algorithm")
+    }

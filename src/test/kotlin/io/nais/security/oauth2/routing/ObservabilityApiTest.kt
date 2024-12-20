@@ -13,7 +13,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
 internal class ObservabilityApiTest {
-
     @Test
     fun `call to isready should answer OK if database is responding`() {
         withMockOAuth2Server {
@@ -37,6 +36,5 @@ internal class ObservabilityApiTest {
     }
 
     @AfterEach
-    fun clearMetricsRegistry() =
-        CollectorRegistry.defaultRegistry.clear()
+    fun clearMetricsRegistry() = CollectorRegistry.defaultRegistry.clear()
 }
