@@ -33,4 +33,3 @@ tokendings:
     sqlinstance_name: tokendings
   host:
   mapSubjectTokenClaims: false
-  extraHosts: []

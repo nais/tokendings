@@ -64,9 +64,6 @@ spec:
             value: "300"
   ingresses:
     - "{{- include "tokenx.tokendings.URL" . }}"
-    {{- range .Values.tokenings.extraHosts }}
-    - {{ . | quote }}
-    {{- end }}
   {{- if .Values.tokendings.mapSubjectTokenClaims }}
   envFrom:
     - configmap: {{ include "tokenx.fullname" . }}-tokendings-mappings

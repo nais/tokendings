@@ -83,7 +83,3 @@ values:
     description: Maximum number of replicas for tokendings
     config:
       type: int
-  tokendings.extraHosts:
-    description: List of extra hosts to add to the ingress
-    config:
-      type: string_array
