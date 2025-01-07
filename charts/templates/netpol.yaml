@@ -2,7 +2,9 @@
 apiVersion: nais.io/v1
 kind: ReplicationConfig
 metadata:
-  name: {{ .Release.Name }}-tokendings-egress
+  name: {{ .Release.Name }}-tokendings
+  labels:
+    {{- include "tokenx.tokendings.labels" . | nindent 4 }}
 spec:
   namespaceSelector:
     matchExpressions:
@@ -13,7 +15,7 @@ spec:
         apiVersion: networking.gke.io/v1alpha3
         kind: FQDNNetworkPolicy
         metadata:
-          name: {{ .Release.Name }}-tokendings-egress
+          name: {{ .Release.Name }}-tokendings-fqdn
           annotations:
             fqdnnetworkpolicies.networking.gke.io/aaaa-lookups: "skip"
         spec:

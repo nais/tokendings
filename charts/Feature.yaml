@@ -60,7 +60,7 @@ values:
     ignoreKind:
       - onprem
   tokendings.host:
-    description: Setting this overrides the mapping value (only needed for legacy/onprem environments)
+    description: Setting this overrides the default mapping value (i.e. `tokenx.<cluster>.<tenant>.cloud.nais.io`)
     required: true
     computed:
       template: '"{{ subdomain . "tokenx" }}"'
