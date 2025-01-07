@@ -14,22 +14,24 @@ import io.nais.security.oauth2.utils.generateRsaKey
 import org.junit.jupiter.api.Test
 
 internal class ClientRegistrationKtTest {
-
     @Test
     fun `softwarestatement should successfully verify and parse into SoftwareStatement`() {
         val signingKey = generateRsaKey()
 
-        val ss = JWTClaimsSet.Builder()
-            .claim("appId", "app1")
-            .claim("accessPolicyInbound", emptyList<String>())
-            .claim("accessPolicyOutbound", emptyList<String>())
-            .build()
-            .sign(signingKey)
-        val request = ClientRegistrationRequest(
-            "name",
-            JsonWebKeys(JWKSet(generateRsaKey())),
-            ss.serialize()
-        )
+        val ss =
+            JWTClaimsSet
+                .Builder()
+                .claim("appId", "app1")
+                .claim("accessPolicyInbound", emptyList<String>())
+                .claim("accessPolicyOutbound", emptyList<String>())
+                .build()
+                .sign(signingKey)
+        val request =
+            ClientRegistrationRequest(
+                "name",
+                JsonWebKeys(JWKSet(generateRsaKey())),
+                ss.serialize(),
+            )
 
         request.verifySoftwareStatement(JWKSet(signingKey)) shouldBe SoftwareStatement("app1", emptyList(), emptyList())
     }
@@ -37,52 +39,55 @@ internal class ClientRegistrationKtTest {
     @Test
     fun `softwarestatement with null values`() {
         val signingKey = generateRsaKey()
-        val ss = JWSObject(
-            JWSHeader.Builder(JWSAlgorithm.RS256).keyID(signingKey.keyID).build(),
-            Payload(
-                """
-                {
-                  "appId": "cluster:ns:app1",
-                  "accessPolicyInbound": null,
-                  "accessPolicyOutbound": [
-                    "cluster:ns:app2"
-                  ]
-                }
-                """.trimIndent()
-            )
-        ).apply {
-            sign(RSASSASigner(signingKey))
-        }
+        val ss =
+            JWSObject(
+                JWSHeader.Builder(JWSAlgorithm.RS256).keyID(signingKey.keyID).build(),
+                Payload(
+                    """
+                    {
+                      "appId": "cluster:ns:app1",
+                      "accessPolicyInbound": null,
+                      "accessPolicyOutbound": [
+                        "cluster:ns:app2"
+                      ]
+                    }
+                    """.trimIndent(),
+                ),
+            ).apply {
+                sign(RSASSASigner(signingKey))
+            }
 
-        val request = ClientRegistrationRequest(
-            "name",
-            JsonWebKeys(JWKSet(generateRsaKey())),
-            ss.serialize()
-        )
+        val request =
+            ClientRegistrationRequest(
+                "name",
+                JsonWebKeys(JWKSet(generateRsaKey())),
+                ss.serialize(),
+            )
         request.verifySoftwareStatement(JWKSet(signingKey)) shouldBe SoftwareStatement("cluster:ns:app1", emptyList(), listOf("cluster:ns:app2"))
 
-        val ss2 = JWSObject(
-            JWSHeader.Builder(JWSAlgorithm.RS256).keyID(signingKey.keyID).build(),
-            Payload(
-                """
-                {
-                  "appId": null,
-                  "accessPolicyInbound": null,
-                  "accessPolicyOutbound": [
-                    "cluster:ns:app2"
-                  ]
-                }
-                """.trimIndent()
-            )
-        ).apply {
-            sign(RSASSASigner(signingKey))
-        }
+        val ss2 =
+            JWSObject(
+                JWSHeader.Builder(JWSAlgorithm.RS256).keyID(signingKey.keyID).build(),
+                Payload(
+                    """
+                    {
+                      "appId": null,
+                      "accessPolicyInbound": null,
+                      "accessPolicyOutbound": [
+                        "cluster:ns:app2"
+                      ]
+                    }
+                    """.trimIndent(),
+                ),
+            ).apply {
+                sign(RSASSASigner(signingKey))
+            }
 
         shouldThrow<OAuth2Exception> {
             ClientRegistrationRequest(
                 "name",
                 JsonWebKeys(JWKSet(generateRsaKey())),
-                ss2.serialize()
+                ss2.serialize(),
             ).verifySoftwareStatement(JWKSet(signingKey))
         }
     }

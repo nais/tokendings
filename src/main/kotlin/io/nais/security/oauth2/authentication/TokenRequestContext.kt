@@ -25,28 +25,31 @@ private val log = KotlinLogging.logger { }
 
 class TokenRequestContext private constructor(
     val oauth2Client: OAuth2Client,
-    val oauth2TokenRequest: OAuth2TokenRequest
+    val oauth2TokenRequest: OAuth2TokenRequest,
 ) {
-
     data class ClientIDs(
         val client: String,
-        val target: String
+        val target: String,
     )
 
-    class From(private val tokenEndpointUrl: TokenEndpointUrl, private val parameters: Parameters) {
-
+    class From(
+        private val tokenEndpointUrl: TokenEndpointUrl,
+        private val parameters: Parameters,
+    ) {
         @WithSpan
-        fun authenticateAndAuthorize(
-            configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit
-        ): TokenRequestContext {
+        fun authenticateAndAuthorize(configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit): TokenRequestContext {
             val credential = credential()
-            val config = TokenRequestConfig(TokenRequestConfig.Configuration().apply {
-                val clientIds = ClientIDs(
-                    client = credential.clientId,
-                    target = parameters.require("audience"),
+            val config =
+                TokenRequestConfig(
+                    TokenRequestConfig.Configuration().apply {
+                        val clientIds =
+                            ClientIDs(
+                                client = credential.clientId,
+                                target = parameters.require("audience"),
+                            )
+                        configure(clientIds)
+                    },
                 )
-                configure(clientIds)
-            })
             val client: OAuth2Client = authenticateClient(config, credential)
             val tokenRequest = authorizeTokenRequest(config, client)
             return TokenRequestContext(client, tokenRequest)
@@ -55,7 +58,7 @@ class TokenRequestContext private constructor(
         private fun credential(): ClientAssertionCredential =
             ClientAssertionCredential(
                 parameters.require("client_assertion_type"),
-                parameters.require("client_assertion")
+                parameters.require("client_assertion"),
             ).also { client ->
                 MDC.put("client_id", client.clientId)
             }
@@ -63,45 +66,52 @@ class TokenRequestContext private constructor(
         @WithSpan
         private fun authenticateClient(
             config: TokenRequestConfig,
-            clientAssertionCredential:
-            ClientAssertionCredential
+            clientAssertionCredential: ClientAssertionCredential,
         ): OAuth2Client =
-            config.clientFinder.invoke(clientAssertionCredential)
+            config.clientFinder
+                .invoke(clientAssertionCredential)
                 ?.also { oAuth2Client ->
-                    val keyIds = oAuth2Client.jwkSet.keys.map { it.keyID }.toList()
+                    val keyIds =
+                        oAuth2Client.jwkSet.keys
+                            .map { it.keyID }
+                            .toList()
                     log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
                     clientAssertionCredential.signedJWT.verify(
                         config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
-                        oAuth2Client.jwkSet
+                        oAuth2Client.jwkSet,
                     )
                     if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime)) {
                         throw OAuth2Exception(
                             OAuth2Error.INVALID_CLIENT.setDescription(
                                 "invalid client authentication for client_id=${clientAssertionCredential.clientId}," +
-                                    " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s)."
-                            )
+                                    " client assertion exceeded max lifetime (${config.clientAssertionMaxLifetime}s).",
+                            ),
                         )
                     }
                 } ?: throw OAuth2Exception(
                 OAuth2Error.INVALID_CLIENT.setDescription(
-                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered."
-                )
+                    "invalid client authentication for client_id=${clientAssertionCredential.clientId}, client not registered.",
+                ),
             )
 
         @WithSpan
-        private fun authorizeTokenRequest(config: TokenRequestConfig, client: OAuth2Client): OAuth2TokenRequest =
-            config.authorizers.find { it.supportsGrantType(parameters["grant_type"]) }
+        private fun authorizeTokenRequest(
+            config: TokenRequestConfig,
+            client: OAuth2Client,
+        ): OAuth2TokenRequest =
+            config.authorizers
+                .find { it.supportsGrantType(parameters["grant_type"]) }
                 ?.authorize(parameters, client)
                 ?: throw OAuth2Exception(
                     OAuth2Error.ACCESS_DENIED.setDescription(
-                        "could not find authorizer for grant_type=${parameters["grant_type"]}"
-                    )
+                        "could not find authorizer for grant_type=${parameters["grant_type"]}",
+                    ),
                 )
     }
 }
 
 class TokenRequestConfig internal constructor(
-    configuration: Configuration
+    configuration: Configuration,
 ) {
     internal val clientFinder = configuration.clientFinder
     internal val claimsVerifier = configuration.claimsVerifier
@@ -116,12 +126,13 @@ class TokenRequestConfig internal constructor(
 
         internal var claimsVerifier: (Pair<OAuth2Client, TokenEndpointUrl>) -> DefaultJWTClaimsVerifier<SecurityContext?> = {
             DefaultJWTClaimsVerifier(
-                JWTClaimsSet.Builder()
+                JWTClaimsSet
+                    .Builder()
                     .issuer(it.first.clientId)
                     .subject(it.first.clientId)
                     .audience(it.second)
                     .build(),
-                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti", "nbf"))
+                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti", "nbf")),
             )
         }
 
@@ -133,31 +144,34 @@ class TokenRequestConfig internal constructor(
     }
 }
 
-data class ClientAssertionCredential(val clientAssertionType: String, val clientAssertion: String) {
-    val signedJWT: SignedJWT = when (clientAssertionType) {
-        JWT_BEARER -> clientAssertion.toJwt()
-        else -> throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": invalid client_assertion_type"))
-    }
-    val clientId = signedJWT.jwtClaimsSet?.subject
-        ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": sub must be present in assertion"))
+data class ClientAssertionCredential(
+    val clientAssertionType: String,
+    val clientAssertion: String,
+) {
+    val signedJWT: SignedJWT =
+        when (clientAssertionType) {
+            JWT_BEARER -> clientAssertion.toJwt()
+            else -> throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": invalid client_assertion_type"))
+        }
+    val clientId =
+        signedJWT.jwtClaimsSet?.subject
+            ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.appendDescription(": sub must be present in assertion"))
 
     companion object {
         const val JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
     }
 }
 
-private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean =
-    this.expiresIn() <= lifetime
+private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean = this.expiresIn() <= lifetime
 
 @WithSpan(kind = SpanKind.CLIENT)
 suspend fun ApplicationCall.receiveTokenRequestContext(
     tokenEndpointUrl: TokenEndpointUrl,
-    block: TokenRequestContext.From.() -> TokenRequestContext
+    block: TokenRequestContext.From.() -> TokenRequestContext,
 ): TokenRequestContext = tokenRequestContext(tokenEndpointUrl, this.receiveParameters(), block)
 
 internal fun tokenRequestContext(
     tokenEndpointUrl: TokenEndpointUrl,
     parameters: Parameters,
-    block: TokenRequestContext.From.() -> TokenRequestContext
-): TokenRequestContext =
-    block.invoke(TokenRequestContext.From(tokenEndpointUrl, parameters))
+    block: TokenRequestContext.From.() -> TokenRequestContext,
+): TokenRequestContext = block.invoke(TokenRequestContext.From(tokenEndpointUrl, parameters))

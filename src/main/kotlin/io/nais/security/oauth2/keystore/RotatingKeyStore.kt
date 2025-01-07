@@ -6,7 +6,6 @@ import com.nimbusds.jose.jwk.source.JWKSource
 import com.nimbusds.jose.proc.SecurityContext
 
 interface RotatingKeyStore : JWKSource<SecurityContext> {
-
     fun currentSigningKey(): RSAKey
 
     fun publicJWKSet(): JWKSet

@@ -6,7 +6,6 @@ import io.nais.security.oauth2.mock.withMigratedDb
 import org.junit.jupiter.api.Test
 
 class DatabaseHealthCheckTest {
-
     @Test
     fun `responds ok if the database is up`() {
         withMigratedDb {

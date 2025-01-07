@@ -19,17 +19,19 @@ data class CacheProperties(
     val refreshTimeout: Duration = JWKSourceBuilder.DEFAULT_CACHE_REFRESH_TIMEOUT.milliseconds,
     val sizeLimitBytes: Int = JWKSourceBuilder.DEFAULT_HTTP_SIZE_LIMIT,
 ) {
-    private val resourceRetriever = DefaultResourceRetriever(
-        connectionTimeout.toInt(DurationUnit.MILLISECONDS),
-        readTimeout.toInt(DurationUnit.MILLISECONDS),
-        sizeLimitBytes
-    )
-    val jwkSource: JWKSource<SecurityContext> = JWKSourceBuilder
-        .create<SecurityContext>(jwksURL, resourceRetriever)
-        .cache(timeToLive.inWholeMilliseconds, refreshTimeout.inWholeMilliseconds)
-        .outageTolerantForever()
-        .rateLimited(false)
-        .refreshAheadCache(refreshAheadTime.inWholeMilliseconds, refreshAheadScheduled)
-        .retrying(true)
-        .build()
+    private val resourceRetriever =
+        DefaultResourceRetriever(
+            connectionTimeout.toInt(DurationUnit.MILLISECONDS),
+            readTimeout.toInt(DurationUnit.MILLISECONDS),
+            sizeLimitBytes,
+        )
+    val jwkSource: JWKSource<SecurityContext> =
+        JWKSourceBuilder
+            .create<SecurityContext>(jwksURL, resourceRetriever)
+            .cache(timeToLive.inWholeMilliseconds, refreshTimeout.inWholeMilliseconds)
+            .outageTolerantForever()
+            .rateLimited(false)
+            .refreshAheadCache(refreshAheadTime.inWholeMilliseconds, refreshAheadScheduled)
+            .retrying(true)
+            .build()
 }

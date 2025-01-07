@@ -6,29 +6,31 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.proc.SecurityContext
 import io.nais.security.oauth2.config.KeyStoreProperties
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.Logger
 import java.time.Duration
-import io.opentelemetry.instrumentation.annotations.WithSpan
 
 private val log: Logger = KotlinLogging.logger { }
 
-class RotatingKeyStorePostgres(keyStoreProperties: KeyStoreProperties) : RotatingKeyStore {
+class RotatingKeyStorePostgres(
+    keyStoreProperties: KeyStoreProperties,
+) : RotatingKeyStore {
     private val keyStore: KeyStore = KeyStore(keyStoreProperties.dataSource)
     private val rotationInterval: Duration = keyStoreProperties.rotationInterval
     private val rotatableKeys: RotatableKeys = getOrGenerateKeys()
 
-    override fun currentSigningKey(): RSAKey {
-        return getAndRotateKeysIfExpired().currentKey
-    }
+    override fun currentSigningKey(): RSAKey = getAndRotateKeysIfExpired().currentKey
 
-    override fun publicJWKSet(): JWKSet = getAndRotateKeysIfExpired().let { keys ->
-        return JWKSet(listOf(keys.currentKey, keys.previousKey)).toPublicJWKSet()
-    }
+    override fun publicJWKSet(): JWKSet =
+        getAndRotateKeysIfExpired().let { keys ->
+            return JWKSet(listOf(keys.currentKey, keys.previousKey)).toPublicJWKSet()
+        }
 
-    override fun get(jwkSelector: JWKSelector?, context: SecurityContext?): List<JWK> {
-        return publicJWKSet().keys
-    }
+    override fun get(
+        jwkSelector: JWKSelector?,
+        context: SecurityContext?,
+    ): List<JWK> = publicJWKSet().keys
 
     private fun getAndRotateKeysIfExpired(): RotatableKeys {
         log.debug("checking keys for expiry and rotating if necessary")
@@ -49,7 +51,8 @@ class RotatingKeyStorePostgres(keyStoreProperties: KeyStoreProperties) : Rotatin
             .also { log.info("No previous key set found. Initialised new key set, next expiry: ${it.expiry}") }
 
     private fun rotateKeysAndSave(keys: RotatableKeys): RotatableKeys =
-        keys.rotate(expiresIn = rotationInterval)
+        keys
+            .rotate(expiresIn = rotationInterval)
             .saveToKeyStore()
             .also { log.info("Keys rotated, next expiry: ${it.expiry}") }
 

@@ -11,5 +11,6 @@ typealias IssuerClaimMappings = Map<IssuerWellKnown, ClaimMappings>
 typealias ClaimMappings = Map<Claim, ClaimValueMapping>
 typealias ClaimValueMapping = Map<ClaimValue, ClaimValue>
 
-fun issuerClaimMappingsFromJson(json: String): IssuerClaimMappings = jacksonObjectMapper()
-    .readValue<IssuerClaimMappings>(json)
+fun issuerClaimMappingsFromJson(json: String): IssuerClaimMappings =
+    jacksonObjectMapper()
+        .readValue<IssuerClaimMappings>(json)

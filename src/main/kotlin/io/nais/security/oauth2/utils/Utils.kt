@@ -11,17 +11,27 @@ import java.util.UUID
 typealias KeyId = String
 typealias KeySize = Int
 
-fun generateRsaKey(keyId: KeyId = UUID.randomUUID().toString(), keySize: KeySize = 2048): RSAKey =
-    KeyPairGenerator.getInstance("RSA").apply { initialize(keySize) }.generateKeyPair()
+fun generateRsaKey(
+    keyId: KeyId = UUID.randomUUID().toString(),
+    keySize: KeySize = 2048,
+): RSAKey =
+    KeyPairGenerator
+        .getInstance("RSA")
+        .apply { initialize(keySize) }
+        .generateKeyPair()
         .let {
-            RSAKey.Builder(it.public as RSAPublicKey)
+            RSAKey
+                .Builder(it.public as RSAPublicKey)
                 .privateKey(it.private as RSAPrivateKey)
                 .keyID(keyId)
                 .keyUse(KeyUse.SIGNATURE)
                 .build()
         }
 
-inline fun <reified R : Any?> withTimer(timerLabel: String, block: () -> R): R {
+inline fun <reified R : Any?> withTimer(
+    timerLabel: String,
+    block: () -> R,
+): R {
     val timer = Metrics.dbTimer.labels(timerLabel).startTimer()
     try {
         return block()

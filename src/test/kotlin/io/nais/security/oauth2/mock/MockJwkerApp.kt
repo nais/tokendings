@@ -61,9 +61,10 @@ data class ClientConfig(
     val bearerTokenScope: String = "tokendings",
     val identityProviderTokenEndpoint: String = "http://localhost:1111/aadmock/token",
     val registrationEndpoint: String = "http://localhost:8080/registration/client",
-    val signingKey: RSAKey = "jwker-jwks.json".asResource().readText().let {
-        JWKSet.parse(it).keys.first() as RSAKey
-    }
+    val signingKey: RSAKey =
+        "jwker-jwks.json".asResource().readText().let {
+            JWKSet.parse(it).keys.first() as RSAKey
+        },
 )
 
 fun main() {
@@ -76,7 +77,7 @@ fun main() {
         },
         module = {
             mockJwkerApp()
-        }
+        },
     ).start()
 }
 
@@ -93,11 +94,12 @@ fun Application.mockJwkerApp() {
             when (error) {
                 is ClientRequestException -> {
                     val statusCode: HttpStatusCode = error.response.status
-                    val body: Any = if (statusCode != HttpStatusCode.NoContent) {
-                        error.response.bodyAsText()
-                    } else {
-                        EmptyContent
-                    }
+                    val body: Any =
+                        if (statusCode != HttpStatusCode.NoContent) {
+                            error.response.bodyAsText()
+                        } else {
+                            EmptyContent
+                        }
 
                     call.respond(statusCode, body)
                 }
@@ -136,26 +138,26 @@ fun Application.mockJwkerApp() {
     }
 }
 
-class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
-
-    suspend fun registerClient(
-        softwareStatement: SoftwareStatement
-    ): ClientRegistration =
+class TokenDingsClient(
+    private val config: ClientConfig = ClientConfig(),
+) {
+    suspend fun registerClient(softwareStatement: SoftwareStatement): ClientRegistration =
         requestBearerToken().let {
             log.debug("using bearer token ${it.accessToken}")
-            httpClient.post(config.registrationEndpoint) {
-                header("Authorization", "Bearer ${it.accessToken}")
-                contentType(Json)
-                setBody(
-                    ClientRegistrationRequest(
-                        clientName = softwareStatement.appId,
-                        jwks = JsonWebKeys(JWKSet(createJWK())),
-                        softwareStatementJwt = softwareStatement.sign(),
-                        scopes = listOf(),
-                        grantTypes = listOf()
+            httpClient
+                .post(config.registrationEndpoint) {
+                    header("Authorization", "Bearer ${it.accessToken}")
+                    contentType(Json)
+                    setBody(
+                        ClientRegistrationRequest(
+                            clientName = softwareStatement.appId,
+                            jwks = JsonWebKeys(JWKSet(createJWK())),
+                            softwareStatementJwt = softwareStatement.sign(),
+                            scopes = listOf(),
+                            grantTypes = listOf(),
+                        ),
                     )
-                )
-            }.body()
+                }.body()
         }
 
     suspend fun deleteWithoutId() =
@@ -174,80 +176,98 @@ class TokenDingsClient(private val config: ClientConfig = ClientConfig()) {
 
     suspend fun getClient(clientId: String): OAuth2Client? =
         requestBearerToken().let {
-            httpClient.get("${config.registrationEndpoint}/$clientId") {
-                header("Authorization", "Bearer ${it.accessToken}")
-            }.body()
+            httpClient
+                .get("${config.registrationEndpoint}/$clientId") {
+                    header("Authorization", "Bearer ${it.accessToken}")
+                }.body()
         }
 
     suspend fun getClients(): List<OAuth2Client> =
         requestBearerToken().let {
-            httpClient.get(config.registrationEndpoint) {
-                header("Authorization", "Bearer ${it.accessToken}")
-            }.body()
+            httpClient
+                .get(config.registrationEndpoint) {
+                    header("Authorization", "Bearer ${it.accessToken}")
+                }.body()
         }
 
     private fun SoftwareStatement.sign(): String =
         SignedJWT(
-            JWSHeader.Builder(JWSAlgorithm.RS256)
+            JWSHeader
+                .Builder(JWSAlgorithm.RS256)
                 .keyID(config.signingKey.keyID)
-                .type(JOSEObjectType.JWT).build(),
-            JWTClaimsSet.parse(jacksonObjectMapper().writeValueAsString(this))
+                .type(JOSEObjectType.JWT)
+                .build(),
+            JWTClaimsSet.parse(jacksonObjectMapper().writeValueAsString(this)),
         ).apply {
             sign(RSASSASigner(config.signingKey.toPrivateKey()))
         }.serialize()
 
     private fun requestBearerToken(): OAuth2TokenResponse =
         runBlocking {
-            val clientAssertion = createClientAssertion(
-                config.jwkerClientId,
-                config.identityProviderTokenEndpoint,
-                config.signingKey
-            )
-            httpClient.submitForm(
-                url = config.identityProviderTokenEndpoint,
-                formParameters = parametersOf(
-                    "client_assertion_type" to listOf("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-                    "client_assertion" to listOf(clientAssertion),
-                    "grant_type" to listOf("client_credentials"),
-                    "scope" to listOf(config.bearerTokenScope)
-                ),
-                encodeInQuery = false
-            ).body()
+            val clientAssertion =
+                createClientAssertion(
+                    config.jwkerClientId,
+                    config.identityProviderTokenEndpoint,
+                    config.signingKey,
+                )
+            httpClient
+                .submitForm(
+                    url = config.identityProviderTokenEndpoint,
+                    formParameters =
+                        parametersOf(
+                            "client_assertion_type" to listOf("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+                            "client_assertion" to listOf(clientAssertion),
+                            "grant_type" to listOf("client_credentials"),
+                            "scope" to listOf(config.bearerTokenScope),
+                        ),
+                    encodeInQuery = false,
+                ).body()
         }
 }
 
 private fun createJWK(): RSAKey =
-    KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }
+    KeyPairGenerator
+        .getInstance("RSA")
+        .apply { initialize(2048) }
         .generateKeyPair()
         .let {
-            RSAKey.Builder(it.public as RSAPublicKey)
+            RSAKey
+                .Builder(it.public as RSAPublicKey)
                 .privateKey(it.private as RSAPrivateKey)
                 .keyID(UUID.randomUUID().toString())
                 .build()
         }
 
-private fun createClientAssertion(clientId: String, tokenEndpoint: String, rsaKey: RSAKey): String =
+private fun createClientAssertion(
+    clientId: String,
+    tokenEndpoint: String,
+    rsaKey: RSAKey,
+): String =
     SignedJWT(
-        JWSHeader.Builder(JWSAlgorithm.RS256)
+        JWSHeader
+            .Builder(JWSAlgorithm.RS256)
             .keyID(rsaKey.keyID)
-            .type(JOSEObjectType.JWT).build(),
-        JWTClaimsSet.Builder()
+            .type(JOSEObjectType.JWT)
+            .build(),
+        JWTClaimsSet
+            .Builder()
             .issuer(clientId)
             .subject(clientId)
             .audience(tokenEndpoint)
             .issueTime(Date.from(Instant.now()))
             .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
             .jwtID(UUID.randomUUID().toString())
-            .build()
+            .build(),
     ).apply {
         sign(RSASSASigner(rsaKey.toPrivateKey()))
     }.serialize()
 
-internal val httpClient = HttpClient(CIO) {
-    install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
-        jackson() {
-            configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
-            setSerializationInclusion(JsonInclude.Include.NON_NULL)
+internal val httpClient =
+    HttpClient(CIO) {
+        install(io.ktor.client.plugins.contentnegotiation.ContentNegotiation) {
+            jackson {
+                configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+                setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            }
         }
     }
-}

@@ -30,50 +30,56 @@ import java.time.Instant
 @WithSpan
 fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     SignedJWT(
-        JWSHeader.Builder(JWSAlgorithm.RS256)
+        JWSHeader
+            .Builder(JWSAlgorithm.RS256)
             .keyID(rsaKey.keyID)
-            .type(JOSEObjectType.JWT).build(),
-        this
+            .type(JOSEObjectType.JWT)
+            .build(),
+        this,
     ).apply {
         sign(RSASSASigner(rsaKey.toPrivateKey()))
     }
 
-fun SignedJWT.expiresIn(): Long =
-    Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
+fun SignedJWT.expiresIn(): Long = Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
 @WithSpan
-fun SignedJWT.verify(issuer: String, keySelector: JWSVerificationKeySelector<SecurityContext?>): JWTClaimsSet {
-    return verify(
+fun SignedJWT.verify(
+    issuer: String,
+    keySelector: JWSVerificationKeySelector<SecurityContext?>,
+): JWTClaimsSet =
+    verify(
         DefaultJWTClaimsVerifier(
-            JWTClaimsSet.Builder()
+            JWTClaimsSet
+                .Builder()
                 .issuer(issuer)
                 .build(),
             HashSet(
-                listOf("sub", "iss", "iat", "exp")
-            )
+                listOf("sub", "iss", "iat", "exp"),
+            ),
         ),
-        keySelector
+        keySelector,
     )
-}
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
 @WithSpan
-fun SignedJWT.verify(jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>, jwkSet: JWKSet): JWTClaimsSet {
-    return verify(
+fun SignedJWT.verify(
+    jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
+    jwkSet: JWKSet,
+): JWTClaimsSet =
+    verify(
         jwtClaimsSetVerifier,
         JWSVerificationKeySelector(
             JWSAlgorithm.RS256,
-            ImmutableJWKSet(jwkSet)
-        )
+            ImmutableJWKSet(jwkSet),
+        ),
     )
-}
 
 @Throws(OAuth2Exception::class)
 @WithSpan
 fun SignedJWT.verify(
     jwtClaimsSetVerifier: JWTClaimsSetVerifier<SecurityContext?>,
-    keySelector: JWSVerificationKeySelector<SecurityContext?>
+    keySelector: JWSVerificationKeySelector<SecurityContext?>,
 ): JWTClaimsSet {
     try {
         val jwtProcessor: ConfigurableJWTProcessor<SecurityContext?> = DefaultJWTProcessor()
@@ -87,11 +93,12 @@ fun SignedJWT.verify(
 }
 
 @Throws(OAuth2Exception::class)
-internal fun String.toJwt(): SignedJWT = try {
-    SignedJWT.parse(this)
-} catch (t: Throwable) {
-    throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"), t)
-}
+internal fun String.toJwt(): SignedJWT =
+    try {
+        SignedJWT.parse(this)
+    } catch (t: Throwable) {
+        throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("invalid request, cannot parse token"), t)
+    }
 
 @Throws(ParseException::class)
 internal fun String.toRSAKey() = RSAKey.parse(this)
@@ -99,11 +106,12 @@ internal fun String.toRSAKey() = RSAKey.parse(this)
 internal fun RSAKey.toJSON() = this.toJSONString()
 
 @Throws(OAuth2Exception::class)
-internal fun <T> tryOrInvalidSubjectToken(block: () -> T): T = try {
-    block()
-} catch (e: OAuth2Exception) {
-    throw OAuth2Exception(
-        errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
-        throwable = e
-    )
-}
+internal fun <T> tryOrInvalidSubjectToken(block: () -> T): T =
+    try {
+        block()
+    } catch (e: OAuth2Exception) {
+        throw OAuth2Exception(
+            errorObject = e.errorObject?.setDescription("invalid subject_token: ${e.errorObject.description}"),
+            throwable = e,
+        )
+    }

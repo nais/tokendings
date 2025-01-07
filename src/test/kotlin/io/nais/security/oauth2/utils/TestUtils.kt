@@ -28,9 +28,13 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 fun jwkSet(): JWKSet =
-    KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+    KeyPairGenerator
+        .getInstance("RSA")
+        .apply { initialize(2048) }
+        .generateKeyPair()
         .let {
-            RSAKey.Builder(it.public as RSAPublicKey)
+            RSAKey
+                .Builder(it.public as RSAPublicKey)
                 .privateKey(it.private as RSAPrivateKey)
                 .keyID(UUID.randomUUID().toString())
                 .keyUse(KeyUse.SIGNATURE)
@@ -38,14 +42,15 @@ fun jwkSet(): JWKSet =
         }.let { JWKSet(it) }
 
 fun SignedJWT.verifySignature(jwkSet: JWKSet): JWTClaimsSet =
-    DefaultJWTProcessor<SecurityContext?>().apply {
-        jwsKeySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwkSet))
-    }.process(this, null)
+    DefaultJWTProcessor<SecurityContext?>()
+        .apply {
+            jwsKeySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, ImmutableJWKSet(jwkSet))
+        }.process(this, null)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorResponse(
     val error_description: String,
-    val error: String
+    val error: String,
 )
 
 suspend infix fun HttpResponse.shouldBeObject(error: ErrorObject) {
