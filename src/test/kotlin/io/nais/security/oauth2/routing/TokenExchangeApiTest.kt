@@ -273,7 +273,9 @@ internal class TokenExchangeApiTest {
                     )
                 } shouldBeObject
                     OAuth2Error.INVALID_REQUEST
-                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D")
+                        .setDescription(
+                            "token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D",
+                        )
             }
         }
     }
@@ -305,7 +307,9 @@ internal class TokenExchangeApiTest {
                     )
                 } shouldBeObject
                     OAuth2Error.INVALID_REQUEST
-                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5Bhttp%3A%2F%2Flocalhost%3A8080%2Ftoken%2C+http%3A%2F%2Flocalhost%3A8080%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D")
+                        .setDescription(
+                            "token verification failed: JWT+aud+claim+has+value+%5Bhttp%3A%2F%2Flocalhost%3A8080%2Ftoken%2C+http%3A%2F%2Flocalhost%3A8080%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D",
+                        )
             }
         }
     }

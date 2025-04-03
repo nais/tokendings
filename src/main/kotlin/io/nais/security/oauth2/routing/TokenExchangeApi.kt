@@ -51,15 +51,16 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
         post {
             log.debug("received call to token endpoint.")
             val tokenRequestContext =
-                call.receiveTokenRequestContext() {
+                call.receiveTokenRequestContext {
                     authenticateAndAuthorize { clientIds ->
                         val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
                         clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
 
-                        acceptedAudience = setOf(
-                            config.authorizationServerProperties.tokenEndpointUrl(),
-                            config.authorizationServerProperties.issuerUrl,
-                        )
+                        acceptedAudience =
+                            setOf(
+                                config.authorizationServerProperties.tokenEndpointUrl(),
+                                config.authorizationServerProperties.issuerUrl,
+                            )
                         authorizers = listOf(TokenExchangeRequestAuthorizer(clientMap))
                         clientAssertionMaxLifetime = config.authorizationServerProperties.clientAssertionMaxExpiry
                     }

@@ -24,16 +24,20 @@ class ClientAssertionJwtClaimsVerifier<C : SecurityContext?>(
     expectedIssuer: String,
     expectedSubject: String,
 ) : DefaultJWTClaimsVerifier<C>(
-    /* exactMatchClaims = */
-    JWTClaimsSet.Builder()
-        .issuer(expectedIssuer)
-        .subject(expectedSubject)
-        .build(),
-    /* requiredClaims = */
-    requiredClaims,
-) {
+        // exactMatchClaims =
+        JWTClaimsSet
+            .Builder()
+            .issuer(expectedIssuer)
+            .subject(expectedSubject)
+            .build(),
+        // requiredClaims =
+        requiredClaims,
+    ) {
     @Throws(BadJWTException::class)
-    override fun verify(claimsSet: JWTClaimsSet, context: C) {
+    override fun verify(
+        claimsSet: JWTClaimsSet,
+        context: C,
+    ) {
         super.verify(claimsSet, context)
 
         val iat: Date = claimsSet.issueTime ?: throw BadJWTExceptions.MISSING_IAT_CLAIM_EXCEPTION
@@ -52,14 +56,15 @@ class ClientAssertionJwtClaimsVerifier<C : SecurityContext?>(
     }
 
     companion object {
-        val requiredClaims = setOf(
-            JWTClaimNames.AUDIENCE,
-            JWTClaimNames.EXPIRATION_TIME,
-            JWTClaimNames.ISSUED_AT,
-            JWTClaimNames.ISSUER,
-            JWTClaimNames.JWT_ID,
-            JWTClaimNames.NOT_BEFORE,
-            JWTClaimNames.SUBJECT,
-        )
+        val requiredClaims =
+            setOf(
+                JWTClaimNames.AUDIENCE,
+                JWTClaimNames.EXPIRATION_TIME,
+                JWTClaimNames.ISSUED_AT,
+                JWTClaimNames.ISSUER,
+                JWTClaimNames.JWT_ID,
+                JWTClaimNames.NOT_BEFORE,
+                JWTClaimNames.SUBJECT,
+            )
     }
 }

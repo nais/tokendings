@@ -161,6 +161,5 @@ data class ClientAssertionCredential(
 private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean = this.expiresIn() <= lifetime
 
 @WithSpan(kind = SpanKind.CLIENT)
-suspend fun ApplicationCall.receiveTokenRequestContext(
-    block: TokenRequestContext.From.() -> TokenRequestContext,
-): TokenRequestContext = block.invoke(TokenRequestContext.From(this.receiveParameters()))
+suspend fun ApplicationCall.receiveTokenRequestContext(block: TokenRequestContext.From.() -> TokenRequestContext): TokenRequestContext =
+    block.invoke(TokenRequestContext.From(this.receiveParameters()))
