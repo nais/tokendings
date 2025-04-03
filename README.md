@@ -66,7 +66,7 @@ For applications in nais clusters, the client registration will be handled autom
 The `client_assertion` must contain the following claims:
 
 * the claims `sub` and `iss` should both be equal and identify the calling client/app to TokenDings, i.e. your apps preregistered `client_id`
-* the `aud` claim should contain the intended "audience" for the token, i.e. it should be equal to the token endpoint you are about to call, for example:`https://tokendings.prod-gcp.nais.io/token`
+* the `aud` claim should contain the intended "audience" for the token. It must be exactly equal to the `issuer` property, for example: `https://tokendings.prod-gcp.nais.io`
 * a unique JWT id should be provided in the claim `jti`
 * Expiration claims such as `nbf`, `iat` and `exp` must be present and the **maximum lifetime** of the token cannot be more than **120** seconds
 
@@ -87,7 +87,7 @@ The following example shows all the required claims of a client_assertion JWT:
 ```json
 {
   "sub": "prod-gcp:namespace-gcp:gcp-app",
-  "aud": "https://tokendings.prod-gcp.nais.io/token",
+  "aud": "https://tokendings.prod-gcp.nais.io",
   "nbf": 1592508050,
   "iss": "prod-gcp:namespace-gcp:gcp-app",
   "exp": 1592508171,

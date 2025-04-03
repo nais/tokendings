@@ -125,6 +125,44 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
+    fun `successful token exchange call with issuer as audience in client assertion`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf("client1")))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.issuerUrl)
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            testApplication {
+                application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                val response =
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to client2.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize(),
+                            ).formUrlEncode(),
+                        )
+                    }
+                assertThat(response.status).isEqualTo(HttpStatusCode.OK)
+                val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.bodyAsText())
+                assertThat(accessTokenResponse.accessToken).isNotBlank
+                val signedJWT = SignedJWT.parse(accessTokenResponse.accessToken)
+                val claims = signedJWT.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
+                assertThat(claims.subject).isEqualTo(subjectToken.jwtClaimsSet.subject)
+                assertThat(claims.issuer).isEqualTo(mockConfig.authorizationServerProperties.issuerUrl)
+                assertThat(claims.audience).containsExactly(client2.clientId)
+            }
+        }
+    }
+
+    @Test
     fun `token exchange call with valid client and subject_token, but incorrect access policy should fail`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
@@ -208,14 +246,16 @@ internal class TokenExchangeApiTest {
     }
 
     @Test
-    fun `token exchange call with invalid audience should fail`() {
+    fun `token exchange call with invalid audience in client assertion should fail`() {
         withMockOAuth2Server {
             val mockConfig = mockConfig(this)
             val client1 = mockConfig.mockClientRegistry().register("client1")
 
             val invalidAudience = "yolo"
             val invalidClientAssertion = client1.createClientAssertion(audience = invalidAudience)
-            val expectedAudience = URLEncoder.encode(mockConfig.authorizationServerProperties.tokenEndpointUrl(), Charsets.UTF_8)
+            val expectedAudience1 = mockConfig.authorizationServerProperties.tokenEndpointUrl()
+            val expectedAudience2 = mockConfig.authorizationServerProperties.issuerUrl
+            val expectedAudience = URLEncoder.encode("$expectedAudience1, $expectedAudience2", Charsets.UTF_8)
 
             testApplication {
                 application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
@@ -233,7 +273,39 @@ internal class TokenExchangeApiTest {
                     )
                 } shouldBeObject
                     OAuth2Error.INVALID_REQUEST
-                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+%5B$expectedAudience%5D")
+                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5B$invalidAudience%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D")
+            }
+        }
+    }
+
+    @Test
+    fun `token exchange call with multiple valid audiences in client assertion should fail`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+
+            val validAudience1 = mockConfig.authorizationServerProperties.tokenEndpointUrl()
+            val validAudience2 = mockConfig.authorizationServerProperties.issuerUrl
+            val invalidClientAssertion = client1.createClientAssertion(audience = setOf(validAudience1, validAudience2))
+            val expectedAudience = URLEncoder.encode("$validAudience1, $validAudience2", Charsets.UTF_8)
+
+            testApplication {
+                application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                client.post("/token") {
+                    header(ContentType, FormUrlEncoded.toString())
+                    setBody(
+                        listOf(
+                            "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                            "client_assertion" to invalidClientAssertion,
+                            "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                            "audience" to "client2",
+                            "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                            "subject_token" to "sometoken",
+                        ).formUrlEncode(),
+                    )
+                } shouldBeObject
+                    OAuth2Error.INVALID_REQUEST
+                        .setDescription("token verification failed: JWT+aud+claim+has+value+%5Bhttp%3A%2F%2Flocalhost%3A8080%2Ftoken%2C+http%3A%2F%2Flocalhost%3A8080%5D%2C+must+be+exactly+one+of+%5B$expectedAudience%5D")
             }
         }
     }
@@ -461,6 +533,24 @@ internal class TokenExchangeApiTest {
         .issuer(clientId)
         .subject(clientId)
         .audience(audience)
+        .issueTime(issueTime)
+        .expirationTime(Date.from(Instant.now().plusSeconds(lifetime)))
+        .notBeforeTime(issueTime)
+        .jwtID(UUID.randomUUID().toString())
+        .build()
+        .sign(jwkSet.keys.first() as RSAKey)
+        .serialize()
+
+    private fun OAuth2Client.createClientAssertion(
+        audience: Set<String>,
+        lifetime: Long = 119,
+        jwkSet: JWKSet = this.jwkSet,
+        issueTime: Date = Date.from(Instant.now()),
+    ) = JWTClaimsSet
+        .Builder()
+        .issuer(clientId)
+        .subject(clientId)
+        .audience(audience.toList())
         .issueTime(issueTime)
         .expirationTime(Date.from(Instant.now().plusSeconds(lifetime)))
         .notBeforeTime(issueTime)

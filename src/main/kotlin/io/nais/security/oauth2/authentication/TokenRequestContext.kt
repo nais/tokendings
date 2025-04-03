@@ -1,13 +1,13 @@
 package io.nais.security.oauth2.authentication
 
 import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.Parameters
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveParameters
+import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
@@ -19,7 +19,7 @@ import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
 import org.slf4j.MDC
 
-typealias TokenEndpointUrl = String
+typealias AcceptedAudience = Set<String>
 
 private val log = KotlinLogging.logger { }
 
@@ -33,7 +33,6 @@ class TokenRequestContext private constructor(
     )
 
     class From(
-        private val tokenEndpointUrl: TokenEndpointUrl,
         private val parameters: Parameters,
     ) {
         @WithSpan
@@ -77,7 +76,7 @@ class TokenRequestContext private constructor(
                             .toList()
                     log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
                     clientAssertionCredential.signedJWT.verify(
-                        config.claimsVerifier.invoke(Pair(oAuth2Client, tokenEndpointUrl)),
+                        config.claimsVerifier(oAuth2Client.clientId),
                         oAuth2Client.jwkSet,
                     )
                     if (!clientAssertionCredential.signedJWT.isWithinMaxLifetime(config.clientAssertionMaxLifetime)) {
@@ -124,15 +123,12 @@ class TokenRequestConfig internal constructor(
         }
         internal var authorizers: List<TokenRequestAuthorizer<*>> = emptyList()
 
-        internal var claimsVerifier: (Pair<OAuth2Client, TokenEndpointUrl>) -> DefaultJWTClaimsVerifier<SecurityContext?> = {
-            DefaultJWTClaimsVerifier(
-                JWTClaimsSet
-                    .Builder()
-                    .issuer(it.first.clientId)
-                    .subject(it.first.clientId)
-                    .audience(it.second)
-                    .build(),
-                HashSet(listOf("sub", "iss", "aud", "iat", "exp", "jti", "nbf")),
+        internal lateinit var acceptedAudience: AcceptedAudience
+        internal var claimsVerifier: (ClientId) -> JWTClaimsSetVerifier<SecurityContext?> = { clientId ->
+            ClientAssertionJwtClaimsVerifier(
+                acceptedAudience = acceptedAudience,
+                expectedIssuer = clientId,
+                expectedSubject = clientId,
             )
         }
 
@@ -166,12 +162,5 @@ private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean = this.expire
 
 @WithSpan(kind = SpanKind.CLIENT)
 suspend fun ApplicationCall.receiveTokenRequestContext(
-    tokenEndpointUrl: TokenEndpointUrl,
     block: TokenRequestContext.From.() -> TokenRequestContext,
-): TokenRequestContext = tokenRequestContext(tokenEndpointUrl, this.receiveParameters(), block)
-
-internal fun tokenRequestContext(
-    tokenEndpointUrl: TokenEndpointUrl,
-    parameters: Parameters,
-    block: TokenRequestContext.From.() -> TokenRequestContext,
-): TokenRequestContext = block.invoke(TokenRequestContext.From(tokenEndpointUrl, parameters))
+): TokenRequestContext = block.invoke(TokenRequestContext.From(this.receiveParameters()))
