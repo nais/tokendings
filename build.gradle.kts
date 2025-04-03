@@ -2,39 +2,39 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.26.3"
+val assertjVersion = "3.27.3"
 val flywayVersion = "10.21.0"
 val h2Version = "2.3.232"
-val hikaricpVersion = "6.1.0"
-val junitJupiterVersion = "5.11.3"
+val hikaricpVersion = "6.3.0"
+val junitJupiterVersion = "5.12.1"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.0.21"
-val kotliqueryVersion = "1.9.0"
-val ktorVersion = "3.0.2"
+val kotlinVersion = "2.1.20"
+val kotliqueryVersion = "1.9.1"
+val ktorVersion = "3.1.2"
 val logbackVersion = "1.5.12"
-val logstashLogbackEncoderVersion = "8.0"
-val micrometerRegistryPrometheusVersion = "1.14.0"
+val logstashLogbackEncoderVersion = "8.1"
+val micrometerRegistryPrometheusVersion = "1.14.5"
 val mockOAuth2ServerVersion = "2.1.10"
 val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.13.13"
-val nimbusSdkVersion = "11.20.1"
-val postgresqlVersion = "42.7.4"
-val testcontainersPostgresVersion = "1.20.4"
-val openTelemetryVersion = "1.44.1"
-val openTelemetryAnnotationsVersion = "2.10.0"
-val dropWizardVersion = "4.2.29"
+val mockkVersion = "1.13.17"
+val nimbusSdkVersion = "11.23.1"
+val postgresqlVersion = "42.7.5"
+val testcontainersPostgresVersion = "1.20.6"
+val openTelemetryVersion = "1.49.0"
+val openTelemetryAnnotationsVersion = "2.14.0"
+val dropWizardVersion = "4.2.30"
 val prometheusDropWizardVersion = "0.16.0"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.0.21"
+    kotlin("jvm") version "2.1.20"
     id("org.jmailen.kotlinter") version "5.0.1"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.51.0"
+    id("com.github.ben-manes.versions") version "0.52.0"
 }
 
 
