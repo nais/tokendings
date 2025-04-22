@@ -148,7 +148,7 @@ internal object DataSource {
             username = PostgresContainer.instance.username
             password = PostgresContainer.instance.password
             jdbcUrl = PostgresContainer.instance.jdbcUrl
-            connectionTimeout = 1000L
+            connectionTimeout = 30_000L
         }
     }
 }
