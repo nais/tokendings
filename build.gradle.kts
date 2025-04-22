@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.27.3"
-val flywayVersion = "10.21.0"
+val flywayVersion = "11.7.2"
 val h2Version = "2.3.232"
 val hikaricpVersion = "6.3.0"
 val junitJupiterVersion = "5.12.1"
@@ -18,7 +18,7 @@ val logstashLogbackEncoderVersion = "8.1"
 val micrometerRegistryPrometheusVersion = "1.14.5"
 val mockOAuth2ServerVersion = "2.1.10"
 val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.13.17"
+val mockkVersion = "1.14.0"
 val nimbusSdkVersion = "11.23.1"
 val postgresqlVersion = "42.7.5"
 val testcontainersPostgresVersion = "1.20.6"
