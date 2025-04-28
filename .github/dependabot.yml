@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      all-deps:
+      gradle-dependencies:
          patterns:
             - "*"
   - package-ecosystem: github-actions
