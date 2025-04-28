@@ -14,7 +14,7 @@ val kotlinLoggingVersion = "3.0.5"
 val kotlinVersion = "2.1.20"
 val kotliqueryVersion = "1.9.1"
 val ktorVersion = "3.1.2"
-val logbackVersion = "1.5.12"
+val logbackVersion = "1.5.18"
 val logstashLogbackEncoderVersion = "8.1"
 val micrometerRegistryPrometheusVersion = "1.14.6"
 val mockOAuth2ServerVersion = "2.1.10"
@@ -58,7 +58,7 @@ repositories {
 
 configurations.all {
     resolutionStrategy {
-        force("org.apache.commons:commons-compress:1.26.0")
+        force("org.apache.commons:commons-compress:1.27.1")
     }
 }
 
