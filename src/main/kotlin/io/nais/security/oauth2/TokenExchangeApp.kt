@@ -58,7 +58,6 @@ import mu.KotlinLogging
 import org.slf4j.event.Level
 import java.util.UUID
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
@@ -70,7 +69,7 @@ fun main() {
         engine.addShutdownHook {
             engine.stop(
                 gracePeriodMillis = (10L).seconds.inWholeMilliseconds,
-                timeoutMillis = (20L).milliseconds.inWholeMilliseconds,
+                timeoutMillis = (20L).seconds.inWholeMilliseconds,
             )
         }
         engine.start(wait = true)
