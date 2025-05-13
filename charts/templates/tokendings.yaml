@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "tokenx.tokendings.labels" . | nindent 4 }}
     team: {{ .Values.team }}
+    logs.nais.io/flow-loki: "true"
 spec:
   image: "{{ .Values.repository }}/{{ .Values.tokendings.image}}:{{ .Values.tokendings.tag}}"
   port: 8080
