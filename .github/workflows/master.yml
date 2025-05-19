@@ -27,9 +27,9 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@06832c7b30a0129d7fb559bcc6e43d26f6374244 # ratchet:gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@8379f6a1328ee0e06e2bb424dadb7b159856a326 # ratchet:gradle/actions/setup-gradle@v4
       - name: Generate and submit dependency graph
-        uses: gradle/actions/dependency-submission@06832c7b30a0129d7fb559bcc6e43d26f6374244 # ratchet:gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@8379f6a1328ee0e06e2bb424dadb7b159856a326 # ratchet:gradle/actions/dependency-submission@v4
       - name: Gradle build
         run: ./gradlew build
       - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # ratchet:sigstore/cosign-installer@v3
@@ -49,14 +49,14 @@ jobs:
           push_ghcr: true
           multi-platform: true
       - name: Update values.yaml
-        uses: fjogeleit/yaml-update-action@b75e8a929eb61bff6b67a6114943c9468f0bd933 # ratchet:fjogeleit/yaml-update-action@main
+        uses: fjogeleit/yaml-update-action@04ff6ec06568fd21197db746472e36cc425de850 # ratchet:fjogeleit/yaml-update-action@main
         with:
           valueFile: 'charts/values.yaml'
           propertyPath: 'tokendings.tag'
           value: ${{ steps.build-push-sign.outputs.version }}
           commitChange: false
       - name: Update Chart.yaml
-        uses: fjogeleit/yaml-update-action@b75e8a929eb61bff6b67a6114943c9468f0bd933 # ratchet:fjogeleit/yaml-update-action@main
+        uses: fjogeleit/yaml-update-action@04ff6ec06568fd21197db746472e36cc425de850 # ratchet:fjogeleit/yaml-update-action@main
         with:
           valueFile: 'charts/Chart.yaml'
           propertyPath: 'version'
