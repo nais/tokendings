@@ -10,6 +10,8 @@ spec:
     matchExpressions:
       - key: team
         operator: Exists
+    matchLabels:
+      nais.io/type: workload
   resources:
     - template: |
         apiVersion: networking.gke.io/v1alpha3
