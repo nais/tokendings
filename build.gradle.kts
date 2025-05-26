@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.27.3"
-val dropWizardVersion = "4.2.30"
+val dropWizardVersion = "4.2.32"
 val flywayVersion = "11.8.2"
 val h2Version = "2.3.232"
 val hikaricpVersion = "6.3.0"
@@ -20,7 +20,7 @@ val micrometerRegistryPrometheusVersion = "1.15.0"
 val mockOAuth2ServerVersion = "2.1.11"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.14.2"
-val nimbusSdkVersion = "11.24"
+val nimbusSdkVersion = "11.25"
 val openTelemetryAnnotationsVersion = "2.16.0"
 val openTelemetryVersion = "1.50.0"
 val postgresqlVersion = "42.7.5"
@@ -32,7 +32,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "2.1.21"
-    id("org.jmailen.kotlinter") version "5.0.2"
+    id("org.jmailen.kotlinter") version "5.1.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.52.0"
 }
