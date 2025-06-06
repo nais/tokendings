@@ -53,7 +53,6 @@ java {
 
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 
