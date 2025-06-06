@@ -17,7 +17,7 @@ val ktorVersion = "3.1.3"
 val logbackVersion = "1.5.18"
 val logstashLogbackEncoderVersion = "8.1"
 val micrometerRegistryPrometheusVersion = "1.15.0"
-val mockOAuth2ServerVersion = "2.1.11"
+val mockOAuth2ServerVersion = "2.2.1"
 val mockWebServerVersion = "4.12.0"
 val mockkVersion = "1.14.2"
 val nimbusSdkVersion = "11.25"
@@ -53,6 +53,7 @@ java {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 
