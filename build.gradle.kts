@@ -23,7 +23,7 @@ val mockkVersion = "1.14.2"
 val nimbusSdkVersion = "11.25"
 val openTelemetryAnnotationsVersion = "2.16.0"
 val openTelemetryVersion = "1.51.0"
-val postgresqlVersion = "42.7.6"
+val postgresqlVersion = "42.7.7"
 val prometheusDropWizardVersion = "0.16.0"
 val testcontainersPostgresVersion = "1.21.1"
 
