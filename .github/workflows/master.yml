@@ -32,7 +32,7 @@ jobs:
         uses: gradle/actions/dependency-submission@ac638b010cf58a27ee6c972d7336334ccaf61c96 # ratchet:gradle/actions/dependency-submission@v4
       - name: Gradle build
         run: ./gradlew build
-      - uses: sigstore/cosign-installer@fb28c2b6339dcd94da6e4cbcbc5e888961f6f8c3 # ratchet:sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # ratchet:sigstore/cosign-installer@v3
       - name: Verify distroless base image
         run: |
           cosign verify \
