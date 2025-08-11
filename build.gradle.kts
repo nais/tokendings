@@ -2,27 +2,27 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.27.3"
+val assertjVersion = "3.27.4"
 val dropWizardVersion = "4.2.33"
-val flywayVersion = "11.10.0"
+val flywayVersion = "11.11.0"
 val h2Version = "2.3.232"
-val hikaricpVersion = "6.3.0"
-val junitJupiterVersion = "5.13.2"
+val hikaricpVersion = "7.0.1"
+val junitJupiterVersion = "5.13.4"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
 val kotlinVersion = "2.2.0"
 val kotliqueryVersion = "1.9.1"
-val ktorVersion = "3.2.0"
+val ktorVersion = "3.2.3"
 val logbackVersion = "1.5.18"
 val logstashLogbackEncoderVersion = "8.1"
-val micrometerRegistryPrometheusVersion = "1.15.1"
+val micrometerRegistryPrometheusVersion = "1.15.2"
 val mockOAuth2ServerVersion = "2.2.1"
-val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.14.4"
-val nimbusSdkVersion = "11.26"
-val openTelemetryAnnotationsVersion = "2.17.0"
-val openTelemetryVersion = "1.51.0"
+val mockWebServerVersion = "5.1.0"
+val mockkVersion = "1.14.5"
+val nimbusSdkVersion = "11.27"
+val openTelemetryAnnotationsVersion = "2.18.1"
+val openTelemetryVersion = "1.53.0"
 val postgresqlVersion = "42.7.7"
 val prometheusDropWizardVersion = "0.16.0"
 val testcontainersPostgresVersion = "1.21.3"
@@ -32,7 +32,7 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 plugins {
     application
     kotlin("jvm") version "2.2.0"
-    id("org.jmailen.kotlinter") version "5.1.1"
+    id("org.jmailen.kotlinter") version "5.2.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.ben-manes.versions") version "0.52.0"
 }
@@ -58,7 +58,7 @@ repositories {
 
 configurations.all {
     resolutionStrategy {
-        force("org.apache.commons:commons-compress:1.27.1")
+        force("org.apache.commons:commons-compress:1.28.0")
     }
 }
 
