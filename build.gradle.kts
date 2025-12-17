@@ -13,7 +13,7 @@ val kotestVersion = "5.9.1"
 val kotlinLoggingVersion = "3.0.5"
 val kotlinVersion = "2.2.0"
 val kotliqueryVersion = "1.9.1"
-val ktorVersion = "3.2.0"
+val ktorVersion = "3.3.3"
 val logbackVersion = "1.5.18"
 val logstashLogbackEncoderVersion = "8.1"
 val micrometerRegistryPrometheusVersion = "1.15.1"
@@ -59,6 +59,7 @@ repositories {
 configurations.all {
     resolutionStrategy {
         force("org.apache.commons:commons-compress:1.27.1")
+        force("org.apache.commons:commons-lang3:3.20.0")
     }
 }
 
