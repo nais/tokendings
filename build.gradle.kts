@@ -2,39 +2,39 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.27.3"
-val dropWizardVersion = "4.2.33"
-val flywayVersion = "11.10.0"
-val h2Version = "2.3.232"
-val hikaricpVersion = "6.3.0"
-val junitJupiterVersion = "5.13.2"
+val assertjVersion = "3.27.6"
+val dropWizardVersion = "4.2.37"
+val flywayVersion = "11.19.1"
+val h2Version = "2.4.240"
+val hikaricpVersion = "7.0.2"
+val junitJupiterVersion = "6.0.1"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "5.9.1"
+val kotestVersion = "6.0.7"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.2.0"
+val kotlinVersion = "2.3.0"
 val kotliqueryVersion = "1.9.1"
 val ktorVersion = "3.3.3"
-val logbackVersion = "1.5.18"
-val logstashLogbackEncoderVersion = "8.1"
-val micrometerRegistryPrometheusVersion = "1.15.1"
-val mockOAuth2ServerVersion = "2.2.1"
-val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.14.4"
-val nimbusSdkVersion = "11.26"
-val openTelemetryAnnotationsVersion = "2.17.0"
-val openTelemetryVersion = "1.51.0"
-val postgresqlVersion = "42.7.7"
+val logbackVersion = "1.5.23"
+val logstashLogbackEncoderVersion = "9.0"
+val micrometerRegistryPrometheusVersion = "1.16.1"
+val mockOAuth2ServerVersion = "3.0.1"
+val mockWebServerVersion = "5.3.2"
+val mockkVersion = "1.14.7"
+val nimbusSdkVersion = "11.30.1"
+val openTelemetryAnnotationsVersion = "2.23.0"
+val openTelemetryVersion = "1.57.0"
+val postgresqlVersion = "42.7.8"
 val prometheusDropWizardVersion = "0.16.0"
-val testcontainersPostgresVersion = "1.21.3"
+val testcontainersPostgresVersion = "1.21.4"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.2.0"
-    id("org.jmailen.kotlinter") version "5.1.1"
+    kotlin("jvm") version "2.3.0"
+    id("org.jmailen.kotlinter") version "5.3.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.52.0"
+    id("com.github.ben-manes.versions") version "0.53.0"
 }
 
 
@@ -58,7 +58,7 @@ repositories {
 
 configurations.all {
     resolutionStrategy {
-        force("org.apache.commons:commons-compress:1.27.1")
+        force("org.apache.commons:commons-compress:1.28.0")
         force("org.apache.commons:commons-lang3:3.20.0")
     }
 }
