@@ -2,7 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.27.3"
+val assertjVersion = "3.27.7"
 val dropWizardVersion = "4.2.33"
 val flywayVersion = "11.10.0"
 val h2Version = "2.3.232"
