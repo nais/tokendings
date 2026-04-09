@@ -387,7 +387,7 @@ internal class ClientRegistrationApiTest {
                     issuerId = "mockaad",
                     subject = clientId,
                     audience = listOf("correct_aud"),
-                    //claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE),
+                    // claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE),
                 ),
             ).serialize()
 }
