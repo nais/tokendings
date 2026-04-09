@@ -20,6 +20,7 @@ import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.model.WellKnownForBearerAuth
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
 import io.nais.security.oauth2.retryingHttpClient
@@ -87,7 +88,7 @@ class AuthProvider(
 ) {
     companion object {
         fun fromWellKnown(wellKnownUrl: String): AuthProvider {
-            val wellKnown: WellKnown =
+            val wellKnown: WellKnownForBearerAuth =
                 runBlocking {
                     log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
