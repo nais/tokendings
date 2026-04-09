@@ -25,7 +25,7 @@ val openTelemetryAnnotationsVersion = "2.17.0"
 val openTelemetryVersion = "1.51.0"
 val postgresqlVersion = "42.7.7"
 val prometheusDropWizardVersion = "0.16.0"
-val testcontainersPostgresVersion = "1.21.3"
+val testcontainersPostgresVersion = "1.21.4"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
