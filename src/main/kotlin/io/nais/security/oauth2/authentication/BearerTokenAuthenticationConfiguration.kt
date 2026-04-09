@@ -42,14 +42,6 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
                         ),
                     )
                 }
-                val roles: MutableList<String> = payload.getClaim("roles") ?.asList(String::class.java) ?: mutableListOf()
-                require(roles.containsAll(properties.acceptedRoles)) {
-                    throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT.setDescription(
-                            "roles claim does not contain accepted roles (${properties.acceptedRoles}",
-                        ),
-                    )
-                }
                 JWTPrincipal(credentials.payload)
             } catch (o: OAuth2Exception) {
                 log.error("error in validation when authenticating.", o)

@@ -193,109 +193,6 @@ internal class ClientRegistrationApiTest {
     }
 
     @Test
-    fun `client registration call with valid bearer token missing required claim roles should fail`() {
-        withMockOAuth2Server {
-            val signingKeySet = jwkSet()
-            val config =
-                mockConfig(
-                    this,
-                    ClientRegistrationAuthProperties(
-                        identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
-                        acceptedAudience = listOf("correct_aud"),
-                        softwareStatementJwks = signingKeySet,
-                    ),
-                )
-            val token =
-                this
-                    .issueToken(
-                        "mockaad",
-                        "client1",
-                        DefaultOAuth2TokenCallback(
-                            issuerId = "mockaad",
-                            subject = "client1",
-                            audience = listOf("correct_aud"),
-                        ),
-                    ).serialize()
-
-            testApplication {
-                application { tokenExchangeApp(config, DefaultRouting(config)) }
-                client
-                    .post("registration/client") {
-                        header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                        header(HttpHeaders.Authorization, "Bearer $token")
-                        setBody(
-                            ClientRegistrationRequest(
-                                clientName = "cluster1:ns1:client1",
-                                jwks = JsonWebKeys(jwkSet()),
-                                softwareStatementJwt =
-                                    softwareStatementJwt(
-                                        SoftwareStatement(
-                                            appId = "cluster1:ns1:client1",
-                                            accessPolicyInbound = listOf("cluster1:ns1:client2"),
-                                            accessPolicyOutbound = emptyList(),
-                                        ),
-                                        signingKeySet.keys.first() as RSAKey,
-                                    ),
-                            ).toJson(),
-                        )
-                    }.status shouldBe HttpStatusCode.Unauthorized
-            }
-        }
-    }
-
-    @Test
-    fun `client registration call with valid bearer token with incorrect roles claim value should fail`() {
-        withMockOAuth2Server {
-            val signingKeySet = jwkSet()
-            val config =
-                mockConfig(
-                    this,
-                    ClientRegistrationAuthProperties(
-                        identityProviderWellKnownUrl = this.wellKnownUrl("mockaad").toString(),
-                        acceptedAudience = listOf("correct_aud"),
-                        softwareStatementJwks = signingKeySet,
-                    ),
-                )
-            val token =
-                this
-                    .issueToken(
-                        "mockaad",
-                        "client1",
-                        DefaultOAuth2TokenCallback(
-                            issuerId = "mockaad",
-                            subject = "client1",
-                            audience = listOf("correct_aud"),
-                            claims = mapOf("roles" to listOf("not_accepted")),
-                        ),
-                    ).serialize()
-
-            testApplication {
-                application { tokenExchangeApp(config, DefaultRouting(config)) }
-                client
-                    .post("registration/client") {
-                        header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-                        header(HttpHeaders.Authorization, "Bearer $token")
-                        setBody(
-                            ClientRegistrationRequest(
-                                clientName = "cluster1:ns1:client1",
-                                jwks = JsonWebKeys(jwkSet()),
-                                softwareStatementJwt =
-                                    softwareStatementJwt(
-                                        SoftwareStatement(
-                                            appId = "cluster1:ns1:client1",
-                                            accessPolicyInbound = listOf("cluster1:ns1:client2"),
-                                            accessPolicyOutbound = emptyList(),
-                                        ),
-                                        signingKeySet.keys.first() as RSAKey,
-                                    ),
-                            ).toJson(),
-                        )
-                    }.status shouldBe HttpStatusCode.Unauthorized
-            }
-        }
-    }
-
-    @Test
     fun `client registration call with valid bearer token and invalid software statement content should fail`() {
         withMockOAuth2Server {
             val signingKeySet = jwkSet()
@@ -490,7 +387,7 @@ internal class ClientRegistrationApiTest {
                     issuerId = "mockaad",
                     subject = clientId,
                     audience = listOf("correct_aud"),
-                    claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE),
+                    //claims = mapOf("roles" to BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE),
                 ),
             ).serialize()
 }

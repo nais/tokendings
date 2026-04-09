@@ -110,7 +110,7 @@ internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig =
         metricRegistry,
     )
 
-internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
+fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
     val jwks =
         konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
@@ -121,7 +121,7 @@ internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthPropertie
         ClientRegistrationAuthProperties(
             authProvider = AuthProvider.fromWellKnown(wellknownUrl),
             acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
+            acceptedRoles = emptyList(),
             softwareStatementJwks = jwks,
         )
     } else {

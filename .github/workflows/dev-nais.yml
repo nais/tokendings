@@ -1,0 +1,88 @@
+name: Build, push and sign
+on:
+  push:
+    branches:
+      - service_accounts
+    paths-ignore:
+      - "*.md"
+env:
+  FEATURE_REPOSITORY: oci://europe-north1-docker.pkg.dev/nais-io/nais/feature
+jobs:
+  build_push_sign:
+    permissions:
+      contents: "write"
+      id-token: "write"
+      packages: "write"
+    outputs:
+      img_to_deploy: ${{ steps.build-push-sign.outputs.tag }}
+      version: ${{ steps.build-push-sign.outputs.version }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # ratchet:actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # ratchet:gradle/actions/setup-gradle@v4
+      - name: Generate and submit dependency graph
+        uses: gradle/actions/dependency-submission@017a9effdb900e5b5b2fddfb590a105619dca3c3 # ratchet:gradle/actions/dependency-submission@v4
+      - name: Gradle build
+        run: ./gradlew build
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # ratchet:sigstore/cosign-installer@v3
+      - name: Verify distroless base image
+        run: |
+          cosign verify \
+          --certificate-identity "keyless@distroless.iam.gserviceaccount.com" \
+          --certificate-oidc-issuer "https://accounts.google.com" \
+          gcr.io/distroless/java21-debian12:nonroot
+      - name: "Build and push image"
+        uses: nais/platform-build-push-sign@main # ratchet:exclude
+        id: build-push-sign
+        with:
+          name: tokendings
+          google_service_account: gh-tokendings
+          workload_identity_provider: ${{ secrets.NAIS_IO_WORKLOAD_IDENTITY_PROVIDER }}
+          push_ghcr: true
+          multi-platform: true
+      - name: Update values.yaml
+        uses: fjogeleit/yaml-update-action@04ff6ec06568fd21197db746472e36cc425de850 # ratchet:fjogeleit/yaml-update-action@main
+        with:
+          valueFile: 'charts/values.yaml'
+          propertyPath: 'tokendings.tag'
+          value: ${{ steps.build-push-sign.outputs.version }}
+          commitChange: false
+      - name: Update Chart.yaml
+        uses: fjogeleit/yaml-update-action@04ff6ec06568fd21197db746472e36cc425de850 # ratchet:fjogeleit/yaml-update-action@main
+        with:
+          valueFile: 'charts/Chart.yaml'
+          propertyPath: 'version'
+          value: ${{ steps.build-push-sign.outputs.version }}
+          commitChange: false
+      - uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # ratchet:azure/setup-helm@v4
+        name: "Setup Helm"
+        with:
+          version: "v3.15.1"
+      - name: Build Chart
+        run: |-
+          sed -i "s/^version: .*/version: ${{ steps.build-push-sign.outputs.version }}/g" charts/Chart.yaml
+          helm package charts
+      - name: Push Chart
+        run: |-
+          helm push tokenx*.tgz ${{ env.FEATURE_REPOSITORY }}
+  rollout:
+    needs:
+      - build_push_sign
+    runs-on: fasit-deploy
+    permissions:
+      id-token: write
+    steps:
+      - uses: nais/fasit-deploy@v3 # ratchet:exclude
+        with:
+          chart: ${{ env.FEATURE_REPOSITORY }}/tokenx
+          version: ${{ needs.build_push_sign.outputs.version }}
+          target: |
+            {"kind":"tenant","tenant":"dev-nais","environment":"dev"}

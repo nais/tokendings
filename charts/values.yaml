@@ -24,6 +24,8 @@ tokendings:
     APPLICATION_PORT: "8080"
     AUTH_CLIENT_ID: "jwker"
     AUTH_CLIENT_JWKS: ""
+    AUTH_WELL_KNOWN_URL: ""
+    AUTH_ACCEPTED_AUDIENCE: "tokendings"
     TOKEN_EXPIRY_SECONDS: 900
   outbound: []
   database:

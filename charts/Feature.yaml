@@ -44,6 +44,11 @@ values:
     required: true
     config:
       type: string
+  tokendings.env.AUTH_WELL_KNOWN_URL:
+    description: The well-known url for the k8s apiserver.
+    required: true
+    computed:
+      template: '"https://container.googleapis.com/v1/projects/{{ .Env.project_id }}/locations/{{ .Env.location }}/clusters/nais-{{ .Env.name }}/.well-known/openid-configuration"'
   tokendings.env.SUBJECT_TOKEN_ISSUERS:
     description: Comma-separated list of well-known urls to trusted token issuers in a token exchange
     required: true
