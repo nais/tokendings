@@ -1,17 +1,18 @@
 package io.nais.security.oauth2.authentication
 
 import com.auth0.jwk.Jwk
-import com.auth0.jwk.JwkProvider
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.auth.AuthenticationConfig
+import io.ktor.server.auth.Principal
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.AuthProvider
 import io.nais.security.oauth2.model.OAuth2Exception
 import mu.KotlinLogging
 import java.security.interfaces.ECPublicKey
@@ -21,30 +22,46 @@ private val log = KotlinLogging.logger { }
 
 object BearerTokenAuth {
     const val CLIENT_REGISTRATION_AUTH = "CLIENT_REGISTRATION_AUTH"
-    val ACCEPTED_ROLES_CLAIM_VALUE = listOf("access_as_application")
 }
+
+data class AuthenticatedClient(
+    val jwtPrincipal: JWTPrincipal,
+    val provider: AuthProvider,
+) : Principal
 
 fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
         val properties = appConfig.clientRegistrationAuthProperties
-        val jwkProvider = properties.jwkProvider
+        val providersByIssuer = properties.providersByIssuer
         realm = "BEARER_AUTH"
         verifier { token ->
-            bearerTokenVerifier(jwkProvider, properties.issuer, token)
+            bearerTokenVerifier(providersByIssuer, token)
         }
         validate { credentials ->
             try {
                 val payload = credentials.payload
-                require(payload.audience.containsAll(properties.acceptedAudience)) {
+                if (!payload.audience.containsAll(properties.acceptedAudience)) {
                     throw OAuth2Exception(
                         OAuth2Error.INVALID_CLIENT.setDescription(
                             "audience claim does not contain accepted audience (${properties.acceptedAudience})",
                         ),
                     )
                 }
-                JWTPrincipal(credentials.payload)
+                val provider =
+                    providersByIssuer[payload.issuer]
+                        ?: throw OAuth2Exception(
+                            OAuth2Error.INVALID_CLIENT.setDescription("unknown issuer: ${payload.issuer}"),
+                        )
+                if (provider.allowedSubjects != null && payload.subject !in provider.allowedSubjects) {
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "subject '${payload.subject}' is not authorized for issuer '${provider.issuer}'",
+                        ),
+                    )
+                }
+                AuthenticatedClient(JWTPrincipal(credentials.payload), provider)
             } catch (o: OAuth2Exception) {
-                log.error("error in validation when authenticating.", o)
+                log.warn("authentication failed: ${o.message}", o)
                 null
             }
         }
@@ -52,25 +69,39 @@ fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
 }
 
 internal fun bearerTokenVerifier(
-    jwkProvider: JwkProvider,
-    issuer: String,
+    providersByIssuer: Map<String, AuthProvider>,
     token: HttpAuthHeader,
 ): JWTVerifier =
     try {
+        val jwt =
+            token.getBlob()?.let { JWT.decode(it) }
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to decode token"))
+        val issuer =
+            jwt.issuer
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token missing iss claim"))
+        val kid =
+            jwt.keyId
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("token missing kid header"))
+        val provider =
+            providersByIssuer[issuer]
+                ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("unknown issuer: $issuer"))
         val jwk =
-            token.getBlob()?.let { jwkProvider.get(JWT.decode(it).keyId) }
-                ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for token"))
+            try {
+                provider.jwkProvider.get(kid)
+            } catch (e: Exception) {
+                throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for kid: $kid"))
+            }
         val algorithm = jwk.makeAlgorithm()
 
         DelegatingJWTVerifier(
             JWT
                 .require(algorithm)
-                .withIssuer(issuer)
+                .withIssuer(provider.issuer)
                 .build(),
         )
-    } catch (t: Throwable) {
-        log.error("received exception when validating token, message: ${t.message}", t)
-        throw t
+    } catch (e: Exception) {
+        log.warn("token verification failed: ${e.message}", e)
+        throw e
     }
 
 private fun HttpAuthHeader.getBlob(): String? =

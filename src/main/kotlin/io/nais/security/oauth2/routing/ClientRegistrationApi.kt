@@ -4,6 +4,7 @@ import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -11,6 +12,7 @@ import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.nais.security.oauth2.authentication.AuthenticatedClient
 import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.model.AccessPolicy
@@ -31,6 +33,17 @@ internal fun Route.clientRegistrationApi(config: AppConfiguration) {
                 val request: ClientRegistrationRequest = call.receive(ClientRegistrationRequest::class).validate()
                 val acceptedSignatureKeys = config.clientRegistrationAuthProperties.softwareStatementJwks
                 val softwareStatement = request.verifySoftwareStatement(acceptedSignatureKeys)
+
+                val authenticatedClient = call.principal<AuthenticatedClient>()
+                val clusterName = authenticatedClient?.provider?.allowedClusterName
+                if (clusterName != null && !softwareStatement.appId.startsWith("$clusterName:")) {
+                    throw OAuth2Exception(
+                        OAuth2Error.INVALID_CLIENT.setDescription(
+                            "provider is not authorized to register clients for '${softwareStatement.appId}'" +
+                                " (allowed cluster: '$clusterName')",
+                        ),
+                    )
+                }
 
                 val grantTypes: List<String> =
                     when {
