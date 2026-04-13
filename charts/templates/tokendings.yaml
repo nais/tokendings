@@ -45,10 +45,8 @@ spec:
       {{- if .Values.tokendings.authWellKnownUrl }}
         {{- $hosts = append $hosts ((urlParse .Values.tokendings.authWellKnownUrl).host) -}}
       {{- end }}
-      {{- if .Values.tokendings.authProviderConfigs }}
-        {{- range .Values.tokendings.authProviderConfigs | fromJsonArray }}
-          {{- $hosts = append $hosts ((urlParse .wellKnownUrl).host) -}}
-        {{- end }}
+      {{- if .Values.tokendings.authOnPremWellKnownUrl }}
+        {{- $hosts = append $hosts ((urlParse .Values.tokendings.authOnPremWellKnownUrl).host) -}}
       {{- end }}
       {{- range splitList "," .Values.tokendings.env.SUBJECT_TOKEN_ISSUERS }}
         {{- $url := trim . -}}

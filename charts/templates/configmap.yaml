@@ -22,11 +22,15 @@ data:
       }
     }
   {{- end }}
-  {{- if or .Values.tokendings.authWellKnownUrl .Values.tokendings.authProviderConfigs}}
   AUTH_PROVIDER_CONFIGS: |
-    {{- if .Values.tokendings.authProviderConfigs }}
-    {{ .Values.tokendings.authProviderConfigs | toJson }}
-    {{- else if .Values.tokendings.authWellKnownUrl }}
-    [{"wellKnownUrl": "{{ .Values.tokendings.authWellKnownUrl }}", "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]}]
-    {{- end }}
-  {{- end }}
+    [
+      {
+        "wellKnownUrl": "{{ .Values.tokendings.authWellKnownUrl | required ".Values.tokendings.authWellKnownUrl is required"}}",
+        "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
+      }{{- if .Values.tokendings.authOnPremWellKnownUrl }},
+      {
+        "wellKnownUrl": "{{ .Values.tokendings.authOnPremWellKnownUrl }}",
+        "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
+      }
+      {{- end }}
+    ]

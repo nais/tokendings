@@ -27,7 +27,7 @@ tokendings:
     TOKEN_EXPIRY_SECONDS: 900
   additionalOutboundHosts: []
   authWellKnownUrl: ""
-  authProviderConfigs: "" # optional override, see README for structure
+  authOnPremWellKnownUrl: ""
   database:
     diskSize: 10
     highAvailability: true

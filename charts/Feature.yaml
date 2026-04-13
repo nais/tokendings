@@ -49,10 +49,8 @@ values:
     required: true
     computed:
       template: '"{{ .Env.apiserver_oidc_well_known_url }}"'
-  tokendings.authProviderConfigs:
-    description: >-
-      Optional override. JSON array of external auth provider configs.
-      If empty, built automatically from authWellKnownUrl without cluster name restriction.
+  tokendings.authOnPremWellKnownUrl:
+    description: Optional well-known URL for on-premises k8s apiserver used for client registration auth.
     config:
       type: string
   tokendings.env.SUBJECT_TOKEN_ISSUERS:
