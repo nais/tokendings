@@ -85,4 +85,10 @@ jobs:
           chart: ${{ env.FEATURE_REPOSITORY }}/tokenx
           version: ${{ needs.build_push_sign.outputs.version }}
           target: |
+            {"kind":"tenant","tenant":"dev-nais"}
+      - uses: nais/fasit-deploy@6e5772c21e82cb101537dd5e3ce78d70e2ae6402 # ratchet:nais/fasit-deploy@v3
+        with:
+          chart: ${{ env.FEATURE_REPOSITORY }}/tokenx
+          version: ${{ needs.build_push_sign.outputs.version }}
+          target: |
             {"kind":"tenant","tenant":"nav"}
