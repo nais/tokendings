@@ -39,13 +39,27 @@ spec:
     inbound:
       rules:
         - application: {{ include "tokenx.fullname" . }}-jwker
-    {{ if .Values.tokendings.outbound }}
     outbound:
       external:
-      {{ range .Values.tokendings.outbound }}
+      {{- $hosts := list -}}
+      {{- if .Values.tokendings.authWellKnownUrl }}
+        {{- $hosts = append $hosts ((urlParse .Values.tokendings.authWellKnownUrl).host) -}}
+      {{- end }}
+      {{- if .Values.tokendings.authOnPremWellKnownUrl }}
+        {{- $hosts = append $hosts ((urlParse .Values.tokendings.authOnPremWellKnownUrl).host) -}}
+      {{- end }}
+      {{- range splitList "," .Values.tokendings.env.SUBJECT_TOKEN_ISSUERS }}
+        {{- $url := trim . -}}
+        {{- if $url }}
+          {{- $hosts = append $hosts ((urlParse $url).host) -}}
+        {{- end }}
+      {{- end }}
+      {{- range .Values.tokendings.additionalOutboundHosts }}
+        {{- $hosts = append $hosts . -}}
+      {{- end }}
+      {{- range $hosts | uniq | sortAlpha }}
         - host: {{ . }}
-      {{ end }}
-    {{ end }}
+      {{- end }}
   gcp:
     sqlInstances:
       - type: POSTGRES_14
@@ -65,17 +79,13 @@ spec:
             value: "300"
   ingresses:
     - "{{- include "tokenx.tokendings.URL" . }}"
-  {{- if .Values.tokendings.mapSubjectTokenClaims }}
   envFrom:
-    - configmap: {{ include "tokenx.fullname" . }}-tokendings-mappings
-  {{- end }}
+    - configmap: {{ include "tokenx.fullname" . }}
   env:
   {{ range $key,$value:= .Values.tokendings.env }}
-    - name: "{{ $key}}"
+    - name: "{{ $key }}"
       value: {{ $value | quote }}
   {{ end }}
     - name: "ISSUER_URL"
       value: "{{- include "tokenx.tokendings.URL" . }}"
-    - name: "AUTH_ACCEPTED_AUDIENCE"
-      value: "{{- include "tokenx.tokendings.URL" . }}/registration/client"
   skipCaBundle: true

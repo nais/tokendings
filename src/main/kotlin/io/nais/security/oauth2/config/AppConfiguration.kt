@@ -9,7 +9,6 @@ import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.JwkCache.BUCKET_SIZE
 import io.nais.security.oauth2.config.JwkCache.CACHE_SIZE
 import io.nais.security.oauth2.config.JwkCache.EXPIRES_IN
@@ -20,6 +19,7 @@ import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.model.WellKnownForBearerAuth
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
 import io.nais.security.oauth2.retryingHttpClient
@@ -60,34 +60,33 @@ data class ClientRegistryProperties(
 )
 
 data class ClientRegistrationAuthProperties(
-    val authProvider: AuthProvider,
+    val authProviders: List<AuthProvider>,
     val acceptedAudience: List<String>,
-    val acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
     val softwareStatementJwks: JWKSet,
 ) {
-    constructor(
-        identityProviderWellKnownUrl: String,
-        acceptedAudience: List<String>,
-        acceptedRoles: List<String> = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-        softwareStatementJwks: JWKSet,
-    ) : this(
-        authProvider = AuthProvider.fromWellKnown(identityProviderWellKnownUrl),
-        acceptedAudience = acceptedAudience,
-        acceptedRoles = acceptedRoles,
-        softwareStatementJwks = softwareStatementJwks,
-    )
+    init {
+        val issuers = authProviders.map { it.issuer }
+        require(issuers.size == issuers.distinct().size) {
+            "Duplicate issuers in auth providers: ${issuers.groupingBy { it }.eachCount().filter { it.value > 1 }.keys}"
+        }
+    }
 
-    val issuer = authProvider.issuer
-    val jwkProvider = authProvider.jwkProvider
+    val providersByIssuer: Map<String, AuthProvider> = authProviders.associateBy { it.issuer }
 }
 
 class AuthProvider(
     val issuer: String,
     val jwkProvider: JwkProvider,
+    val allowedClusterName: String? = null,
+    val allowedSubjects: Set<String>? = null,
 ) {
     companion object {
-        fun fromWellKnown(wellKnownUrl: String): AuthProvider {
-            val wellKnown: WellKnown =
+        fun fromWellKnown(
+            wellKnownUrl: String,
+            allowedClusterName: String? = null,
+            allowedSubjects: Set<String>? = null,
+        ): AuthProvider {
+            val wellKnown: WellKnownForBearerAuth =
                 runBlocking {
                     log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
@@ -97,7 +96,7 @@ class AuthProvider(
                     .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
                     .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
                     .build()
-            return AuthProvider(wellKnown.issuer, jwk)
+            return AuthProvider(wellKnown.issuer, jwk, allowedClusterName, allowedSubjects)
         }
 
         fun fromSelfSigned(

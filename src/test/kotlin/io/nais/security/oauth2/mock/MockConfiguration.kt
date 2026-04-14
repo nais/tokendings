@@ -1,12 +1,9 @@
 package io.nais.security.oauth2.mock
 
-import com.auth0.jwk.JwkProvider
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
-import io.mockk.every
-import io.mockk.mockk
-import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.AuthProvider
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.config.ServerProperties
@@ -20,7 +17,6 @@ import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
-import io.nais.security.oauth2.model.WellKnown
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.tokenExchangeApp
@@ -49,9 +45,8 @@ fun mockConfig(
             clientRegistrationAuthProperties != null -> clientRegistrationAuthProperties
             mockOAuth2Server != null ->
                 ClientRegistrationAuthProperties(
-                    identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("aadmock").toString(),
+                    authProviders = listOf(AuthProvider.fromWellKnown(mockOAuth2Server.wellKnownUrl("aadmock").toString())),
                     acceptedAudience = listOf("tokendings"),
-                    acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
                     softwareStatementJwks = jwkSet(),
                 )
             else -> mockBearerTokenAuthenticationProperties()
@@ -72,22 +67,11 @@ fun mockConfig(
 }
 
 fun mockBearerTokenAuthenticationProperties(): ClientRegistrationAuthProperties =
-    mockBearerTokenAuthenticationProperties(
-        mockk<WellKnown>().also {
-            every { it.jwksUri } returns "http://na"
-            every { it.issuer } returns "http://na"
-        },
-        mockk(),
+    ClientRegistrationAuthProperties(
+        authProviders = emptyList(),
+        acceptedAudience = emptyList(),
+        softwareStatementJwks = jwkSet(),
     )
-
-fun mockBearerTokenAuthenticationProperties(
-    wellKnown: WellKnown,
-    jwkProvider: JwkProvider,
-): ClientRegistrationAuthProperties =
-    mockk<ClientRegistrationAuthProperties>().also {
-        every { it.issuer } returns wellKnown.issuer
-        every { it.jwkProvider } returns jwkProvider
-    }
 
 fun rotatingKeyStore(): RotatingKeyStore = MockRotatingKeyStore()
 

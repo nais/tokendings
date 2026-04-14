@@ -1,6 +1,10 @@
 package io.nais.security.oauth2.config
 
 import com.codahale.metrics.MetricRegistry
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
@@ -11,12 +15,12 @@ import com.natpryce.konfig.longType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
 import com.nimbusds.jose.jwk.JWKSet
-import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PORT
 import io.nais.security.oauth2.config.EnvKey.APPLICATION_PROFILE
 import io.nais.security.oauth2.config.EnvKey.AUTH_ACCEPTED_AUDIENCE
 import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_ID
 import io.nais.security.oauth2.config.EnvKey.AUTH_CLIENT_JWKS
+import io.nais.security.oauth2.config.EnvKey.AUTH_PROVIDER_CONFIGS
 import io.nais.security.oauth2.config.EnvKey.AUTH_WELL_KNOWN_URL
 import io.nais.security.oauth2.config.EnvKey.DB_JDBC_URL
 import io.nais.security.oauth2.config.EnvKey.DEFAULT_TOKEN_EXPIRY_SECONDS
@@ -44,6 +48,7 @@ internal object EnvKey {
     const val DB_JDBC_URL = "DB_JDBC_URL"
     const val AUTH_ACCEPTED_AUDIENCE = "AUTH_ACCEPTED_AUDIENCE"
     const val AUTH_WELL_KNOWN_URL = "AUTH_WELL_KNOWN_URL"
+    const val AUTH_PROVIDER_CONFIGS = "AUTH_PROVIDER_CONFIGS"
     const val AUTH_CLIENT_JWKS = "AUTH_CLIENT_JWKS"
     const val AUTH_CLIENT_ID = "AUTH_CLIENT_ID"
     const val APPLICATION_PORT = "APPLICATION_PORT"
@@ -53,6 +58,13 @@ internal object EnvKey {
     const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
     const val SUBJECT_TOKEN_MAPPINGS = "SUBJECT_TOKEN_MAPPINGS"
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AuthProviderConfig(
+    @JsonProperty("wellKnownUrl") val wellKnownUrl: String,
+    @JsonProperty("allowedClusterName") val allowedClusterName: String? = null,
+    @JsonProperty("allowedSubjects") val allowedSubjects: List<String> = emptyList(),
+)
 
 object Configuration {
     private val issuerUrl = konfig[Key(ISSUER_URL, stringType)]
@@ -110,27 +122,45 @@ internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig =
         metricRegistry,
     )
 
-internal fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
-    val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
+fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val jwks =
         konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
-            log.info("Loaded ${jwkSet.keys.size} keys from JWKS with kids: ${jwkSet.keys.map { it.keyID }}")
+            log.info("loaded ${jwkSet.keys.size} keys from JWKS with key IDs: ${jwkSet.keys.map { it.keyID }}")
         }
 
-    return if (wellknownUrl != null) {
-        ClientRegistrationAuthProperties(
-            authProvider = AuthProvider.fromWellKnown(wellknownUrl),
-            acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
-            softwareStatementJwks = jwks,
-        )
-    } else {
-        val issuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
-        ClientRegistrationAuthProperties(
-            authProvider = AuthProvider.fromSelfSigned(issuer, jwks),
-            acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
-            acceptedRoles = emptyList(),
-            softwareStatementJwks = jwks,
-        )
-    }
+    val providerConfigsJson = konfig.getOrNull(Key(AUTH_PROVIDER_CONFIGS, stringType))
+    val wellknownUrl = konfig.getOrNull(Key(AUTH_WELL_KNOWN_URL, stringType))
+
+    val providers =
+        when {
+            providerConfigsJson != null -> {
+                log.debug("using external auth providers from AUTH_PROVIDER_CONFIGS")
+                val configs: List<AuthProviderConfig> = jacksonObjectMapper().readValue(providerConfigsJson)
+                configs
+                    .map { config ->
+                        AuthProvider.fromWellKnown(
+                            wellKnownUrl = config.wellKnownUrl,
+                            allowedClusterName = config.allowedClusterName,
+                            allowedSubjects = config.allowedSubjects.toSet().ifEmpty { null },
+                        )
+                    }.also {
+                        log.info("loaded ${it.size} external auth providers from AUTH_PROVIDER_CONFIGS: {}", configs)
+                    }
+            }
+            wellknownUrl != null -> {
+                log.info("using single external auth provider from AUTH_WELL_KNOWN_URL={} (legacy)", wellknownUrl)
+                listOf(AuthProvider.fromWellKnown(wellknownUrl))
+            }
+            else -> {
+                val selfSignedIssuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
+                log.info("using self-signed auth provider with issuer=$selfSignedIssuer")
+                listOf(AuthProvider.fromSelfSigned(selfSignedIssuer, jwks))
+            }
+        }
+
+    return ClientRegistrationAuthProperties(
+        authProviders = providers,
+        acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
+        softwareStatementJwks = jwks,
+    )
 }

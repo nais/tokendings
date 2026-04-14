@@ -1,11 +1,11 @@
-{{- if .Values.tokendings.mapSubjectTokenClaims }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "tokenx.fullname" . }}-tokendings-mappings
+  name: {{ include "tokenx.fullname" . }}
   labels:
     {{- include "tokenx.tokendings.labels" . | nindent 4 }}
 data:
+  {{- if .Values.tokendings.mapSubjectTokenClaims }}
   SUBJECT_TOKEN_MAPPINGS: |
     {
       "https://test.idporten.no/.well-known/openid-configuration": {
@@ -21,4 +21,16 @@ data:
         }
       }
     }
-{{- end }}
+  {{- end }}
+  AUTH_PROVIDER_CONFIGS: |
+    [
+      {
+        "wellKnownUrl": "{{ .Values.tokendings.authWellKnownUrl | required ".Values.tokendings.authWellKnownUrl is required"}}",
+        "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
+      }{{- if .Values.tokendings.authOnPremWellKnownUrl }},
+      {
+        "wellKnownUrl": "{{ .Values.tokendings.authOnPremWellKnownUrl }}",
+        "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
+      }
+      {{- end }}
+    ]

@@ -4,8 +4,8 @@ import com.nimbusds.jose.jwk.JWKSet
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.nais.security.oauth2.authentication.BearerTokenAuth
 import io.nais.security.oauth2.config.AppConfiguration
+import io.nais.security.oauth2.config.AuthProvider
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
 import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.tokenExchangeApp
@@ -26,9 +26,8 @@ fun main() {
 
     val clientRegistrationAuthProps =
         ClientRegistrationAuthProperties(
-            identityProviderWellKnownUrl = mockOAuth2Server.wellKnownUrl("/aadmock").toString(),
+            authProviders = listOf(AuthProvider.fromWellKnown(mockOAuth2Server.wellKnownUrl("/aadmock").toString())),
             acceptedAudience = listOf("tokendings"),
-            acceptedRoles = BearerTokenAuth.ACCEPTED_ROLES_CLAIM_VALUE,
             softwareStatementJwks = jwkerJwks,
         )
 

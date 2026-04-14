@@ -69,3 +69,9 @@ data class WellKnown(
     @JsonProperty("subject_types_supported")
     val subjectTypesSupported: List<String> = listOf("public"),
 )
+
+data class WellKnownForBearerAuth(
+    val issuer: String,
+    @JsonProperty("jwks_uri")
+    val jwksUri: String,
+)
