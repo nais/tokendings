@@ -85,4 +85,4 @@ jobs:
           chart: ${{ env.FEATURE_REPOSITORY }}/tokenx
           version: ${{ needs.build_push_sign.outputs.version }}
           target: |
-            {"kind":"tenant"}
+            {"kind":"tenant","tenant":"nav"}
