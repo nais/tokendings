@@ -1,7 +1,6 @@
 package io.nais.security.oauth2.authentication
 
 import com.auth0.jwk.Jwk
-import com.auth0.jwk.UrlJwkProvider
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.interfaces.JWTVerifier
@@ -86,14 +85,6 @@ internal fun bearerTokenVerifier(
         val provider =
             providersByIssuer[issuer]
                 ?: throw OAuth2Exception(OAuth2Error.INVALID_CLIENT.setDescription("unknown issuer: $issuer"))
-
-        log.info(
-            "verifying token with kid=$kid from issuer=$issuer using provider with allowed cluster '${provider.allowedClusterName}' and allowed subjects ${provider.allowedSubjects}",
-        )
-        log.info("jwks for issuer $issuer")
-        (provider.jwkProvider as? UrlJwkProvider)?.all?.forEach {
-            log.info("  - kid=${it.id}, alg=${it.algorithm}")
-        }
 
         val jwk =
             try {
