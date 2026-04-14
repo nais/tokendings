@@ -95,6 +95,7 @@ class AuthProvider(
                 JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
                     .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
                     .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+                    .headers(mapOf("Accept" to "application/json, application/jwk-set+json"))
                     .build()
             return AuthProvider(wellKnown.issuer, jwk, allowedClusterName, allowedSubjects)
         }

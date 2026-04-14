@@ -90,6 +90,7 @@ internal fun bearerTokenVerifier(
             try {
                 provider.jwkProvider.get(kid)
             } catch (e: Exception) {
+                log.warn("failed to retrieve JWK for kid=$kid from issuer=$issuer: ${e.message}", e)
                 throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("unable to find public key for kid: $kid"))
             }
         val algorithm = jwk.makeAlgorithm()
