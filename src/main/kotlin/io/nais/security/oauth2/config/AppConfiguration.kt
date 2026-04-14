@@ -88,7 +88,7 @@ class AuthProvider(
         ): AuthProvider {
             val wellKnown: WellKnownForBearerAuth =
                 runBlocking {
-                    log.info("getting OpenID Connect server metadata from well-known url=$wellKnownUrl")
+                    log.info("getting external auth provider discovery document from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
                 }
             val jwk =
@@ -142,7 +142,7 @@ class SubjectTokenIssuer(
 ) {
     val wellKnown: WellKnown =
         runBlocking {
-            log.info("getting OAuth2 server metadata from well-known url=$wellKnownUrl")
+            log.info("getting subject token discovery document from well-known url=$wellKnownUrl")
             retryingHttpClient.get(wellKnownUrl).body()
         }
     val issuer = wellKnown.issuer

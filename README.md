@@ -159,6 +159,24 @@ Each object configures an external OIDC provider — the `wellKnownUrl` is fetch
 
 For more details about the client registration process see this diagram [Client Registration](doc/client_registration.svg)
 
+## Running locally
+
+Prerequisites: [Mise](https://mise.jdx.dev/) and Docker.
+
+```shell
+mise run local
+```
+
+This starts the required infrastructure (Postgres, mock-oauth2-server, OpenTelemetry) via Docker Compose and then builds and runs Tokendings on `http://localhost:8080`.
+
+To start only the infrastructure without the app:
+
+```shell
+mise run services
+```
+
+Configuration is read automatically from `local.env`.
+
 ## Upgrading the gradle wrapper
 Find the newest version of gradle here: https://gradle.org/releases/
 Then run this command:

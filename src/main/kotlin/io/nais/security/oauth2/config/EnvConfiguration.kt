@@ -31,12 +31,21 @@ import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
 import io.nais.security.oauth2.model.IssuerClaimMappings
 import io.nais.security.oauth2.model.issuerClaimMappingsFromJson
 import mu.KotlinLogging
+import java.io.File
 import java.time.Duration
 
 private val log = KotlinLogging.logger {}
+
 val konfig =
-    ConfigurationProperties.systemProperties() overriding
-        EnvironmentVariables()
+    run {
+        val base = ConfigurationProperties.systemProperties() overriding EnvironmentVariables()
+        val localEnvFile = File("local.env")
+        if (localEnvFile.exists()) {
+            base overriding ConfigurationProperties.fromFile(localEnvFile)
+        } else {
+            base
+        }
+    }
 
 enum class Profile {
     NON_PROD,
@@ -125,7 +134,7 @@ internal fun databaseConfig(metricRegistry: MetricRegistry): DatabaseConfig =
 fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
     val jwks =
         konfig[Key(AUTH_CLIENT_JWKS, stringType)].let { JWKSet.parse(it) }.also { jwkSet ->
-            log.info("loaded ${jwkSet.keys.size} keys from JWKS with key IDs: ${jwkSet.keys.map { it.keyID }}")
+            log.info("loaded ${jwkSet.keys.size} keys from AUTH_CLIENT_JWKS with key IDs: ${jwkSet.keys.map { it.keyID }}")
         }
 
     val providerConfigsJson = konfig.getOrNull(Key(AUTH_PROVIDER_CONFIGS, stringType))

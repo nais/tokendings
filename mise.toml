@@ -1,3 +1,12 @@
 [tools]
 java = "temurin-21.0.10+7.0.LTS"
 step = "0.30.2"
+
+[tasks.services]
+description = "Start local infrastructure (Postgres, mock-oauth2-server, otel)"
+run = "docker compose up -d"
+
+[tasks.local]
+description = "Build and run Tokendings locally"
+depends = ["services"]
+run = "./gradlew run"
