@@ -44,15 +44,15 @@ values:
     required: true
     config:
       type: string
-#  tokendings.authWellKnownUrl:
-#    description: The well-known url for the k8s apiserver used for client registration auth.
-#    required: true
-#    computed:
-#      template: '"{{ .Env.apiserver_oidc_well_known_url }}"'
-#  tokendings.authOnPremWellKnownUrl:
-#    description: Optional well-known URL for on-premises k8s apiserver used for client registration auth.
-#    config:
-#      type: string
+  tokendings.authWellKnownUrl:
+    description: The well-known url for the k8s apiserver used for client registration auth.
+    required: true
+    computed:
+      template: '"{{ .Env.apiserver_oidc_well_known_url }}"'
+  tokendings.authOnPremWellKnownUrl:
+    description: Optional well-known URL for on-premises k8s apiserver used for client registration auth.
+    config:
+      type: string
   tokendings.env.SUBJECT_TOKEN_ISSUERS:
     description: Comma-separated list of well-known urls to trusted token issuers in a token exchange
     required: true

@@ -23,7 +23,7 @@ tokendings:
     SUBJECT_TOKEN_ISSUERS: ""
     APPLICATION_PORT: "8080"
     AUTH_CLIENT_JWKS: ""
-    AUTH_CLIENT_ID: "jwker"
+    AUTH_ACCEPTED_AUDIENCE: "tokendings"
     TOKEN_EXPIRY_SECONDS: 900
   additionalOutboundHosts: []
   authWellKnownUrl: ""

@@ -88,6 +88,4 @@ spec:
   {{ end }}
     - name: "ISSUER_URL"
       value: "{{- include "tokenx.tokendings.URL" . }}"
-    - name: "AUTH_ACCEPTED_AUDIENCE"
-      value: "{{- include "tokenx.tokendings.URL" . }}/registration/client"
   skipCaBundle: true
