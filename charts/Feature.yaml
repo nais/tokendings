@@ -44,15 +44,18 @@ values:
     required: true
     config:
       type: string
-  tokendings.authWellKnownUrl:
-    description: The well-known url for the k8s apiserver used for client registration auth.
-    required: true
+  tokendings.registrationApi.authWellKnownUrl:
+    description: The well-known url for the k8s apiserver used for client registration auth. Required when useServiceAccountAuth is true.
     computed:
       template: '"{{ .Env.apiserver_oidc_well_known_url }}"'
-  tokendings.authOnPremWellKnownUrl:
+  tokendings.registrationApi.authOnPremWellKnownUrl:
     description: Optional well-known URL for on-premises k8s apiserver used for client registration auth.
     config:
       type: string
+  tokendings.registrationApi.useServiceAccountAuth:
+    description: Use service account auth via AUTH_PROVIDER_CONFIGS instead of self-signed client auth. When disabled, falls back to self-signed mode.
+    config:
+      type: bool
   tokendings.env.SUBJECT_TOKEN_ISSUERS:
     description: Comma-separated list of well-known urls to trusted token issuers in a token exchange
     required: true
@@ -75,10 +78,6 @@ values:
       template: '"{{ subdomain . "tokenx" }}"'
     config:
       type: string
-  tokendings.additionalOutboundHosts:
-    description: Additional outbound hosts beyond those auto-derived from auth provider and subject token issuer URLs
-    config:
-      type: string_array
   tokendings.tag:
     description: Image tag for tokendings
     config:

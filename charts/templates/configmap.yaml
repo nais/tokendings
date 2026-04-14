@@ -22,15 +22,17 @@ data:
       }
     }
   {{- end }}
+  {{- if .Values.tokendings.registrationApi.useServiceAccountAuth }}
   AUTH_PROVIDER_CONFIGS: |
     [
       {
-        "wellKnownUrl": "{{ .Values.tokendings.authWellKnownUrl | required ".Values.tokendings.authWellKnownUrl is required"}}",
+        "wellKnownUrl": "{{ .Values.tokendings.registrationApi.authWellKnownUrl | required ".Values.tokendings.registrationApi.authWellKnownUrl is required"}}",
         "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
-      }{{- if .Values.tokendings.authOnPremWellKnownUrl }},
+      }{{- if .Values.tokendings.registrationApi.authOnPremWellKnownUrl }},
       {
-        "wellKnownUrl": "{{ .Values.tokendings.authOnPremWellKnownUrl }}",
+        "wellKnownUrl": "{{ .Values.tokendings.registrationApi.authOnPremWellKnownUrl }}",
         "allowedSubjects": ["system:serviceaccount:nais-system:tokenx-jwker"]
       }
       {{- end }}
     ]
+  {{- end }}

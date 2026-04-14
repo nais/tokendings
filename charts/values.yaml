@@ -23,11 +23,9 @@ tokendings:
     SUBJECT_TOKEN_ISSUERS: ""
     APPLICATION_PORT: "8080"
     AUTH_CLIENT_JWKS: ""
-    AUTH_ACCEPTED_AUDIENCE: "tokendings"
     TOKEN_EXPIRY_SECONDS: 900
-  additionalOutboundHosts: []
-  authWellKnownUrl: ""
-  authOnPremWellKnownUrl: ""
+  accessPolicy:
+    outboundHosts: []
   database:
     diskSize: 10
     highAvailability: true
@@ -35,3 +33,7 @@ tokendings:
     sqlinstance_name: tokendings
   host:
   mapSubjectTokenClaims: false
+  registrationApi:
+    authWellKnownUrl: ""
+    authOnPremWellKnownUrl: ""
+    useServiceAccountAuth: true

@@ -42,11 +42,11 @@ spec:
     outbound:
       external:
       {{- $hosts := list -}}
-      {{- if .Values.tokendings.authWellKnownUrl }}
-        {{- $hosts = append $hosts ((urlParse .Values.tokendings.authWellKnownUrl).host) -}}
+      {{- if .Values.tokendings.registrationApi.authWellKnownUrl }}
+        {{- $hosts = append $hosts ((urlParse .Values.tokendings.registrationApi.authWellKnownUrl).host) -}}
       {{- end }}
-      {{- if .Values.tokendings.authOnPremWellKnownUrl }}
-        {{- $hosts = append $hosts ((urlParse .Values.tokendings.authOnPremWellKnownUrl).host) -}}
+      {{- if .Values.tokendings.registrationApi.authOnPremWellKnownUrl }}
+        {{- $hosts = append $hosts ((urlParse .Values.tokendings.registrationApi.authOnPremWellKnownUrl).host) -}}
       {{- end }}
       {{- range splitList "," .Values.tokendings.env.SUBJECT_TOKEN_ISSUERS }}
         {{- $url := trim . -}}
@@ -54,7 +54,7 @@ spec:
           {{- $hosts = append $hosts ((urlParse $url).host) -}}
         {{- end }}
       {{- end }}
-      {{- range .Values.tokendings.additionalOutboundHosts }}
+      {{- range .Values.tokendings.accessPolicy.outboundHosts }}
         {{- $hosts = append $hosts . -}}
       {{- end }}
       {{- range $hosts | uniq | sortAlpha }}
@@ -88,4 +88,13 @@ spec:
   {{ end }}
     - name: "ISSUER_URL"
       value: "{{- include "tokenx.tokendings.URL" . }}"
+  {{- if .Values.tokendings.registrationApi.useServiceAccountAuth }}
+    - name: "AUTH_ACCEPTED_AUDIENCE"
+      value: "tokendings"
+  {{- else }}
+    - name: "AUTH_ACCEPTED_AUDIENCE"
+      value: "{{- include "tokenx.tokendings.URL" . }}/registration/client"
+    - name: "AUTH_CLIENT_ID"
+      value: "jwker"
+  {{- end }}
   skipCaBundle: true
