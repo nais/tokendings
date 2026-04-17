@@ -16,6 +16,12 @@ interface ClientRegistry {
         @SpanAttribute clientIDs: List<String>,
     ): Map<String, OAuth2Client>
 
+    @WithSpan
+    fun findClientByFederatedIdentity(
+        @SpanAttribute issuer: String,
+        @SpanAttribute subject: String,
+    ): OAuth2Client?
+
     fun registerClient(client: OAuth2Client): OAuth2Client
 
     fun findAll(): List<OAuth2Client>

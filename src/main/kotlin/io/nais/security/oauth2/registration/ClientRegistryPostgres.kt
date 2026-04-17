@@ -16,6 +16,11 @@ open class ClientRegistryPostgres(
 
     override fun findClients(clientIDs: List<String>) = clientStore.findClients(clientIDs)
 
+    override fun findClientByFederatedIdentity(
+        issuer: String,
+        subject: String,
+    ): OAuth2Client? = clientStore.findByFederatedIdentity(issuer, subject)
+
     override fun registerClient(client: OAuth2Client): OAuth2Client {
         log.info("register client with clientId=${client.clientId} and keyIds=${client.jwkSet.keys.map { it.keyID }.toList()}")
         clientStore.storeClient(client)

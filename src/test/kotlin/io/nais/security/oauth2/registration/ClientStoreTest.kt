@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldNotBe
 import io.nais.security.oauth2.mock.DataSource
 import io.nais.security.oauth2.mock.withMigratedDb
 import io.nais.security.oauth2.model.ClientId
+import io.nais.security.oauth2.model.FederatedIdentity
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.utils.jwkSet
@@ -66,6 +67,41 @@ internal class ClientStoreTest {
                         "testclient" to testclient,
                         "testclient2" to testclient2,
                     )
+            }
+        }
+    }
+
+    @Test
+    fun `findByFederatedIdentity returns client when federated identity matches`() {
+        withMigratedDb {
+            with(ClientStore(DataSource.instance)) {
+                val identity = FederatedIdentity("https://kubernetes.default.svc", "system:serviceaccount:team:app")
+                val federated = oauth2Client("federated-client").copy(federatedIdentity = identity)
+                val legacy = oauth2Client("legacy-client")
+                storeClient(federated)
+                storeClient(legacy)
+
+                findByFederatedIdentity(identity.issuer, identity.subject) shouldBe federated
+                findByFederatedIdentity("https://other.example", identity.subject) shouldBe null
+                findByFederatedIdentity(identity.issuer, "other-subject") shouldBe null
+            }
+        }
+    }
+
+    @Test
+    fun `storeClient persists and updates federated identity columns`() {
+        withMigratedDb {
+            with(ClientStore(DataSource.instance)) {
+                val identity = FederatedIdentity("https://kubernetes.default.svc", "system:serviceaccount:team:app")
+                val withIdentity = oauth2Client("client").copy(federatedIdentity = identity)
+                storeClient(withIdentity)
+                findByFederatedIdentity(identity.issuer, identity.subject) shouldBe withIdentity
+
+                // Removing the federated identity must clear the indexed columns.
+                val withoutIdentity = withIdentity.copy(federatedIdentity = null)
+                storeClient(withoutIdentity) shouldBe 1
+                findByFederatedIdentity(identity.issuer, identity.subject) shouldBe null
+                find("client") shouldBe withoutIdentity
             }
         }
     }

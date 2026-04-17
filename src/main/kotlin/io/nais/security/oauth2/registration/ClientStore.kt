@@ -28,11 +28,16 @@ class ClientStore(
     private fun upsertQuery(oAuth2Client: OAuth2Client): Query =
         queryOf(
             """
-        INSERT INTO $TABLE_NAME(client_id, data) values (:client_id, :data)
+        INSERT INTO $TABLE_NAME(client_id, data, federated_issuer, federated_subject)
+            VALUES (:client_id, :data, :federated_issuer, :federated_subject)
         ON CONFLICT (client_id) 
             DO UPDATE SET 
-            data = EXCLUDED.data
-        WHERE clients.data IS DISTINCT FROM EXCLUDED.data;
+            data = EXCLUDED.data,
+            federated_issuer = EXCLUDED.federated_issuer,
+            federated_subject = EXCLUDED.federated_subject
+        WHERE clients.data IS DISTINCT FROM EXCLUDED.data
+           OR clients.federated_issuer IS DISTINCT FROM EXCLUDED.federated_issuer
+           OR clients.federated_subject IS DISTINCT FROM EXCLUDED.federated_subject;
             """.trimMargin(),
             mapOf(
                 "client_id" to oAuth2Client.clientId,
@@ -41,6 +46,8 @@ class ClientStore(
                         it.type = "jsonb"
                         it.value = oAuth2Client.toJson()
                     },
+                "federated_issuer" to oAuth2Client.federatedIdentity?.issuer,
+                "federated_subject" to oAuth2Client.federatedIdentity?.subject,
             ),
         )
 
@@ -74,6 +81,23 @@ class ClientStore(
                             .map { it.mapToOAuth2Client() }
                             .asList,
                     ).associateBy { it.clientId }
+            }
+        }
+
+    fun findByFederatedIdentity(
+        issuer: String,
+        subject: String,
+    ): OAuth2Client? =
+        withTimer("findByFederatedIdentity") {
+            using(sessionOf(dataSource)) { session ->
+                session.run(
+                    queryOf(
+                        """SELECT data FROM $TABLE_NAME WHERE federated_issuer = ? AND federated_subject = ?""",
+                        issuer,
+                        subject,
+                    ).map { it.mapToOAuth2Client() }
+                        .asSingle,
+                )
             }
         }
 
