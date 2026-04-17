@@ -24,6 +24,9 @@ import io.nais.security.oauth2.config.EnvKey.AUTH_PROVIDER_CONFIGS
 import io.nais.security.oauth2.config.EnvKey.AUTH_WELL_KNOWN_URL
 import io.nais.security.oauth2.config.EnvKey.DB_JDBC_URL
 import io.nais.security.oauth2.config.EnvKey.DEFAULT_TOKEN_EXPIRY_SECONDS
+import io.nais.security.oauth2.config.EnvKey.FEDERATED_CLIENT_AUTH_AUDIENCE
+import io.nais.security.oauth2.config.EnvKey.FEDERATED_CLIENT_AUTH_ISSUERS
+import io.nais.security.oauth2.config.EnvKey.FEDERATED_CLIENT_AUTH_MAX_LIFETIME_SECONDS
 import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_MAPPINGS
@@ -66,6 +69,9 @@ internal object EnvKey {
     const val ISSUER_URL = "ISSUER_URL"
     const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
     const val SUBJECT_TOKEN_MAPPINGS = "SUBJECT_TOKEN_MAPPINGS"
+    const val FEDERATED_CLIENT_AUTH_ISSUERS = "FEDERATED_CLIENT_AUTH_ISSUERS"
+    const val FEDERATED_CLIENT_AUTH_AUDIENCE = "FEDERATED_CLIENT_AUTH_AUDIENCE"
+    const val FEDERATED_CLIENT_AUTH_MAX_LIFETIME_SECONDS = "FEDERATED_CLIENT_AUTH_MAX_LIFETIME_SECONDS"
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -104,6 +110,7 @@ object Configuration {
             clientRegistry,
             authorizationServerProperties,
             bearerTokenAuthenticationProperties,
+            federatedClientAuthProperties(),
             databaseHealthCheck,
         )
     }
@@ -171,5 +178,36 @@ fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
         authProviders = providers,
         acceptedAudience = konfig[Key(AUTH_ACCEPTED_AUDIENCE, listType(stringType, Regex(",")))],
         softwareStatementJwks = jwks,
+    )
+}
+
+fun federatedClientAuthProperties(): FederatedClientAuthProperties {
+    val wellKnownUrls =
+        konfig
+            .getOrNull(Key(FEDERATED_CLIENT_AUTH_ISSUERS, stringType))
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?: emptyList()
+
+    if (wellKnownUrls.isEmpty()) {
+        log.info("federated client authentication disabled (no $FEDERATED_CLIENT_AUTH_ISSUERS configured)")
+        return FederatedClientAuthProperties()
+    }
+
+    val issuers =
+        wellKnownUrls
+            .map { FederatedIssuer.fromWellKnown(it) }
+            .associateBy { it.issuer }
+    log.info("loaded ${issuers.size} federated client auth issuers: ${issuers.keys}")
+
+    return FederatedClientAuthProperties(
+        allowedIssuers = issuers,
+        audience = konfig.getOrNull(Key(FEDERATED_CLIENT_AUTH_AUDIENCE, stringType)),
+        maxAssertionLifetimeSeconds =
+            konfig.getOrElse(
+                Key(FEDERATED_CLIENT_AUTH_MAX_LIFETIME_SECONDS, longType),
+                FederatedClientAuthProperties.DEFAULT_MAX_LIFETIME_SECONDS,
+            ),
     )
 }

@@ -46,6 +46,7 @@ data class AppConfiguration(
     val clientRegistry: ClientRegistry,
     val authorizationServerProperties: AuthorizationServerProperties,
     val clientRegistrationAuthProperties: ClientRegistrationAuthProperties,
+    val federatedClientAuthProperties: FederatedClientAuthProperties,
     val databaseHealthCheck: HealthCheck,
 ) {
     val tokenIssuer: TokenIssuer = TokenIssuer(authorizationServerProperties)
@@ -91,12 +92,7 @@ class AuthProvider(
                     log.info("getting external auth provider discovery document from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
                 }
-            val jwk =
-                JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
-                    .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-                    .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-                    .headers(mapOf("Accept" to "application/json, application/jwk-set+json"))
-                    .build()
+            val jwk = buildCachedJwkProvider(wellKnown.jwksUri)
             return AuthProvider(wellKnown.issuer, jwk, allowedClusterName, allowedSubjects)
         }
 
@@ -113,6 +109,57 @@ class AuthProvider(
                 jwk.get(key.keyID).publicKey
             }
             return AuthProvider(issuer, jwk)
+        }
+    }
+}
+
+private fun buildCachedJwkProvider(jwksUri: String): JwkProvider =
+    JwkProviderBuilder(URI(jwksUri).toURL())
+        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+        .headers(mapOf("Accept" to "application/json, application/jwk-set+json"))
+        .build()
+
+/**
+ * Configuration for authenticating token-exchange clients via federated OIDC
+ * providers (e.g. a Kubernetes cluster's service account issuer).
+ *
+ * Tokendings keeps a whitelist of allowed issuers plus a JwkProvider per issuer
+ * and delegates the mapping of federated identity (iss, sub) to a registered
+ * [io.nais.security.oauth2.model.OAuth2Client] to the client registry.
+ *
+ * When no issuers are configured, federated client authentication is disabled
+ * and the token endpoint behaves exactly as before.
+ */
+data class FederatedClientAuthProperties(
+    val allowedIssuers: Map<String, FederatedIssuer> = emptyMap(),
+    val audience: String? = null,
+    val maxAssertionLifetimeSeconds: Long = DEFAULT_MAX_LIFETIME_SECONDS,
+) {
+    val isEnabled: Boolean get() = allowedIssuers.isNotEmpty()
+
+    companion object {
+        /**
+         * Default aligned with the Kubernetes ServiceAccount token minimum of
+         * 600 seconds. Kept separate from [AuthorizationServerProperties.clientAssertionMaxExpiry]
+         * (120s) which still governs self-signed client assertions.
+         */
+        const val DEFAULT_MAX_LIFETIME_SECONDS = 600L
+    }
+}
+
+class FederatedIssuer(
+    val issuer: String,
+    val jwkProvider: JwkProvider,
+) {
+    companion object {
+        fun fromWellKnown(wellKnownUrl: String): FederatedIssuer {
+            val wellKnown: WellKnownForBearerAuth =
+                runBlocking {
+                    log.info("getting federated issuer discovery document from well-known url=$wellKnownUrl")
+                    retryingHttpClient.get(wellKnownUrl).body()
+                }
+            return FederatedIssuer(wellKnown.issuer, buildCachedJwkProvider(wellKnown.jwksUri))
         }
     }
 }

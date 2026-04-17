@@ -6,6 +6,7 @@ import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthProvider
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.config.ClientRegistrationAuthProperties
+import io.nais.security.oauth2.config.FederatedClientAuthProperties
 import io.nais.security.oauth2.config.ServerProperties
 import io.nais.security.oauth2.config.SubjectTokenIssuer
 import io.nais.security.oauth2.config.clean
@@ -28,6 +29,7 @@ import java.time.Duration
 fun mockConfig(
     mockOAuth2Server: MockOAuth2Server? = null,
     clientRegistrationAuthProperties: ClientRegistrationAuthProperties? = null,
+    federatedClientAuthProperties: FederatedClientAuthProperties = FederatedClientAuthProperties(),
     failHealthCheck: Boolean = false,
 ): AppConfiguration {
     val issuerUrl = "http://localhost:8080"
@@ -62,6 +64,7 @@ fun mockConfig(
         clientRegistry,
         authorizationServerProperties,
         clientRegAuthProperties,
+        federatedClientAuthProperties,
         mockDatabaseHealthCheck,
     )
 }
