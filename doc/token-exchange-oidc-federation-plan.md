@@ -1,22 +1,6 @@
 # Plan: OIDC Federated Token Support for Token Exchange API
 
-## Status (as of commit `305fc85` on `token-exchange-oidc-federation`)
-
-**Vertical slice shipped**: token-exchange side of OIDC federation works end-to-end for the happy path. Existing clients are unaffected (all 78 tests pass).
-
-### Done
-
-| # | Commit | Scope |
-|---|---|---|
-| 1 | `ca48d51` | **feat(db)** — `V3__add_federated_identity.sql`: nullable `federated_issuer`/`federated_subject` columns + partial unique index on `(federated_issuer, federated_subject) WHERE ... IS NOT NULL`. |
-| 2 | `6435307` | **feat(model)** — `FederatedIdentity` on `OAuth2Client`, `@JsonInclude(NON_NULL)` to avoid JSONB churn on existing rows, SerDe tests. |
-| 3 | `e15c924` | **feat(registry)** — `findClientByFederatedIdentity` on all `ClientRegistry` impls; upsert writes the new columns; store tests. |
-| 4 | `55d081c` | **feat(config)** — `FederatedClientAuthProperties` (map-of-issuers whitelist, audience, `maxAssertionLifetimeSeconds` default 600s), `FederatedIssuer.fromWellKnown` eager resolution, `buildCachedJwkProvider` helper, env wiring. |
-| 5 | `2337446` | **feat(auth)** — `FederatedClientAssertionJwtClaimsVerifier` (no `jti`/`nbf` required, `aud` contains-check, K8s-token friendly) + 7 unit tests. |
-| 6 | `ac3a7af` | **test(db)** — bump expected migration count 2 → 3. |
-| 7 | `731092f` | **feat(auth)** — dual-path dispatch in `TokenRequestContext`: sealed `ClientCredential` with `SelfSigned`/`Federated` variants, `iss`-whitelist dispatch, auth0 `Jwk` → Nimbus `JWKSet` bridging via `RSAPublicKey`, `findClientByFederatedIdentity` lookup, federated-identity mismatch guard, MDC `client_id` moved post-auth. |
-| 8 | `305fc85` | **test(auth)** — happy-path integration test on `/token`: `MockOAuth2Server` acts as a federated issuer, a client is registered with a matching `FederatedIdentity`, a K8s-shaped assertion (`expiry=300s`) authenticates and token-exchange returns 200 with the target client's audience. |
-| 9 | `8f3d2ec` | **refactor(auth)** — `FederatedIssuer` now uses Nimbus `CacheProperties` + `JWKSource` (stale-tolerant, refresh-ahead, retrying) mirroring `SubjectTokenIssuer`, instead of auth0 `JwkProvider`. `authenticateFederated` verifies via `JWSVerificationKeySelector` — no more manual `Jwk` → `RSAPublicKey` → `RSAKey.Builder` bridging, no explicit `kid` handling. |
+**Vertical slice shipped**: token-exchange side of OIDC federation works end-to-end for the happy path. Existing clients are unaffected (all 78 tests pass). See `git log` on `token-exchange-oidc-federation` for shipped commits.
 
 ### Key discoveries (locked in)
 
@@ -26,17 +10,25 @@
 - `TokenExchangeRequestAuthorizer.targetClients` is audience-keyed; the authenticated federated client doesn't need to be in that map — `clientFinder` falls back to `config.clientRegistry.findClient(clientId)`.
 - `DefaultOAuth2TokenCallback` defaults to 3600s expiry; federated tests must pass `expiry <= 600`.
 
-### Remaining goals (recommended order)
+### Remaining goals (recommended order — revised after council review of the shipped slice)
 
-1. **Negative federated tests** (`TokenExchangeApiTest`): wrong audience, expired assertion, unknown issuer (not in whitelist), unregistered `(iss, sub)`, federated-identity mismatch between JWT and stored client, lifetime exceeded. Low risk, high confidence.
-2. **Security test — impersonation guard**: federated assertion with `sub == someVictimClientId` (a legacy self-signed client's id) must NOT authenticate as that client. Locks in the oracle-flagged concern.
-3. **Registration-side changes** (`ClientRegistrationApi.kt`, `ClientRegistration.kt`):
+1. **Registration-side changes** (`ClientRegistrationApi.kt`, `ClientRegistration.kt`) — *council bumped from #3 to #1: real impersonation/squatting risk lives at the registrar trust boundary, not the token-exchange path*:
    - Add optional `federatedIssuer` / `federatedSubject` to `SoftwareStatement` + verifier.
    - Fix validation ordering: move JWKS emptiness check to *after* software-statement verification; enforce "at least one auth method" invariant.
    - Add `AuthProvider.allowedFederatedIssuers: Set<String>?` trust boundary (prevents cross-cluster registrar impersonation).
    - Persist `FederatedIdentity` on the `OAuth2Client` on register/update.
-4. **Observability** (step 8 below): `client_auth_path` metric, JWKS fetch latency/error metric + alert, `federated_jti_duplicate_observations`, log fields, span attribute.
-5. **Docs for client teams**: K8s projected-SA-token audience must equal `federatedAssertionAudience`; no re-signing; forward as-is in `client_assertion`.
+2. **Security test — impersonation guard**: federated assertion with `sub == someVictimClientId` (a legacy self-signed client's id) must NOT authenticate as that client. Locks in the invariant cheaply after #1.
+3. **Negative federated tests** (`TokenExchangeApiTest`): wrong audience, expired assertion, unknown issuer (not in whitelist), unregistered `(iss, sub)`, federated-identity mismatch between JWT and stored client, lifetime exceeded.
+4. **Startup config validation** — fail boot on misconfig, with clear error messages:
+   - If any federated issuers configured, `federatedAssertionAudience` must be non-blank.
+   - No federated issuer URL may equal tokendings' own `issuerUrl` or collide with another whitelisted issuer (keeps `iss`-dispatch unambiguous).
+   - `maxAssertionLifetimeSeconds` in `1..3600`.
+   - Probe each issuer's `jwks_uri` at startup (not just `.well-known` parse) so a broken JWKS URL fails boot rather than first request.
+   - Log resolved federated-issuer config at INFO (issuer, `jwks_uri`, audience, max lifetime).
+5. **Observability**: `client_auth_path` metric (`self_signed` / `federated`), JWKS fetch latency/error metric + alert, `federated_jti_duplicate_observations`, log fields distinguishing self-signed vs. federated failures, span attribute.
+6. **Type-level defense-in-depth** — *new, low-effort*: make the federated subject a distinct type inside `FederatedIdentity` (e.g. `value class FederatedSubject(val value: String)`) so it cannot accidentally flow into a `ClientId` slot in future code. Audit call sites. Keep wire format unchanged.
+7. **Move toward "exactly one client-auth method per client"** — *council, Alpha-leaning*: the DB currently allows both `jwks` and `FederatedIdentity` on the same row. Acceptable during transition, but becomes a revocation/migration ambiguity if left. Decide: invariant at registration time, or phased migration plan.
+8. **Docs for client teams**: K8s projected-SA-token audience must equal `federatedAssertionAudience`; no re-signing; forward as-is in `client_assertion`.
 
 ### Deferred (not blocking phase 1)
 
@@ -94,6 +86,8 @@ This means:
 - Adding new providers or changing client-to-issuer mappings requires no tokendings configuration changes — only software statement changes from the registrar.
 
 ## Implementation Plan
+
+> **Historical — original plan before implementation.** Current status lives in "Remaining goals" above; shipped work is in `git log` on `token-exchange-oidc-federation`. Details diverged during implementation (e.g. Nimbus `JWKSource` replaced auth0 `JwkProvider` on the federated path, `TokenValidator` gained an `extraClaimsVerifier` hook, columns-authoritative chosen over a JSONB trigger). Kept for design rationale.
 
 ### 1. Configuration — Allowed federated issuers whitelist
 
