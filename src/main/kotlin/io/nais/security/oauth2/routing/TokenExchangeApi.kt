@@ -53,8 +53,17 @@ internal fun Routing.tokenExchangeApi(config: AppConfiguration) {
             val tokenRequestContext =
                 call.receiveTokenRequestContext {
                     authenticateAndAuthorize { clientIds ->
+                        // Pre-fetch both the claimed client (only meaningful for self-signed
+                        // assertions) and the target audience client in a single query. For
+                        // federated assertions, the entry keyed by clientIds.client will simply
+                        // be missing, which is fine — the federated path resolves the client via
+                        // findClientByFederatedIdentity instead.
                         val clientMap = config.clientRegistry.findClients(listOf(clientIds.client, clientIds.target))
-                        clientFinder = { clientAssertionCredential -> clientMap[clientAssertionCredential.clientId] }
+                        clientFinder = { clientId -> clientMap[clientId] ?: config.clientRegistry.findClient(clientId) }
+                        federatedClientFinder = { issuer, subject ->
+                            config.clientRegistry.findClientByFederatedIdentity(issuer, subject)
+                        }
+                        federatedClientAuthProperties = config.federatedClientAuthProperties
 
                         acceptedAudience =
                             setOf(
