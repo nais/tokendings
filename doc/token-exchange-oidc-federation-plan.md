@@ -53,12 +53,17 @@ This means:
 
 **File**: `AppConfiguration.kt`
 
-- Add a simple config property: `allowedFederatedIssuers: Map<String, JwkProvider>` — a map from issuer URL to a cached/rate-limited `JwkProvider` (for JWKS fetching), built via discovery from well-known URLs.
-- Wire from `EnvConfiguration` as a list of allowed issuer well-known URLs.
-- No cluster mappings or per-provider subject restrictions — that's the registrar's job.
+- Add a config property: `allowedFederatedIssuers: Map<String, JwkProvider>` — a map from issuer URL to a cached/rate-limited `JwkProvider` (for JWKS fetching).
+- Add a config property: `federatedAssertionAudience: String` — the required `aud` value for federated client assertions, configured via environment variable.
+- Add a config property: `federatedAssertionMaxLifetime: Long` — max lifetime in seconds for federated assertions. Must accommodate Kubernetes service account tokens which have a minimum of 600s. Suggested default: `600L` (or higher to provide headroom).
+- **Resolve at startup**: Like `AuthProvider.fromWellKnown` and `SubjectTokenIssuer`, fetch each well-known document eagerly at construction time (via `runBlocking` + `retryingHttpClient`) and build the `JwkProvider` pointing at the discovered `jwks_uri`. This fails fast on misconfiguration and avoids cold-start latency on the first federated request.
+- Wire from `EnvConfiguration` as a list of allowed issuer well-known URLs plus the audience and lifetime values.
+- No cluster mappings or per-provider subject restrictions — that's the registrar's job (but see step 3 for the registrar-to-issuer trust boundary).
 - Reuse `JwkProviderBuilder` with caching/rate-limiting as done in `AuthProvider.fromWellKnown()`.
 
-### 2. Model — Extend `SoftwareStatement` with optional federated identity
+**Operational note**: `auth0`'s `JwkProviderBuilder.cached(...)` does not serve stale on upstream failure. A JWKS outage for a whitelisted issuer will fail federated auth for that issuer until recovery. Plan alerting for this (see step 8).
+
+### 2. Model — Extend `SoftwareStatement` and `OAuth2Client` with optional federated identity
 
 **File**: `ClientRegistration.kt`
 
@@ -69,7 +74,9 @@ This means:
 **File**: `OAuth2Client.kt`
 
 - Add optional field: `federatedIdentity: FederatedIdentity?` containing `issuer: String` and `subject: String`.
-- Default to `null` for backwards compatibility — existing JSON in the DB deserializes fine (Jackson ignores missing fields).
+- Default to `null` for backwards compatibility.
+- **Add `@JsonInclude(JsonInclude.Include.NON_NULL)` at the class level** to prevent emitting `"federatedIdentity": null` for legacy clients — otherwise every existing row's `data` column would flip on first touch after deploy (data churn + cache invalidation).
+- Add a regression test that deserializes a pre-migration JSON blob to verify Jackson + Kotlin default-args handles it cleanly.
 - Allow JWKS-only, federated-only, or both auth methods per client.
 
 **Registration invariant**: A client must have at least one auth method:
@@ -82,48 +89,60 @@ Reject registrations with empty JWKS and no federated identity.
 
 **File**: `ClientRegistrationApi.kt`
 
+- **Fix validation ordering**: The current `request.validate()` at line 33 rejects empty JWKS *before* the software statement is parsed. Move the JWKS check to after `verifySoftwareStatement()` and enforce the real invariant: "at least one of non-empty JWKS or federated identity". Also: `JsonWebKeys.keys` is currently non-nullable `List<JWK>`; decide whether to accept `{"keys": []}` or make `jwks` nullable in `ClientRegistrationRequest`.
 - After verifying the software statement, read `federatedIssuer` and `federatedSubject` from it.
-- If present, validate that the issuer is in tokendings' allowed issuers whitelist. Reject if not.
+- Validate that `federatedIssuer` is in tokendings' allowed issuers whitelist. Reject if not.
+- **Registrar-to-issuer trust boundary**: Extend `AuthProvider` with `allowedFederatedIssuers: Set<String>?` (nullable = allow all whitelisted issuers for this registrar). Enforce during registration: the calling registrar must be permitted to declare the given `federatedIssuer`. Without this, a compromised registrar in cluster A could register a client with a `federatedIdentity` pointing to cluster B's K8s issuer + a victim subject. Mirrors the existing `allowedClusterName` constraint on `appId`.
 - Store the `FederatedIdentity` on the `OAuth2Client`.
-- Relax JWKS validation: if federated identity is present in the software statement, allow empty JWKS in the request.
 
 ### 4. Token Request Authentication — Dual-path client auth
 
 **File**: `TokenRequestContext.kt`
 
-This is the core change. `credential()` and `authenticateClient()` need to support two paths:
+This is the core change. The current flow is **extract clientId from JWT `sub` → pre-fetch client → verify**. For federated assertions, `sub` is the external subject (e.g., `system:serviceaccount:team:app`), not a Nais clientId — so the current ordering breaks.
+
+**Revised ordering**:
 
 - **Path A (existing/self-signed)**: Parse `client_assertion` JWT. `iss` does not match any allowed federated issuer → extract `clientId` from `sub` → find client by `clientId` → verify signature against `oAuth2Client.jwkSet`.
-- **Path B (federated)**: Parse `client_assertion` JWT. `iss` matches an allowed federated issuer → verify signature against the issuer's JWKS (via `JwkProvider`) → find `OAuth2Client` by matching `federatedIdentity.issuer` + `federatedIdentity.subject` to the JWT's `iss` + `sub` claims → verify the client's stored `federatedIdentity` matches.
+- **Path B (federated)**: Parse `client_assertion` JWT. `iss` matches an allowed federated issuer → verify signature against the issuer's JWKS (via `JwkProvider`) → verify claims via the federated claims verifier → look up `OAuth2Client` via `findByFederatedIdentity(iss, sub)` → verify the returned client's stored `federatedIdentity` matches the JWT claims.
 
 **Implementation approach**:
-- Extract `credential()` into a sealed type: `ClientCredential` with subtypes `SelfSignedAssertion` (existing) and `FederatedAssertion` (new).
-- Add a new `clientFinder` path for federated tokens that queries the client registry by federated identity.
-- Reuse `bearerTokenVerifier`-style logic from `BearerTokenAuthenticationConfiguration.kt` to verify the federated JWT against the provider's JWKS.
+- Extract `credential()` into a sealed `ClientCredential` with `SelfSignedAssertion` and `FederatedAssertion` variants.
+- `ClientCredential` **must not expose `clientId` directly for the federated path** — the Nais clientId is only known *after* lookup. Expose a `resolveClient(...)` method per variant that returns the resolved `OAuth2Client`.
+- Downstream code (MDC logging, `ClientIDs`, `clientFinder`, `TokenExchangeRequestAuthorizer`) must consume the resolved `OAuth2Client.clientId`, never the raw JWT `sub` on the federated path.
+- **Move `clientMap` pre-fetch out of `TokenExchangeApi.kt`**: Today `TokenExchangeApi.kt:56` pre-fetches `findClients(listOf(clientIds.client, clientIds.target))` using the unverified `sub`. This must either happen *after* the authenticated client is resolved, or be extended to include the federated-resolved client. Otherwise `accessPolicyInbound.contains(authenticatedClient.clientId)` checks in `TokenExchangeRequestAuthorizer` will fail on federated requests.
+- **MDC put**: `TokenRequestContext.kt:62` puts the unverified `sub` into MDC before verification. Consider moving this after verification (or tagging as "claimed") — otherwise federated subjects from unverified tokens land in logs.
+- Reuse `bearerTokenVerifier`-style logic from `BearerTokenAuthenticationConfiguration.kt` for JWKS-based verification. Map fetch failures to `invalid_client` (per RFC 6749 at the token endpoint), not `invalid_request`.
 
 **Runtime fail-fast rules**:
 - Self-signed path must fail fast if client has no JWKS.
 - Federated path must fail fast if client has no federated identity.
+- **Security test**: Add a test proving a federated assertion with `sub == someVictimClientId` cannot authenticate as that client unless the client has explicitly registered exactly that `(iss, sub)` federated identity.
 
 ### 5. Client Registry — Query by federated identity
 
 **Files**: `ClientStore.kt`, `ClientRegistry` interface
 
 - Add `findByFederatedIdentity(issuer: String, subject: String): OAuth2Client?` method.
-- Add dedicated nullable columns `federated_issuer` and `federated_subject` with a unique composite index for fast lookup and uniqueness enforcement.
+- Add dedicated nullable columns `federated_issuer` and `federated_subject`.
+- Enforce a **unique composite constraint** on `(federated_issuer, federated_subject)` where both are non-null, via a partial unique index (e.g., `CREATE UNIQUE INDEX ... WHERE federated_issuer IS NOT NULL AND federated_subject IS NOT NULL`).
+- **Extend the upsert SQL to write the new columns** — today `storeClient` only writes `data`. Without this, the indexed columns stay null and lookups fail silently.
+- **Decide authority**: JSONB as source of truth (with a trigger populating columns from `data`) OR columns authoritative (and remove `federatedIdentity` from the JSONB blob). Don't let them drift. Recommendation: columns authoritative for federated identity (simpler semantics, DB-enforceable, no trigger to maintain).
 - Requires a Flyway migration to add the columns and index.
 
 ### 6. Federated Claims Verifier
 
-Do not reuse the existing `ClientAssertionJwtClaimsVerifier` unchanged — it assumes `iss == sub == clientId`.
+Do not reuse the existing `ClientAssertionJwtClaimsVerifier` unchanged — it assumes `iss == sub == clientId` and requires `aud.size == 1` plus `jti`/`nbf`. Kubernetes projected SA tokens don't include `jti` and may have multiple audiences.
 
 Federated verifier must validate:
 - Signature against the issuer's JWKS (fetched via `JwkProvider` from the allowed issuers map)
 - `iss` equals a whitelisted issuer
 - `sub` present and non-empty
-- `aud` contains tokendings token endpoint URL
-- `exp` valid with bounded max lifetime
+- `aud` **contains** the configured `federatedAssertionAudience` (don't require `aud.size == 1`; RFC 7523 allows multi-value)
+- `exp` valid
 - `iat` valid
+- Required claims: `iss, sub, aud, exp, iat`. Do **not** require `jti`. `nbf` is typically present in K8s tokens but should not be required.
+- Lifetime bounded by `federatedAssertionMaxLifetime` (default 600s to accommodate Kubernetes SA tokens; separate from the existing 120s `clientAssertionMaxExpiry` used for self-signed assertions)
 
 ### 7. Token Exchange API — Wire the new config
 
@@ -131,6 +150,17 @@ Federated verifier must validate:
 
 - Pass the allowed federated issuers map into the `authenticateAndAuthorize` block.
 - Update the `clientFinder` lambda to support both lookup-by-clientId (existing) and lookup-by-federated-identity (new).
+- Restructure the `clientMap` pre-fetch per step 4 so it works for both auth paths.
+
+### 8. Observability
+
+- Metric: `client_auth_path{path=self_signed|federated, outcome=success|failure}` on the token endpoint.
+- Metric: `federated_jwks_fetch_latency{issuer}` and error counter.
+- Metric: `federated_jti_duplicate_observations` — count duplicate `jti` values seen within the assertion lifetime window. Enables evidence-based decision on whether to add a full replay cache.
+- Log field: `federated_iss`, `federated_sub` on the federated path (alongside `client_id`).
+- Span attribute: `auth.path` on the `authenticateClient` span.
+- Alert: sudden drop in self-signed success rate after deploy (regression canary).
+- Alert: elevated JWKS fetch errors per issuer (upstream outage).
 
 ## Migration Strategy
 
@@ -158,9 +188,15 @@ The plan was reviewed by a multi-LLM council (claude-opus-4.6 + gemini-3.1-pro-p
 
 4. **"Define strict registration invariants"** — **Accepted.** Require at least one auth method; fail fast at runtime if wrong path is attempted.
 
-### Risks and open questions
+### Resolved decisions
 
-- **Audience validation is critical**: Define exactly what `aud` must be for federated client auth and document it for clients.
-- **Provider `sub` stability**: Confirm the external provider's `sub` claim is stable and not subject to pairwise/rotation behavior.
-- **Replay risk**: If federated assertions live longer than current client assertions, consider stricter lifetime bounds or `jti` replay handling.
-- **Uniqueness must be DB-enforced**: A given `(issuer, subject)` must not map to multiple tokendings clients — use DB-level unique constraint.
+- **Audience**: The required `aud` for federated assertions is configurable via environment variable (`federatedAssertionAudience`). Documented for the registrar to include in software statements / client onboarding.
+- **Provider `sub` stability**: Assumed stable. Stability is the registrar's concern (it controls which `sub` values get mapped to clients via the software statement).
+- **Federated assertion lifetime**: Configurable via `federatedAssertionMaxLifetime`, default 600s to accommodate Kubernetes service account tokens (minimum 600s). Kept separate from the 120s `clientAssertionMaxExpiry` used for self-signed assertions.
+- **Uniqueness**: Enforced at the DB level via a partial unique index on `(federated_issuer, federated_subject)`.
+
+### Remaining considerations
+
+- **Replay risk with longer-lived assertions**: 600s+ lifetime increases replay window vs. 120s. The plan instruments duplicate-`jti` observations (step 8) as an evidence-gathering step. Promote to a full replay cache if metrics show misuse or if threat modeling requires it pre-prod.
+- **K8s ServiceAccountToken projection**: Document for client teams — the projected volume must declare `audience = federatedAssertionAudience`. Clients forward the mounted token as-is in `client_assertion`; no re-signing needed.
+- **Registrar software-statement signing key scope**: Multiple registrars sharing the same software-statement signing key means they share the trust boundary for declaring federated identities. The `allowedFederatedIssuers` constraint on `AuthProvider` (step 3) mitigates cross-cluster impersonation.
