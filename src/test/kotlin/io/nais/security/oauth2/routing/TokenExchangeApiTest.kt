@@ -21,11 +21,14 @@ import io.ktor.server.testing.testApplication
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.JWKS_PATH
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.WELL_KNOWN_PATH
+import io.nais.security.oauth2.config.FederatedClientAuthProperties
+import io.nais.security.oauth2.config.FederatedIssuer
 import io.nais.security.oauth2.mock.MockClientRegistry
 import io.nais.security.oauth2.mock.mockConfig
 import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.AccessPolicy
 import io.nais.security.oauth2.model.ClientId
+import io.nais.security.oauth2.model.FederatedIdentity
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2TokenResponse
@@ -517,6 +520,71 @@ internal class TokenExchangeApiTest {
                         ).formUrlEncode(),
                     )
                 } shouldBeObject OAuth2Error.INVALID_REQUEST.setDescription("invalid subject_token: token verification failed: Expired+JWT")
+            }
+        }
+    }
+
+    @Test
+    fun `successful token exchange with federated client assertion resolves client via federated identity`() {
+        withMockOAuth2Server {
+            val federatedIssuerId = "fedissuer"
+            val federatedAudience = "tokendings-federated"
+            val federatedSubject = "system:serviceaccount:myteam:myapp"
+            val federatedWellKnownUrl = this.wellKnownUrl(federatedIssuerId).toString()
+            val federatedIssuerUrl = this.issuerUrl(federatedIssuerId).toString()
+
+            val federatedProps =
+                FederatedClientAuthProperties(
+                    allowedIssuers = mapOf(federatedIssuerUrl to FederatedIssuer.fromWellKnown(federatedWellKnownUrl)),
+                    audience = federatedAudience,
+                )
+            val mockConfig = mockConfig(this, federatedClientAuthProperties = federatedProps)
+
+            val registry = mockConfig.mockClientRegistry()
+            val clientApp =
+                registry.registerFederated(
+                    clientId = "cluster:myteam:myapp",
+                    federatedIdentity = FederatedIdentity(federatedIssuerUrl, federatedSubject),
+                )
+            val targetClient = registry.register("target-client", AccessPolicy(listOf(clientApp.clientId)))
+
+            val clientAssertion =
+                this
+                    .issueToken(
+                        federatedIssuerId,
+                        federatedSubject,
+                        DefaultOAuth2TokenCallback(
+                            issuerId = federatedIssuerId,
+                            subject = federatedSubject,
+                            audience = listOf(federatedAudience),
+                            // Must be within federated max lifetime (default 600s).
+                            expiry = 300,
+                        ),
+                    ).serialize()
+            val subjectToken = this.issueToken("mock1", "end-user", DefaultOAuth2TokenCallback())
+
+            testApplication {
+                application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                val response =
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(
+                            listOf(
+                                "client_assertion_type" to "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                                "client_assertion" to clientAssertion,
+                                "grant_type" to "urn:ietf:params:oauth:grant-type:token-exchange",
+                                "audience" to targetClient.clientId,
+                                "subject_token_type" to "urn:ietf:params:oauth:token-type:jwt",
+                                "subject_token" to subjectToken.serialize(),
+                            ).formUrlEncode(),
+                        )
+                    }
+                assertThat(response.status).isEqualTo(HttpStatusCode.OK)
+                val accessTokenResponse: OAuth2TokenResponse = mapper.readValue(response.bodyAsText())
+                val issuedJwt = SignedJWT.parse(accessTokenResponse.accessToken)
+                val claims = issuedJwt.verifySignature(mockConfig.tokenIssuer.publicJwkSet())
+                assertThat(claims.audience).containsExactly(targetClient.clientId)
+                assertThat(claims.subject).isEqualTo(subjectToken.jwtClaimsSet.subject)
             }
         }
     }

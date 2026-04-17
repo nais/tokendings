@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.mock
 
+import com.nimbusds.jose.jwk.JWKSet
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.nais.security.oauth2.config.AppConfiguration
@@ -113,6 +114,21 @@ class MockClientRegistry : ClientRegistry {
         accessPolicy,
         emptyList(),
         emptyList(),
+    ).let { registerClient(it) }
+
+    fun registerFederated(
+        clientId: ClientId,
+        federatedIdentity: io.nais.security.oauth2.model.FederatedIdentity,
+        accessPolicy: AccessPolicy = AccessPolicy(),
+    ) = OAuth2Client(
+        clientId = clientId,
+        // Federated clients need no registered JWKS; keep an empty set to satisfy the model.
+        jwks = JsonWebKeys(JWKSet()),
+        accessPolicyInbound = accessPolicy,
+        accessPolicyOutbound = accessPolicy,
+        allowedScopes = emptyList(),
+        allowedGrantTypes = emptyList(),
+        federatedIdentity = federatedIdentity,
     ).let { registerClient(it) }
 }
 
