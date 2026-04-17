@@ -1,6 +1,7 @@
 package io.nais.security.oauth2.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -40,6 +41,12 @@ data class JsonWebKeys(
     }
 }
 
+data class FederatedIdentity(
+    val issuer: String,
+    val subject: String,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class OAuth2Client(
     val clientId: ClientId,
     val jwks: JsonWebKeys,
@@ -47,6 +54,7 @@ data class OAuth2Client(
     val accessPolicyOutbound: AccessPolicy = AccessPolicy(),
     val allowedScopes: List<String> = emptyList(),
     val allowedGrantTypes: List<String> = emptyList(),
+    val federatedIdentity: FederatedIdentity? = null,
 ) {
     @JsonIgnore
     val jwkSet: JWKSet = JWKSet(jwks.keys)
