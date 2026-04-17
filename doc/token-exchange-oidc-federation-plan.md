@@ -16,12 +16,13 @@
 | 6 | `ac3a7af` | **test(db)** — bump expected migration count 2 → 3. |
 | 7 | `731092f` | **feat(auth)** — dual-path dispatch in `TokenRequestContext`: sealed `ClientCredential` with `SelfSigned`/`Federated` variants, `iss`-whitelist dispatch, auth0 `Jwk` → Nimbus `JWKSet` bridging via `RSAPublicKey`, `findClientByFederatedIdentity` lookup, federated-identity mismatch guard, MDC `client_id` moved post-auth. |
 | 8 | `305fc85` | **test(auth)** — happy-path integration test on `/token`: `MockOAuth2Server` acts as a federated issuer, a client is registered with a matching `FederatedIdentity`, a K8s-shaped assertion (`expiry=300s`) authenticates and token-exchange returns 200 with the target client's audience. |
+| 9 | `8f3d2ec` | **refactor(auth)** — `FederatedIssuer` now uses Nimbus `CacheProperties` + `JWKSource` (stale-tolerant, refresh-ahead, retrying) mirroring `SubjectTokenIssuer`, instead of auth0 `JwkProvider`. `authenticateFederated` verifies via `JWSVerificationKeySelector` — no more manual `Jwk` → `RSAPublicKey` → `RSAKey.Builder` bridging, no explicit `kid` handling. |
 
 ### Key discoveries (locked in)
 
 - `MockOAuth2Server.issueToken(issuerId, subject, DefaultOAuth2TokenCallback(issuerId=..., subject=..., audience=listOf(...), expiry=<=600))` fully simulates a federated OIDC issuer. `iss` claim equals `issuerUrl(issuerId).toString()`.
-- auth0 `Jwk` has no `toJSONString()`; we cast `jwk.publicKey` to `java.security.interfaces.RSAPublicKey` and use `RSAKey.Builder(publicKey).keyID(kid).build()`.
-- auth0 `JwkProviderBuilder.cached(...)` does **not** serve stale on upstream failure — alerting is required (deferred, see step 8).
+- Nimbus `JWKSourceBuilder` (used via `CacheProperties`) is `.outageTolerantForever()`, refresh-ahead, and retries on transient failures — preferred over auth0's `JwkProvider` for federated issuer JWKS. `AuthProvider` (bearer auth on registration) still uses auth0; refactoring that is a separate concern.
+- auth0 `JwkProviderBuilder.cached(...)` does **not** serve stale on upstream failure. Only relevant where auth0 is still used.
 - `TokenExchangeRequestAuthorizer.targetClients` is audience-keyed; the authenticated federated client doesn't need to be in that map — `clientFinder` falls back to `config.clientRegistry.findClient(clientId)`.
 - `DefaultOAuth2TokenCallback` defaults to 3600s expiry; federated tests must pass `expiry <= 600`.
 

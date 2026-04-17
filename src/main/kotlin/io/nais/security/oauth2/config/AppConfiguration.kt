@@ -92,7 +92,12 @@ class AuthProvider(
                     log.info("getting external auth provider discovery document from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
                 }
-            val jwk = buildCachedJwkProvider(wellKnown.jwksUri)
+            val jwk =
+                JwkProviderBuilder(URI(wellKnown.jwksUri).toURL())
+                    .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
+                    .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
+                    .headers(mapOf("Accept" to "application/json, application/jwk-set+json"))
+                    .build()
             return AuthProvider(wellKnown.issuer, jwk, allowedClusterName, allowedSubjects)
         }
 
@@ -112,13 +117,6 @@ class AuthProvider(
         }
     }
 }
-
-private fun buildCachedJwkProvider(jwksUri: String): JwkProvider =
-    JwkProviderBuilder(URI(jwksUri).toURL())
-        .cached(CACHE_SIZE, EXPIRES_IN, TimeUnit.HOURS)
-        .rateLimited(BUCKET_SIZE, 1, TimeUnit.MINUTES)
-        .headers(mapOf("Accept" to "application/json, application/jwk-set+json"))
-        .build()
 
 /**
  * Configuration for authenticating token-exchange clients via federated OIDC
@@ -150,7 +148,7 @@ data class FederatedClientAuthProperties(
 
 class FederatedIssuer(
     val issuer: String,
-    val jwkProvider: JwkProvider,
+    val cacheProperties: CacheProperties,
 ) {
     companion object {
         fun fromWellKnown(wellKnownUrl: String): FederatedIssuer {
@@ -159,7 +157,17 @@ class FederatedIssuer(
                     log.info("getting federated issuer discovery document from well-known url=$wellKnownUrl")
                     retryingHttpClient.get(wellKnownUrl).body()
                 }
-            return FederatedIssuer(wellKnown.issuer, buildCachedJwkProvider(wellKnown.jwksUri))
+            return FederatedIssuer(
+                issuer = wellKnown.issuer,
+                cacheProperties =
+                    CacheProperties(
+                        jwksURL = URI(wellKnown.jwksUri).toURL(),
+                        timeToLive = 6.hours,
+                        connectionTimeout = 5.seconds,
+                        readTimeout = 5.seconds,
+                        refreshAheadTime = 1.hours,
+                    ),
+            )
         }
     }
 }

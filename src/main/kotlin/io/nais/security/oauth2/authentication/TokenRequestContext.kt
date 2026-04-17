@@ -1,7 +1,5 @@
 package io.nais.security.oauth2.authentication
 
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
@@ -15,6 +13,7 @@ import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenRequest
+import io.nais.security.oauth2.token.TokenValidator
 import io.nais.security.oauth2.token.expiresIn
 import io.nais.security.oauth2.token.toJwt
 import io.nais.security.oauth2.token.verify
@@ -150,43 +149,21 @@ class TokenRequestContext private constructor(
                         ),
                     )
 
-            val kid =
-                credential.signedJWT.header.keyID
-                    ?: throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT.setDescription(
-                            "federated client_assertion JWT header must include kid",
-                        ),
-                    )
-            val jwkSet =
-                try {
-                    val jwk = federatedIssuer.jwkProvider.get(kid)
-                    val publicKey =
-                        jwk.publicKey as? java.security.interfaces.RSAPublicKey
-                            ?: throw OAuth2Exception(
-                                OAuth2Error.INVALID_CLIENT.setDescription(
-                                    "federated issuer ${credential.issuer} returned non-RSA key for kid=$kid",
-                                ),
-                            )
-                    JWKSet(RSAKey.Builder(publicKey).keyID(kid).build())
-                } catch (e: OAuth2Exception) {
-                    throw e
-                } catch (t: Throwable) {
-                    throw OAuth2Exception(
-                        OAuth2Error.INVALID_CLIENT.setDescription(
-                            "could not resolve signing key kid=$kid for issuer=${credential.issuer}: ${t.message}",
-                        ),
-                        t,
-                    )
-                }
-
-            log.info("verify federated client_assertion iss=${credential.issuer} sub=${credential.subject} kid=$kid")
-            credential.signedJWT.verify(
-                FederatedClientAssertionJwtClaimsVerifier(
-                    expectedAudience = expectedAudience,
-                    maxLifetimeSeconds = federatedConfig.maxAssertionLifetimeSeconds,
-                ),
-                jwkSet,
+            log.info(
+                "verify federated client_assertion iss=${credential.issuer} sub=${credential.subject} " +
+                    "kid=${credential.signedJWT.header.keyID}",
             )
+            val validator =
+                TokenValidator(
+                    issuer = federatedIssuer.issuer,
+                    cacheProperties = federatedIssuer.cacheProperties,
+                    extraClaimsVerifier =
+                        FederatedClientAssertionJwtClaimsVerifier(
+                            expectedAudience = expectedAudience,
+                            maxLifetimeSeconds = federatedConfig.maxAssertionLifetimeSeconds,
+                        ),
+                )
+            validator.validate(credential.signedJWT)
 
             val client =
                 config.federatedClientFinder.invoke(credential.issuer, credential.subject)
