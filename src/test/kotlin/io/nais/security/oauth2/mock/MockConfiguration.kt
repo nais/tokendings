@@ -1,5 +1,7 @@
 package io.nais.security.oauth2.mock
 
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.nais.security.oauth2.config.AppConfiguration
@@ -22,6 +24,7 @@ import io.nais.security.oauth2.routing.DefaultRouting
 import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import org.slf4j.LoggerFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Duration
 
@@ -115,6 +118,17 @@ fun <R> withMockOAuth2Server(test: MockOAuth2Server.() -> R): R {
         return server.test()
     } finally {
         server.shutdown()
+    }
+}
+
+fun <R> withLogAppender(loggerName: String, test: ListAppender<ILoggingEvent>.() -> R): R {
+    val logger = LoggerFactory.getLogger(loggerName) as ch.qos.logback.classic.Logger
+    val appender = ListAppender<ILoggingEvent>().apply { start() }
+    logger.addAppender(appender)
+    try {
+        return appender.test()
+    } finally {
+        logger.detachAppender(appender)
     }
 }
 
