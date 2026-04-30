@@ -18,7 +18,7 @@ import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.keystore.RotatingKeyStorePostgres
 import io.nais.security.oauth2.model.CacheProperties
 import io.nais.security.oauth2.model.ClaimMappings
-import io.nais.security.oauth2.model.WellKnown
+import io.nais.security.oauth2.model.SubjectTokenIssuerMetadata
 import io.nais.security.oauth2.model.WellKnownForBearerAuth
 import io.nais.security.oauth2.registration.ClientRegistry
 import io.nais.security.oauth2.registration.ClientRegistryPostgres
@@ -141,7 +141,7 @@ class SubjectTokenIssuer(
     private val wellKnownUrl: String,
     val subjectTokenClaimMappings: ClaimMappings = emptyMap(),
 ) {
-    val wellKnown: WellKnown =
+    val wellKnown: SubjectTokenIssuerMetadata =
         runBlocking {
             log.info("getting subject token discovery document from well-known url=$wellKnownUrl")
             retryingHttpClient.get(wellKnownUrl).body()

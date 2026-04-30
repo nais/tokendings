@@ -75,3 +75,16 @@ data class WellKnownForBearerAuth(
     @JsonProperty("jwks_uri")
     val jwksUri: String,
 )
+
+/**
+ * Subset of an OAuth 2.0 Authorization Server / OpenID Connect discovery document needed to
+ * use an issuer as a subject token issuer in token exchange.
+ *
+ * Only `issuer` and `jwks_uri` are required (see RFC 8414 §2). This avoids requiring
+ * `authorization_endpoint`, which machine-to-machine issuers such as Maskinporten do not expose.
+ */
+data class SubjectTokenIssuerMetadata(
+    val issuer: String,
+    @JsonProperty("jwks_uri")
+    val jwksUri: String,
+)
