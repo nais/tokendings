@@ -2,28 +2,28 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.27.3"
-val dropWizardVersion = "4.2.33"
-val flywayVersion = "11.10.0"
-val h2Version = "2.3.232"
-val hikaricpVersion = "6.3.0"
-val junitJupiterVersion = "5.13.2"
+val assertjVersion = "3.27.7"
+val dropWizardVersion = "4.2.38"
+val flywayVersion = "12.5.0"
+val h2Version = "2.4.240"
+val hikaricpVersion = "7.0.2"
+val junitJupiterVersion = "6.0.3"
 val konfigVersion = "1.6.10.0"
-val kotestVersion = "5.9.1"
+val kotestVersion = "6.1.11"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.2.0"
+val kotlinVersion = "2.3.21"
 val kotliqueryVersion = "1.9.1"
-val ktorVersion = "3.3.3"
-val logbackVersion = "1.5.18"
-val logstashLogbackEncoderVersion = "8.1"
-val micrometerRegistryPrometheusVersion = "1.15.1"
-val mockOAuth2ServerVersion = "2.2.1"
-val mockWebServerVersion = "4.12.0"
-val mockkVersion = "1.14.4"
-val nimbusSdkVersion = "11.26"
-val openTelemetryAnnotationsVersion = "2.17.0"
-val openTelemetryVersion = "1.51.0"
-val postgresqlVersion = "42.7.7"
+val ktorVersion = "3.4.3"
+val logbackVersion = "1.5.32"
+val logstashLogbackEncoderVersion = "9.0"
+val micrometerRegistryPrometheusVersion = "1.16.5"
+val mockOAuth2ServerVersion = "3.0.1"
+val mockWebServerVersion = "5.3.2"
+val mockkVersion = "1.14.9"
+val nimbusSdkVersion = "11.37"
+val openTelemetryAnnotationsVersion = "2.27.0"
+val openTelemetryVersion = "1.61.0"
+val postgresqlVersion = "42.7.11"
 val prometheusDropWizardVersion = "0.16.0"
 val testcontainersPostgresVersion = "1.21.4"
 
@@ -31,10 +31,10 @@ val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.2.0"
-    id("org.jmailen.kotlinter") version "5.1.1"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.ben-manes.versions") version "0.52.0"
+    kotlin("jvm") version "2.3.21"
+    id("org.jmailen.kotlinter") version "5.4.2"
+    id("com.gradleup.shadow") version "9.4.1"
+    id("com.github.ben-manes.versions") version "0.54.0"
 }
 
 
@@ -58,8 +58,9 @@ repositories {
 
 configurations.all {
     resolutionStrategy {
+        // testcontainers 1.21.4 pulls commons-compress 1.24.0 (CVE-2024-25710, CVE-2024-26308).
+        // Test-only, but force a patched version to silence scanners. Re-check on testcontainers bumps.
         force("org.apache.commons:commons-compress:1.27.1")
-        force("org.apache.commons:commons-lang3:3.20.0")
     }
 }
 
@@ -140,10 +141,6 @@ tasks {
         testLogging {
             events(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
         }
-    }
-
-    "build" {
-        dependsOn("shadowJar")
     }
 
     named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class).configure {
