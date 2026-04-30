@@ -22,7 +22,6 @@ spec:
             action: |
               Investigate reason for restarts.
               Check the error logs and traces in the Grafana dashboard.
-            runbook_url: "https://github.com/nais/vakt/blob/master/tokendings.md"
 
         - alert: Tokendings high rate of OAuth2 errors
           expr: |
@@ -37,7 +36,6 @@ spec:
             action: |
               Check the dashboard and logs for the error code.
               Common causes: misconfigured clients, invalid subject tokens, expired keys.
-            runbook_url: "https://github.com/nais/vakt/blob/master/tokendings.md"
 
         - alert: Tokendings high rate of HTTP 5xx responses
           expr: |
@@ -55,5 +53,4 @@ spec:
             action: |
               Investigate reason for errors.
               Check the error logs, traces and dependencies (database, identity providers) in the Grafana dashboard.
-            runbook_url: "https://github.com/nais/vakt/blob/master/tokendings.md"
 {{- end }}
