@@ -1,0 +1,59 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "tokenx.fullname" . }}-tokendings
+  labels:
+    {{- include "tokenx.tokendings.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: "tokendings-alerts"
+      rules:
+        - alert: Tokendings restarting continuously
+          expr: |
+            sum by (pod,uid) (changes(kube_pod_container_status_restarts_total{container="{{ include "tokenx.fullname" . }}-tokendings"}[1h])) * on(uid) group_left kube_pod_status_phase{phase="Running"} > 5
+          for: 10m
+          labels:
+            severity: warning
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: '{{ "Multiple restarts of Tokendings in pod `{{ $labels.pod }}` the last hour" }}'
+            consequence: Applications that depend on Tokendings (TokenX) may be unable to exchange tokens, breaking authentication between services.
+            action: |
+              Investigate reason for restarts.
+              Check the error logs and traces in the Grafana dashboard.
+            dashboard_url: "https://monitoring.nais.io/d/Ebu1ICOGk/tokenx-tokendings?var-tenant={{ .Values.fasit.tenant.name }}&var-cluster={{ .Values.fasit.env.name }}"
+
+        - alert: Tokendings high rate of OAuth2 errors
+          expr: |
+            sum by (code) (rate(tokendings_oauth2_errors[5m])) > 1
+          for: 15m
+          labels:
+            severity: warning
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: '{{ "Tokendings is returning OAuth2 errors with code `{{ $labels.code }}` at an elevated rate" }}'
+            consequence: Applications may be unable to exchange tokens, leading to authentication failures between services.
+            action: |
+              Check the dashboard and logs for the error code.
+              Common causes: misconfigured clients, invalid subject tokens, expired keys.
+            dashboard_url: "https://monitoring.nais.io/d/Ebu1ICOGk/tokenx-tokendings?var-tenant={{ .Values.fasit.tenant.name }}&var-cluster={{ .Values.fasit.env.name }}"
+
+        - alert: Tokendings high rate of HTTP 5xx responses
+          expr: |
+            sum(rate(ktor_http_server_requests_seconds_count{app="{{ include "tokenx.fullname" . }}-tokendings", status=~"5.."}[5m]))
+            /
+            sum(rate(ktor_http_server_requests_seconds_count{app="{{ include "tokenx.fullname" . }}-tokendings"}[5m]))
+            > 0.10
+          for: 10m
+          labels:
+            severity: critical
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: '{{ "Tokendings is responding with HTTP 5xx for over 10% of requests the last 10 minutes" }}'
+            consequence: Token exchange is failing for a significant share of clients; authentication between services is degraded.
+            action: |
+              Investigate reason for errors.
+              Check the error logs, traces and dependencies (database, identity providers) in the Grafana dashboard.
+            dashboard_url: "https://monitoring.nais.io/d/Ebu1ICOGk/tokenx-tokendings?var-tenant={{ .Values.fasit.tenant.name }}&var-cluster={{ .Values.fasit.env.name }}"
+{{- end }}

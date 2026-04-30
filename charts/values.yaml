@@ -2,6 +2,12 @@ repository: europe-north1-docker.pkg.dev/nais-io/nais/images
 
 team: nais
 
+fasit: # mapped from Fasit
+  tenant:
+    name: ""
+  env:
+    name: ""
+
 networkPolicy:
   enabled: false
   apiServerCIDR:
