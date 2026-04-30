@@ -1,7 +1,11 @@
+[settings]
+pin = true
+
 [tools]
 java = "temurin-21.0.10+7.0.LTS"
 helm = "3.16.2"
 step = "0.30.2"
+"aqua:sethvargo/ratchet" = "0.11.4"
 
 [tasks.services]
 description = "Start local infrastructure (Postgres, mock-oauth2-server, otel)"
@@ -19,3 +23,15 @@ run = "./scripts/test-token-exchange.sh"
 [tasks."check:helm-lint"]
 description = "Lint helm chart"
 run = "helm lint --strict ./charts"
+
+[tasks."check:actions-lint"]
+description = "Check for unpinned actions"
+run = "ratchet lint .github/workflows/*.yml"
+
+[tasks."actions:update"]
+description = "Upgrade all github actions to latest version satisfying their version tag"
+run = "ratchet update .github/workflows/*.yml"
+
+[tasks."actions:upgrade"]
+description = "Upgrade all github actions to latest"
+run = "ratchet upgrade .github/workflows/*.yml"
