@@ -33,7 +33,6 @@ plugins {
     application
     kotlin("jvm") version "2.3.21"
     id("org.jmailen.kotlinter") version "5.4.2"
-    id("com.gradleup.shadow") version "9.4.1"
     id("com.github.ben-manes.versions") version "0.54.0"
 }
 
@@ -117,19 +116,6 @@ dependencies {
 }
 
 tasks {
-    withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-        archiveBaseName.set("app")
-        archiveClassifier.set("")
-        manifest {
-            attributes(
-                mapOf(
-                    "Main-Class" to mainClassKt
-                )
-            )
-        }
-        mergeServiceFiles()
-    }
-
     withType<KotlinJvmCompile>().configureEach {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
