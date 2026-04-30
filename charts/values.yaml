@@ -18,10 +18,10 @@ tokendings:
     max: 4
   resources:
     limits:
-      memory: 4Gi
+      memory: 2Gi
     requests:
-      memory: 512Mi
-      cpu: 400m
+      memory: 1Gi
+      cpu: 750m
   image: tokendings
   tag: latest
   env:
@@ -30,6 +30,7 @@ tokendings:
     APPLICATION_PORT: "8080"
     AUTH_CLIENT_JWKS: ""
     TOKEN_EXPIRY_SECONDS: 900
+    JDK_JAVA_OPTIONS: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=4"
   accessPolicy:
     outboundHosts: []
   database:
