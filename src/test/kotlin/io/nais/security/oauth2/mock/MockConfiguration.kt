@@ -121,14 +121,18 @@ fun <R> withMockOAuth2Server(test: MockOAuth2Server.() -> R): R {
     }
 }
 
-fun <R> withLogAppender(loggerName: String, test: ListAppender<ILoggingEvent>.() -> R): R {
+fun <R> withLogAppender(
+    loggerName: String,
+    test: ListAppender<ILoggingEvent>.() -> R,
+): R {
     val logger = LoggerFactory.getLogger(loggerName) as ch.qos.logback.classic.Logger
     val appender = ListAppender<ILoggingEvent>().apply { start() }
     logger.addAppender(appender)
-    try {
-        return appender.test()
+    return try {
+        appender.test()
     } finally {
         logger.detachAppender(appender)
+        appender.stop()
     }
 }
 

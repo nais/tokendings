@@ -19,6 +19,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.formUrlEncode
 import io.ktor.server.testing.testApplication
 import io.nais.security.oauth2.appLoggerName
+import io.nais.security.oauth2.authentication.tokenRequestContextLoggerName
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.JWKS_PATH
 import io.nais.security.oauth2.config.AuthorizationServerProperties.Companion.WELL_KNOWN_PATH
@@ -455,6 +456,80 @@ internal class TokenExchangeApiTest {
                 assertThat(eventWithMdc.mdcPropertyMap["callId"]).isNotBlank
                 assertThat(eventWithMdc.mdcPropertyMap["client_id"]).isEqualTo("client1")
                 assertThat(eventWithMdc.mdcPropertyMap["audience"]).isEqualTo("client2")
+            }
+        }
+    }
+
+    @Test
+    fun `in-flight log inside route handler carries client_id and audience via withLoggingContext`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf("client1")))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            withLogAppender(tokenRequestContextLoggerName) {
+                testApplication {
+                    application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(tokenExchangeBody(clientAssertion, client2.clientId, subjectToken.serialize()))
+                    }
+                }
+                assertThat(list).isNotEmpty
+                val verifyEvent = list.first { it.formattedMessage.startsWith("verify client_assertion") }
+                assertThat(verifyEvent.mdcPropertyMap["client_id"]).isEqualTo("client1")
+                assertThat(verifyEvent.mdcPropertyMap["audience"]).isEqualTo("client2")
+            }
+        }
+    }
+
+    @Test
+    fun `subsequent request does not inherit MDC client_id or audience from previous request`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val client1 = mockConfig.mockClientRegistry().register("client1")
+            val client2 = mockConfig.mockClientRegistry().register("client2", AccessPolicy(listOf("client1")))
+            val clientAssertion = client1.createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+            val subjectToken = this.issueToken("mock1", "someclientid", DefaultOAuth2TokenCallback())
+
+            withLogAppender(appLoggerName) {
+                testApplication {
+                    application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                    // Request 1: populates MDC for client1/client2
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(tokenExchangeBody(clientAssertion, client2.clientId, subjectToken.serialize()))
+                    }
+                    // Request 2: a route that never touches TokenRequestContext
+                    client.get(JWKS_PATH)
+                }
+                val jwksEvent = list.first { it.formattedMessage.contains(JWKS_PATH) && it.mdcPropertyMap["callId"]?.isNotBlank() == true }
+                assertThat(jwksEvent.mdcPropertyMap).doesNotContainKey("client_id")
+                assertThat(jwksEvent.mdcPropertyMap).doesNotContainKey("audience")
+            }
+        }
+    }
+
+    @Test
+    fun `failed client authentication logs client_id=unknown and audience in MDC`() {
+        withMockOAuth2Server {
+            val mockConfig = mockConfig(this)
+            val unknownClientAssertion = oAuth2Client().createClientAssertion(mockConfig.authorizationServerProperties.tokenEndpointUrl())
+
+            withLogAppender(appLoggerName) {
+                testApplication {
+                    application { tokenExchangeApp(mockConfig, DefaultRouting(mockConfig)) }
+                    client.post("/token") {
+                        header(ContentType, FormUrlEncoded.toString())
+                        setBody(tokenExchangeBody(unknownClientAssertion, "some-audience", "sometoken"))
+                    }
+                }
+                assertThat(list).isNotEmpty
+                val eventWithMdc = list.first { it.mdcPropertyMap["callId"]?.isNotBlank() == true }
+                assertThat(eventWithMdc.mdcPropertyMap["client_id"]).isEqualTo("unknown")
+                assertThat(eventWithMdc.mdcPropertyMap["audience"]).isEqualTo("some-audience")
             }
         }
     }

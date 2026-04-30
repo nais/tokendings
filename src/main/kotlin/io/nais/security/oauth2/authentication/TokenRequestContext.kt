@@ -19,11 +19,12 @@ import io.nais.security.oauth2.token.verify
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
-import org.slf4j.MDC
+import mu.withLoggingContext
 
 typealias AcceptedAudience = Set<String>
 
 private val log = KotlinLogging.logger { }
+internal val tokenRequestContextLoggerName: String = log.name
 
 val ClientIdAttributeKey = AttributeKey<String>("client_id")
 val AudienceAttributeKey = AttributeKey<String>("audience")
@@ -55,26 +56,25 @@ class TokenRequestContext private constructor(
                 parameters.require("client_assertion_type"),
                 parameters.require("client_assertion"),
             ).also { client ->
-                MDC.put(ClientIdAttributeKey.name, client.clientId)
                 attributes.put(ClientIdAttributeKey, client.clientId)
             }
 
         private fun config(
             credential: ClientAssertionCredential,
-            configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit
-        ): TokenRequestConfig = TokenRequestConfig(
-            TokenRequestConfig.Configuration().apply {
-                val clientIds =
-                    ClientIDs(
-                        client = credential.clientId,
-                        target = parameters.require("audience"),
-                    )
-                configure(clientIds).also {
-                    MDC.put(AudienceAttributeKey.name, clientIds.target)
-                    attributes.put(AudienceAttributeKey, clientIds.target)
-                }
-            },
-        )
+            configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit,
+        ): TokenRequestConfig {
+            val clientIds =
+                ClientIDs(
+                    client = credential.clientId,
+                    target = parameters.require("audience"),
+                )
+            attributes.put(AudienceAttributeKey, clientIds.target)
+            return TokenRequestConfig(
+                TokenRequestConfig.Configuration().apply {
+                    configure(clientIds)
+                },
+            )
+        }
 
         @WithSpan
         private fun authenticateClient(
@@ -88,7 +88,12 @@ class TokenRequestContext private constructor(
                         oAuth2Client.jwkSet.keys
                             .map { it.keyID }
                             .toList()
-                    log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
+                    withLoggingContext(
+                        ClientIdAttributeKey.name to oAuth2Client.clientId,
+                        AudienceAttributeKey.name to (attributes.getOrNull(AudienceAttributeKey) ?: ""),
+                    ) {
+                        log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
+                    }
                     clientAssertionCredential.signedJWT.verify(
                         config.claimsVerifier(oAuth2Client.clientId),
                         oAuth2Client.jwkSet,

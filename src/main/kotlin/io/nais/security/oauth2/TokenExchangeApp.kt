@@ -43,8 +43,8 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import io.nais.security.oauth2.authentication.ClientIdAttributeKey
 import io.nais.security.oauth2.authentication.AudienceAttributeKey
+import io.nais.security.oauth2.authentication.ClientIdAttributeKey
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.HikariProperties
