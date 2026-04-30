@@ -10,3 +10,7 @@ run = "docker compose up -d"
 description = "Build and run Tokendings locally"
 depends = ["services"]
 run = "./gradlew run"
+
+[tasks.test-exchange]
+description = "End-to-end token exchange against the local Tokendings"
+run = "./scripts/test-token-exchange.sh"
