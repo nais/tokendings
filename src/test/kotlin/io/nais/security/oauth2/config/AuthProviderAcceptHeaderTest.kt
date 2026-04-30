@@ -21,11 +21,12 @@ class AuthProviderAcceptHeaderTest {
             object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse =
                     when (request.path) {
-                        "/.well-known/openid-configuration" ->
+                        "/.well-known/openid-configuration" -> {
                             MockResponse()
                                 .setBody(
                                     """{"issuer":"${server.url("/")}","jwks_uri":"${server.url("/jwks")}"}""",
                                 ).addHeader("Content-Type", "application/json")
+                        }
 
                         "/jwks" -> {
                             val accept = request.getHeader("Accept") ?: ""
@@ -40,7 +41,9 @@ class AuthProviderAcceptHeaderTest {
                             }
                         }
 
-                        else -> MockResponse().setResponseCode(404)
+                        else -> {
+                            MockResponse().setResponseCode(404)
+                        }
                     }
             }
         server.start()

@@ -87,7 +87,10 @@ class TokenIssuer(
 
     private fun validator(issuer: String?): TokenValidator =
         when (issuer) {
-            issuerUrl -> internalTokenValidator
+            issuerUrl -> {
+                internalTokenValidator
+            }
+
             else -> {
                 issuer?.let { tokenValidators[it] }
                     ?: throw OAuth2Exception(

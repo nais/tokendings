@@ -156,10 +156,12 @@ fun clientRegistrationAuthProperties(): ClientRegistrationAuthProperties {
                         log.info("loaded ${it.size} external auth providers from AUTH_PROVIDER_CONFIGS: {}", configs)
                     }
             }
+
             wellknownUrl != null -> {
                 log.info("using single external auth provider from AUTH_WELL_KNOWN_URL={} (legacy)", wellknownUrl)
                 listOf(AuthProvider.fromWellKnown(wellknownUrl))
             }
+
             else -> {
                 val selfSignedIssuer = konfig[Key(AUTH_CLIENT_ID, stringType)]
                 log.info("using self-signed auth provider with issuer=$selfSignedIssuer")

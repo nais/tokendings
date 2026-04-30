@@ -103,6 +103,7 @@ fun Application.mockJwkerApp() {
 
                     call.respond(statusCode, body)
                 }
+
                 else -> {
                     call.respond(HttpStatusCode.InternalServerError, error.message ?: "unknown internal server error")
                 }

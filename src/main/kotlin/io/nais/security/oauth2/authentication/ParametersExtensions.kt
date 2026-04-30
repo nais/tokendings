@@ -19,6 +19,7 @@ fun Parameters.require(
                     ),
                 )
         }
+
         else -> {
             this[name] ?: throw OAuth2Exception(OAuth2Error.INVALID_REQUEST.setDescription("Parameter $name missing"))
         }

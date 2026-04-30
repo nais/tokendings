@@ -60,6 +60,7 @@ class TokenExchangeRequestAuthorizer(
 
         return when {
             targetClient.accessPolicyInbound.contains(authenticatedClient.clientId) -> tokenRequest
+
             else -> throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
                     "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${targetClient.clientId}",
@@ -88,6 +89,7 @@ class ClientCredentialsRequestAuthorizer : TokenRequestAuthorizer<OAuth2ClientCr
 
         return when {
             authenticatedClient.allowedScopes.contains(tokenRequest.scope) -> tokenRequest
+
             else -> throw OAuth2Exception(
                 OAuth2Error.INVALID_REQUEST.setDescription(
                     "client '${authenticatedClient.clientId}' is not authorized to get token with aud=${tokenRequest.scope}",
