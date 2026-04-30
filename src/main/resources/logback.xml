@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<configuration debug="true">
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%green(%d{HH:mm:ss}){faint} %cyan([%15t]){faint} %highlight(%0.-5p) %yellow(%-40.40logger{39}){cyan}: [%mdc] %m%n</pattern>
-        </encoder>
-    </appender>
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.OnErrorConsoleStatusListener"/>
 
     <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
