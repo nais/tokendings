@@ -1,8 +1,5 @@
-FROM gcr.io/distroless/java21-debian12:nonroot
+FROM gcr.io/distroless/java21-debian13:nonroot
 
-COPY build/libs/app-*.jar /app/app.jar
+COPY build/install/*/lib /app/lib
 
-WORKDIR /app
-
-CMD ["app.jar"]
-
+ENTRYPOINT ["java", "-cp", "/app/lib/*", "io.nais.security.oauth2.TokenExchangeAppKt"]

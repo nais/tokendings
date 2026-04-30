@@ -25,4 +25,4 @@ jobs:
         with:
           cache-provider: basic
       - name: Build with Gradle
-        run: ./gradlew clean build
+        run: ./gradlew clean build installDist

@@ -148,7 +148,7 @@ fun Application.tokenExchangeApp(
     install(ContentNegotiation) {
         jackson {
             configure(FAIL_ON_UNKNOWN_PROPERTIES, true)
-            setSerializationInclusion(NON_NULL)
+            setDefaultPropertyInclusion(NON_NULL)
         }
     }
 
@@ -219,7 +219,7 @@ internal val defaultHttpClient =
     HttpClient(CIO) {
         install(ClientContentNegotiation) {
             jackson {
-                setSerializationInclusion(NON_NULL)
+                setDefaultPropertyInclusion(NON_NULL)
                 configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
         }
@@ -229,7 +229,7 @@ internal val retryingHttpClient =
     HttpClient(CIO) {
         install(ClientContentNegotiation) {
             jackson {
-                setSerializationInclusion(NON_NULL)
+                setDefaultPropertyInclusion(NON_NULL)
                 configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
             }
         }
