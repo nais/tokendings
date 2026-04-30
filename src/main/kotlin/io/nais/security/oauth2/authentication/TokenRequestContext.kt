@@ -7,6 +7,8 @@ import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.Parameters
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveParameters
+import io.ktor.util.AttributeKey
+import io.ktor.util.Attributes
 import io.nais.security.oauth2.model.ClientId
 import io.nais.security.oauth2.model.OAuth2Client
 import io.nais.security.oauth2.model.OAuth2Exception
@@ -17,11 +19,15 @@ import io.nais.security.oauth2.token.verify
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import mu.KotlinLogging
-import org.slf4j.MDC
+import mu.withLoggingContext
 
 typealias AcceptedAudience = Set<String>
 
 private val log = KotlinLogging.logger { }
+internal val tokenRequestContextLoggerName: String = log.name
+
+val ClientIdAttributeKey = AttributeKey<String>("client_id")
+val AudienceAttributeKey = AttributeKey<String>("audience")
 
 class TokenRequestContext private constructor(
     val oauth2Client: OAuth2Client,
@@ -33,22 +39,13 @@ class TokenRequestContext private constructor(
     )
 
     class From(
+        private val attributes: Attributes,
         private val parameters: Parameters,
     ) {
         @WithSpan
         fun authenticateAndAuthorize(configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit): TokenRequestContext {
             val credential = credential()
-            val config =
-                TokenRequestConfig(
-                    TokenRequestConfig.Configuration().apply {
-                        val clientIds =
-                            ClientIDs(
-                                client = credential.clientId,
-                                target = parameters.require("audience"),
-                            )
-                        configure(clientIds)
-                    },
-                )
+            val config = config(credential, configure)
             val client: OAuth2Client = authenticateClient(config, credential)
             val tokenRequest = authorizeTokenRequest(config, client)
             return TokenRequestContext(client, tokenRequest)
@@ -59,8 +56,25 @@ class TokenRequestContext private constructor(
                 parameters.require("client_assertion_type"),
                 parameters.require("client_assertion"),
             ).also { client ->
-                MDC.put("client_id", client.clientId)
+                attributes.put(ClientIdAttributeKey, client.clientId)
             }
+
+        private fun config(
+            credential: ClientAssertionCredential,
+            configure: TokenRequestConfig.Configuration.(ClientIDs) -> Unit,
+        ): TokenRequestConfig {
+            val clientIds =
+                ClientIDs(
+                    client = credential.clientId,
+                    target = parameters.require("audience"),
+                )
+            attributes.put(AudienceAttributeKey, clientIds.target)
+            return TokenRequestConfig(
+                TokenRequestConfig.Configuration().apply {
+                    configure(clientIds)
+                },
+            )
+        }
 
         @WithSpan
         private fun authenticateClient(
@@ -74,7 +88,12 @@ class TokenRequestContext private constructor(
                         oAuth2Client.jwkSet.keys
                             .map { it.keyID }
                             .toList()
-                    log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
+                    withLoggingContext(
+                        ClientIdAttributeKey.name to oAuth2Client.clientId,
+                        AudienceAttributeKey.name to (attributes.getOrNull(AudienceAttributeKey) ?: ""),
+                    ) {
+                        log.info("verify client_assertion for client_id=${oAuth2Client.clientId} with keyIds=$keyIds")
+                    }
                     clientAssertionCredential.signedJWT.verify(
                         config.claimsVerifier(oAuth2Client.clientId),
                         oAuth2Client.jwkSet,
@@ -162,4 +181,4 @@ private fun SignedJWT.isWithinMaxLifetime(lifetime: Long): Boolean = this.expire
 
 @WithSpan(kind = SpanKind.CLIENT)
 suspend fun ApplicationCall.receiveTokenRequestContext(block: TokenRequestContext.From.() -> TokenRequestContext): TokenRequestContext =
-    block.invoke(TokenRequestContext.From(this.receiveParameters()))
+    block.invoke(TokenRequestContext.From(this.attributes, this.receiveParameters()))

@@ -43,6 +43,8 @@ import io.micrometer.core.instrument.binder.logging.LogbackMetrics
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics
 import io.micrometer.prometheus.PrometheusConfig
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import io.nais.security.oauth2.authentication.AudienceAttributeKey
+import io.nais.security.oauth2.authentication.ClientIdAttributeKey
 import io.nais.security.oauth2.authentication.clientRegistrationAuth
 import io.nais.security.oauth2.config.AppConfiguration
 import io.nais.security.oauth2.config.HikariProperties
@@ -61,7 +63,8 @@ import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
-private val log = KotlinLogging.logger { }
+internal val log = KotlinLogging.logger { }
+internal val appLoggerName: String = log.name
 
 fun main() {
     try {
@@ -114,6 +117,8 @@ fun Application.tokenExchangeApp(
         logger = log
         level = Level.INFO
         callIdMdc("callId")
+        mdc(ClientIdAttributeKey.name) { call -> call.attributes.getOrNull(ClientIdAttributeKey) }
+        mdc(AudienceAttributeKey.name) { call -> call.attributes.getOrNull(AudienceAttributeKey) }
         filter { call ->
             !call.request.path().startsWith("/internal/isalive") &&
                 !call.request.path().startsWith("/internal/isready") &&

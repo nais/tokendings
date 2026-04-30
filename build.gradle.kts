@@ -99,6 +99,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
+    testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
     testImplementation("com.h2database:h2:$h2Version")
     testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
