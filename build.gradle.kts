@@ -59,7 +59,7 @@ configurations.all {
     resolutionStrategy {
         // testcontainers 1.21.4 pulls commons-compress 1.24.0 (CVE-2024-25710, CVE-2024-26308).
         // Test-only, but force a patched version to silence scanners. Re-check on testcontainers bumps.
-        force("org.apache.commons:commons-compress:1.27.1")
+        force("org.apache.commons:commons-compress:1.28.0")
     }
 }
 
