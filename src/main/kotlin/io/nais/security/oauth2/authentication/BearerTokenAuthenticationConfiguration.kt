@@ -7,7 +7,6 @@ import com.auth0.jwt.interfaces.JWTVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.auth.AuthenticationConfig
-import io.ktor.server.auth.Principal
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.jwt.jwt
 import io.nais.security.oauth2.authentication.BearerTokenAuth.CLIENT_REGISTRATION_AUTH
@@ -27,7 +26,7 @@ object BearerTokenAuth {
 data class AuthenticatedClient(
     val jwtPrincipal: JWTPrincipal,
     val provider: AuthProvider,
-) : Principal
+)
 
 fun AuthenticationConfig.clientRegistrationAuth(appConfig: AppConfiguration) {
     jwt(CLIENT_REGISTRATION_AUTH) {
