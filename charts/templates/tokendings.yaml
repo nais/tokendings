@@ -16,7 +16,7 @@ spec:
   replicas:
     min: {{.Values.tokendings.replicas.min}}
     max: {{.Values.tokendings.replicas.max}}
-    cpuThresholdPercentage: 60
+    cpuThresholdPercentage: 85
   startup:
     initialDelay: 10
     failureThreshold: 30 # allow up to 1 minute (30 attempts * 2 second period) for the application to start
