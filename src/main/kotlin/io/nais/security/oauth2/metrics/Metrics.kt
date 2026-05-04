@@ -31,6 +31,6 @@ object Metrics {
             .namespace(NAMESPACE)
             .name("tokens_issued")
             .help("Number of tokens we have issued")
-            .labelNames("audience")
+            .labelNames("client_id", "audience")
             .register()
 }

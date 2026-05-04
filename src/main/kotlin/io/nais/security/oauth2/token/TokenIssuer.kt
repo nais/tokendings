@@ -81,7 +81,7 @@ class TokenIssuer(
             .build()
             .sign(rotatingKeyStore.currentSigningKey())
             .also {
-                issuedTokensCounter.labels(targetAudience).inc()
+                issuedTokensCounter.labels(oAuth2Client.clientId, targetAudience).inc()
             }
     }
 
