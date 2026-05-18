@@ -16,7 +16,6 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.engine.EmbeddedServer
-import io.ktor.server.engine.addShutdownHook
 import io.ktor.server.engine.connector
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.metrics.micrometer.MicrometerMetrics
@@ -68,14 +67,7 @@ internal val appLoggerName: String = log.name
 
 fun main() {
     try {
-        val engine = server()
-        engine.addShutdownHook {
-            engine.stop(
-                gracePeriodMillis = (10L).seconds.inWholeMilliseconds,
-                timeoutMillis = (20L).seconds.inWholeMilliseconds,
-            )
-        }
-        engine.start(wait = true)
+        server().start(wait = true)
     } catch (t: Throwable) {
         log.error("received unexpected exception when starting app. message: ${t.message}", t)
         exitProcess(1)
@@ -92,6 +84,8 @@ fun server(): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Conf
             connector {
                 port = config.serverProperties.port
             }
+            shutdownGracePeriod = 10.seconds.inWholeMilliseconds
+            shutdownTimeout = 20.seconds.inWholeMilliseconds
             connectionGroupSize = maxOf(1, processors / 2)
             workerGroupSize = processors
             callGroupSize = maxOf(1, minOf(processors * 2, maxConnectionPool))
