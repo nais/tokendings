@@ -8,6 +8,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.natpryce.konfig.ConfigurationProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
+import com.natpryce.konfig.booleanType
 import com.natpryce.konfig.enumType
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.listType
@@ -28,6 +29,7 @@ import io.nais.security.oauth2.config.EnvKey.ISSUER_URL
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_ISSUERS
 import io.nais.security.oauth2.config.EnvKey.SUBJECT_TOKEN_MAPPINGS
 import io.nais.security.oauth2.config.EnvKey.TOKEN_EXPIRY_SECONDS
+import io.nais.security.oauth2.config.EnvKey.VALIDATE_SUBJECT_TOKEN_AUDIENCE
 import io.nais.security.oauth2.model.IssuerClaimMappings
 import io.nais.security.oauth2.model.issuerClaimMappingsFromJson
 import mu.KotlinLogging
@@ -66,6 +68,7 @@ internal object EnvKey {
     const val ISSUER_URL = "ISSUER_URL"
     const val SUBJECT_TOKEN_ISSUERS = "SUBJECT_TOKEN_ISSUERS"
     const val SUBJECT_TOKEN_MAPPINGS = "SUBJECT_TOKEN_MAPPINGS"
+    const val VALIDATE_SUBJECT_TOKEN_AUDIENCE = "VALIDATE_SUBJECT_TOKEN_AUDIENCE"
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -95,6 +98,7 @@ object Configuration {
                         rotationInterval = Duration.ofDays(1),
                     ),
                 tokenExpiry = konfig.getOrElse(Key(TOKEN_EXPIRY_SECONDS, longType), DEFAULT_TOKEN_EXPIRY_SECONDS),
+                validateSubjectTokenAudience = konfig.getOrElse(Key(VALIDATE_SUBJECT_TOKEN_AUDIENCE, booleanType), false),
             )
         val clientRegistry = clientRegistry(databaseConfig)
         val databaseHealthCheck = databaseHealthCheck(databaseConfig)

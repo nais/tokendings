@@ -7,6 +7,7 @@ import com.nimbusds.oauth2.sdk.OAuth2Error
 import io.nais.security.oauth2.config.AuthorizationServerProperties
 import io.nais.security.oauth2.keystore.RotatingKeyStore
 import io.nais.security.oauth2.metrics.Metrics.issuedTokensCounter
+import io.nais.security.oauth2.metrics.Metrics.subjectTokenAudienceMismatchCounter
 import io.nais.security.oauth2.model.Claim
 import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.ClaimValueMapping
@@ -29,6 +30,7 @@ class TokenIssuer(
     private val issuerUrl: String = authorizationServerProperties.issuerUrl
     private val tokenExpiry: Long = authorizationServerProperties.tokenExpiry
     private val rotatingKeyStore: RotatingKeyStore = authorizationServerProperties.rotatingKeyStore
+    private val validateSubjectTokenAudience: Boolean = authorizationServerProperties.validateSubjectTokenAudience
 
     private val tokenValidators: Map<String, TokenValidator> =
         authorizationServerProperties.subjectTokenIssuers.associate {
@@ -57,11 +59,17 @@ class TokenIssuer(
             tryOrInvalidSubjectToken {
                 tokenExchangeRequest.subjectToken.toJwt()
             }
-        val issuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
+        val subjectIssuer: String? = subjectTokenJwt.jwtClaimsSet.issuer
         val subjectTokenClaims =
             tryOrInvalidSubjectToken {
-                validator(issuer).validate(subjectTokenJwt)
+                validator(subjectIssuer).validate(subjectTokenJwt)
             }
+
+        if (subjectIssuer == issuerUrl) {
+            tryOrInvalidSubjectToken {
+                checkSubjectTokenAudience(oAuth2Client, subjectTokenClaims)
+            }
+        }
 
         val now = Instant.now()
         return JWTClaimsSet
@@ -77,7 +85,7 @@ class TokenIssuer(
                 if (!subjectTokenClaims.claims.containsKey("idp")) {
                     subjectTokenClaims.issuer?.let { claim("idp", it) }
                 }
-            }.mapSubjectTokenClaims(issuer, subjectTokenClaims)
+            }.mapSubjectTokenClaims(subjectIssuer, subjectTokenClaims)
             .build()
             .sign(rotatingKeyStore.currentSigningKey())
             .also {
@@ -142,5 +150,31 @@ class TokenIssuer(
         }
 
         return this
+    }
+
+    private fun checkSubjectTokenAudience(
+        oAuth2Client: OAuth2Client,
+        subjectTokenClaims: JWTClaimsSet,
+    ) {
+        val subjectTokenAudience = subjectTokenClaims.audience.orEmpty()
+        if (oAuth2Client.clientId in subjectTokenAudience) return
+
+        log.warn {
+            "subject token audience mismatch: client_id=${oAuth2Client.clientId} " +
+                "is not in subject token audience=$subjectTokenAudience"
+        }
+        subjectTokenAudienceMismatchCounter
+            .labels(oAuth2Client.clientId, subjectTokenAudience.joinToString(","))
+            .inc()
+
+        // TODO: this should always be validated, but is a breaking change.
+        //  Track for now and enforce by default in a future release.
+        if (validateSubjectTokenAudience) {
+            throw OAuth2Exception(
+                OAuth2Error.INVALID_REQUEST.setDescription(
+                    "audience does not match client_id=${oAuth2Client.clientId}",
+                ),
+            )
+        }
     }
 }
