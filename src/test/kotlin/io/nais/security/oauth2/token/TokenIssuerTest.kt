@@ -1,5 +1,6 @@
 package io.nais.security.oauth2.token
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.maps.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.nais.security.oauth2.config.AuthorizationServerProperties
@@ -11,6 +12,7 @@ import io.nais.security.oauth2.mock.withMockOAuth2Server
 import io.nais.security.oauth2.model.ClaimMappings
 import io.nais.security.oauth2.model.JsonWebKeys
 import io.nais.security.oauth2.model.OAuth2Client
+import io.nais.security.oauth2.model.OAuth2Exception
 import io.nais.security.oauth2.model.OAuth2TokenExchangeRequest
 import io.nais.security.oauth2.model.SubjectTokenType
 import io.nais.security.oauth2.utils.jwkSet
@@ -294,6 +296,58 @@ internal class TokenIssuerTest {
         }
     }
 
+    @Test
+    fun `chained exchange succeeds when subject token audience matches requesting client_id`() {
+        withMockOAuth2Server {
+            val fakeKeyStore = MockRotatingKeyStore()
+            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore)
+            val clientA = oAuth2Client("clientA")
+            val clientB = oAuth2Client("clientB")
+
+            val externalSubjectToken = createSubjectToken("thesubject").serialize()
+            val internalToken = issuer.issueTokenFor(clientA, tokenExchangeRequest(externalSubjectToken, "clientB"))
+
+            // clientB exchanges the token issued to it — audience matches
+            val result = issuer.issueTokenFor(clientB, tokenExchangeRequest(internalToken.serialize(), "someTarget"))
+            result.verifySignature(issuer.publicJwkSet()).claims["sub"] shouldBe "thesubject"
+        }
+    }
+
+    @Test
+    fun `chained exchange succeeds with audience mismatch when validation is disabled (default)`() {
+        withMockOAuth2Server {
+            val fakeKeyStore = MockRotatingKeyStore()
+            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, validateSubjectTokenAudience = false)
+            val clientA = oAuth2Client("clientA")
+            val clientC = oAuth2Client("clientC")
+
+            val externalSubjectToken = createSubjectToken("thesubject").serialize()
+            val internalToken = issuer.issueTokenFor(clientA, tokenExchangeRequest(externalSubjectToken, "clientB"))
+
+            // clientC exchanges a token issued to clientB — mismatch, but validation is off
+            val result = issuer.issueTokenFor(clientC, tokenExchangeRequest(internalToken.serialize(), "someTarget"))
+            result.verifySignature(issuer.publicJwkSet()).claims["sub"] shouldBe "thesubject"
+        }
+    }
+
+    @Test
+    fun `chained exchange fails with audience mismatch when validation is enabled`() {
+        withMockOAuth2Server {
+            val fakeKeyStore = MockRotatingKeyStore()
+            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, validateSubjectTokenAudience = true)
+            val clientA = oAuth2Client("clientA")
+            val clientC = oAuth2Client("clientC")
+
+            val externalSubjectToken = createSubjectToken("thesubject").serialize()
+            val internalToken = issuer.issueTokenFor(clientA, tokenExchangeRequest(externalSubjectToken, "clientB"))
+
+            // clientC exchanges a token issued to clientB — mismatch, validation is on
+            shouldThrow<OAuth2Exception> {
+                issuer.issueTokenFor(clientC, tokenExchangeRequest(internalToken.serialize(), "someTarget"))
+            }
+        }
+    }
+
     private fun MockOAuth2Server.createSubjectToken(
         subject: String,
         claims: Map<String, Any> = emptyMap(),
@@ -317,9 +371,9 @@ internal class TokenIssuerTest {
         audience,
     )
 
-    private fun oAuth2Client(): OAuth2Client =
+    private fun oAuth2Client(clientId: String = "testclient"): OAuth2Client =
         OAuth2Client(
-            "testclient",
+            clientId,
             JsonWebKeys(jwkSet()),
         )
 
@@ -327,6 +381,7 @@ internal class TokenIssuerTest {
         mockOAuth2Server: MockOAuth2Server? = null,
         rotatingKeyStore: RotatingKeyStore? = null,
         subjectTokenMappings: ClaimMappings = emptyMap(),
+        validateSubjectTokenAudience: Boolean = false,
     ) = if (mockOAuth2Server != null) {
         TokenIssuer(
             AuthorizationServerProperties(
@@ -338,6 +393,7 @@ internal class TokenIssuerTest {
                     ),
                 tokenExpiry = 300,
                 rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
+                validateSubjectTokenAudience = validateSubjectTokenAudience,
             ),
         )
     } else {
@@ -347,6 +403,7 @@ internal class TokenIssuerTest {
                 subjectTokenIssuers = emptyList(),
                 tokenExpiry = 300,
                 rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
+                validateSubjectTokenAudience = validateSubjectTokenAudience,
             ),
         )
     }
