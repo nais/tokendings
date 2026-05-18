@@ -25,14 +25,10 @@ data class DatabaseConfig(
 
 fun dataSourceFrom(databaseConfig: DatabaseConfig): HikariDataSource = HikariDataSource(hikariConfig(databaseConfig))
 
-internal fun migrate(
-    dataSource: HikariDataSource,
-    initSql: String = "",
-): MigrateResult? =
+internal fun migrate(dataSource: HikariDataSource): MigrateResult? =
     Flyway
         .configure()
         .dataSource(dataSource)
-        .initSql(initSql)
         .load()
         .migrate()
 
