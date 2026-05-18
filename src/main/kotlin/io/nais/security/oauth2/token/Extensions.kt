@@ -15,7 +15,6 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.jwt.proc.BadJWTException
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor
-import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import com.nimbusds.jwt.proc.DefaultJWTProcessor
 import com.nimbusds.jwt.proc.JWTClaimsSetVerifier
 import com.nimbusds.oauth2.sdk.OAuth2Error
@@ -41,25 +40,6 @@ fun JWTClaimsSet.sign(rsaKey: RSAKey): SignedJWT =
     }
 
 fun SignedJWT.expiresIn(): Long = Duration.between(Instant.now(), this.jwtClaimsSet.expirationTime.toInstant()).seconds
-
-@Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
-@WithSpan
-fun SignedJWT.verify(
-    issuer: String,
-    keySelector: JWSVerificationKeySelector<SecurityContext?>,
-): JWTClaimsSet =
-    verify(
-        DefaultJWTClaimsVerifier(
-            JWTClaimsSet
-                .Builder()
-                .issuer(issuer)
-                .build(),
-            HashSet(
-                listOf("sub", "iss", "iat", "exp"),
-            ),
-        ),
-        keySelector,
-    )
 
 @Throws(BadJOSEException::class, JOSEException::class, BadJWTException::class)
 @WithSpan

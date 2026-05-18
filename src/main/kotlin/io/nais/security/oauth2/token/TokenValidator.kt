@@ -6,6 +6,7 @@ import com.nimbusds.jose.proc.JWSVerificationKeySelector
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import io.nais.security.oauth2.model.CacheProperties
 import io.opentelemetry.instrumentation.annotations.WithSpan
 
@@ -19,7 +20,14 @@ class TokenValidator(
     )
 
     private val keySelector = JWSVerificationKeySelector(JWSAlgorithm.RS256, jwkSource)
+    private val claimsVerifier =
+        DefaultJWTClaimsVerifier<SecurityContext>(
+            JWTClaimsSet.Builder().issuer(issuer).build(),
+            setOf("iss", "iat", "exp"),
+        )
 
     @WithSpan
-    fun validate(token: SignedJWT): JWTClaimsSet = token.verify(issuer, keySelector)
+    fun validate(token: SignedJWT): JWTClaimsSet = token.verify(claimsVerifier, keySelector)
+
+    fun maxClockSkew(): Int = claimsVerifier.maxClockSkew
 }
