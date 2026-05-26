@@ -20,7 +20,7 @@ jobs:
     outputs:
       img_to_deploy: ${{ steps.build-push-sign.outputs.tag }}
       version: ${{ steps.build-push-sign.outputs.version }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
