@@ -1,18 +1,28 @@
 version: 2
 updates:
   - package-ecosystem: "gradle"
-    directory: "/" # Location of package manifests
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
     groups:
       gradle-dependencies:
-         patterns:
-            - "*"
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Oslo"
     groups:
       github-actions:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
