@@ -100,16 +100,18 @@ internal class TokenIssuerTest {
             val tokenIssuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore)
             var issuedToken =
                 tokenIssuer.issueTokenFor(
-                    oAuth2Client(),
-                    tokenExchangeRequest(subjectToken, "aud1"),
+                    oAuth2Client("client0"),
+                    tokenExchangeRequest(subjectToken, "client1"),
                 )
             // simulate 3 key rotations
             repeat(3) {
                 mockkFuture(Duration.ofDays(1).plusMinutes(1))
+                val currentClient = oAuth2Client("client${it + 1}")
+                val nextAudience = "client${it + 2}"
                 issuedToken =
                     tokenIssuer.issueTokenFor(
-                        oAuth2Client(),
-                        tokenExchangeRequest(issuedToken.serialize(), "aud$it"),
+                        currentClient,
+                        tokenExchangeRequest(issuedToken.serialize(), nextAudience),
                     )
                 issuedToken.verifySignature(tokenIssuer.publicJwkSet())
             }
@@ -314,34 +316,17 @@ internal class TokenIssuerTest {
     }
 
     @Test
-    fun `chained exchange succeeds with audience mismatch when validation is disabled (default)`() {
+    fun `chained exchange fails when subject token audience does not match requesting client_id`() {
         withMockOAuth2Server {
             val fakeKeyStore = MockRotatingKeyStore()
-            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, validateSubjectTokenAudience = false)
+            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore)
             val clientA = oAuth2Client("clientA")
             val clientC = oAuth2Client("clientC")
 
             val externalSubjectToken = createSubjectToken("thesubject").serialize()
             val internalToken = issuer.issueTokenFor(clientA, tokenExchangeRequest(externalSubjectToken, "clientB"))
 
-            // clientC exchanges a token issued to clientB — mismatch, but validation is off
-            val result = issuer.issueTokenFor(clientC, tokenExchangeRequest(internalToken.serialize(), "someTarget"))
-            result.verifySignature(issuer.publicJwkSet()).claims["sub"] shouldBe "thesubject"
-        }
-    }
-
-    @Test
-    fun `chained exchange fails with audience mismatch when validation is enabled`() {
-        withMockOAuth2Server {
-            val fakeKeyStore = MockRotatingKeyStore()
-            val issuer = tokenIssuer(mockOAuth2Server = this, rotatingKeyStore = fakeKeyStore, validateSubjectTokenAudience = true)
-            val clientA = oAuth2Client("clientA")
-            val clientC = oAuth2Client("clientC")
-
-            val externalSubjectToken = createSubjectToken("thesubject").serialize()
-            val internalToken = issuer.issueTokenFor(clientA, tokenExchangeRequest(externalSubjectToken, "clientB"))
-
-            // clientC exchanges a token issued to clientB — mismatch, validation is on
+            // clientC exchanges a token issued to clientB — rejected
             shouldThrow<OAuth2Exception> {
                 issuer.issueTokenFor(clientC, tokenExchangeRequest(internalToken.serialize(), "someTarget"))
             }
@@ -381,7 +366,6 @@ internal class TokenIssuerTest {
         mockOAuth2Server: MockOAuth2Server? = null,
         rotatingKeyStore: RotatingKeyStore? = null,
         subjectTokenMappings: ClaimMappings = emptyMap(),
-        validateSubjectTokenAudience: Boolean = false,
     ) = if (mockOAuth2Server != null) {
         TokenIssuer(
             AuthorizationServerProperties(
@@ -393,7 +377,6 @@ internal class TokenIssuerTest {
                     ),
                 tokenExpiry = 300,
                 rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
-                validateSubjectTokenAudience = validateSubjectTokenAudience,
             ),
         )
     } else {
@@ -403,7 +386,6 @@ internal class TokenIssuerTest {
                 subjectTokenIssuers = emptyList(),
                 tokenExpiry = 300,
                 rotatingKeyStore = rotatingKeyStore ?: rotatingKeyStore(),
-                validateSubjectTokenAudience = validateSubjectTokenAudience,
             ),
         )
     }

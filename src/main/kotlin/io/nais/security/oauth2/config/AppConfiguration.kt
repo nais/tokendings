@@ -123,7 +123,6 @@ class AuthorizationServerProperties(
     val tokenExpiry: Long = 300,
     val rotatingKeyStore: RotatingKeyStore,
     val clientAssertionMaxExpiry: Long = 120,
-    val validateSubjectTokenAudience: Boolean = false,
 ) {
     fun tokenEndpointUrl() = issuerUrl.path(TOKEN_PATH)
 

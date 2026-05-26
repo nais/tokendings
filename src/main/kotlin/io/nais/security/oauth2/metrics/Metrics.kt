@@ -33,13 +33,4 @@ object Metrics {
             .help("Number of tokens we have issued")
             .labelNames("client_id", "audience")
             .register()
-
-    val subjectTokenAudienceMismatchCounter: Counter =
-        Counter
-            .build()
-            .namespace(NAMESPACE)
-            .name("subject_token_audience_mismatch")
-            .help("Number of token exchanges where the internal subject token audience does not match the requesting client_id")
-            .labelNames("client_id", "subject_token_audience")
-            .register()
 }
