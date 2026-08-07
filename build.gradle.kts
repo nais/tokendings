@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 val assertjVersion = "3.27.7"
 val dropWizardVersion = "4.2.39"
-val flywayVersion = "12.11.0"
+val flywayVersion = "13.0.0"
 val h2Version = "2.4.240"
 val hikaricpVersion = "7.1.0"
 val junitJupiterVersion = "6.1.2"
