@@ -28,7 +28,7 @@ val openTelemetryAnnotationsVersion = "2.31.1"
 val openTelemetryVersion = "1.65.0"
 val postgresqlVersion = "42.7.13"
 val prometheusDropWizardVersion = "0.16.0"
-val testcontainersPostgresVersion = "1.21.4"
+val testcontainersPostgresVersion = "2.0.5"
 
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
@@ -54,14 +54,6 @@ java {
 
 repositories {
     mavenCentral()
-}
-
-configurations.all {
-    resolutionStrategy {
-        // testcontainers 1.21.4 pulls commons-compress 1.24.0 (CVE-2024-25710, CVE-2024-26308).
-        // Test-only, but force a patched version to silence scanners. Re-check on testcontainers bumps.
-        force("org.apache.commons:commons-compress:1.28.0")
-    }
 }
 
 dependencies {
@@ -116,7 +108,7 @@ dependencies {
     testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
-    testImplementation("org.testcontainers:postgresql:$testcontainersPostgresVersion")
+    testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersPostgresVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
 }
 

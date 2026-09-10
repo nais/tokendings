@@ -25,7 +25,7 @@ import io.nais.security.oauth2.tokenExchangeApp
 import io.nais.security.oauth2.utils.jwkSet
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.Duration
 
 fun mockConfig(
@@ -145,7 +145,7 @@ fun <R> withLogAppender(
 
 internal object PostgresContainer {
     val instance by lazy {
-        PostgreSQLContainer<Nothing>("postgres:14").apply {
+        PostgreSQLContainer("postgres:14").apply {
             start()
         }
     }
