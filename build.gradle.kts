@@ -7,11 +7,13 @@ val dropWizardVersion = "4.2.40"
 val flywayVersion = "13.5.0"
 val h2Version = "2.4.240"
 val hikaricpVersion = "7.1.0"
+val httpClientVersion = "5.6.4"
 val junitJupiterVersion = "6.1.3"
+val jacksonVersion = "3.2.2"
 val konfigVersion = "1.6.10.0"
 val kotestVersion = "6.2.4"
 val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.4.10"
+val kotlinVersion = "2.4.20"
 val kotliqueryVersion = "1.9.1"
 val ktorVersion = "3.5.2"
 val logbackVersion = "1.6.3"
@@ -20,6 +22,7 @@ val micrometerRegistryPrometheusVersion = "1.17.1"
 val mockOAuth2ServerVersion = "6.0.2"
 val mockWebServerVersion = "5.5.0"
 val mockkVersion = "1.14.11"
+val nettyVersion = "4.2.18.Final"
 val nimbusSdkVersion = "11.38.2"
 val openTelemetryAnnotationsVersion = "2.31.1"
 val openTelemetryVersion = "1.65.0"
@@ -35,7 +38,6 @@ plugins {
     id("org.jmailen.kotlinter") version "5.7.0"
     id("io.github.ben-manes.versions") version "0.61.0"
 }
-
 
 kotlin {
     jvmToolchain(21)
@@ -54,7 +56,6 @@ repositories {
     mavenCentral()
 }
 
-
 configurations.all {
     resolutionStrategy {
         // testcontainers 1.21.4 pulls commons-compress 1.24.0 (CVE-2024-25710, CVE-2024-26308).
@@ -64,6 +65,9 @@ configurations.all {
 }
 
 dependencies {
+    implementation(platform("io.netty:netty-bom:$nettyVersion"))
+    implementation(platform("tools.jackson:jackson-bom:$jacksonVersion"))
+
     implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
@@ -97,6 +101,7 @@ dependencies {
     implementation("io.dropwizard.metrics:metrics-core:$dropWizardVersion")
 
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
+    testImplementation("org.apache.httpcomponents.client5:httpclient5:$httpClientVersion")
     testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
     runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
     testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
