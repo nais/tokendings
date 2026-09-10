@@ -2,41 +2,13 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
-val assertjVersion = "3.27.7"
-val dropWizardVersion = "4.2.40"
-val flywayVersion = "13.5.0"
-val h2Version = "2.4.240"
-val hikaricpVersion = "7.1.0"
-val httpClientVersion = "5.6.4"
-val junitJupiterVersion = "6.1.3"
-val jacksonVersion = "3.2.2"
-val konfigVersion = "1.6.10.0"
-val kotestVersion = "6.2.4"
-val kotlinLoggingVersion = "3.0.5"
-val kotlinVersion = "2.4.20"
-val kotliqueryVersion = "1.9.1"
-val ktorVersion = "3.5.2"
-val logbackVersion = "1.6.3"
-val logstashLogbackEncoderVersion = "9.0"
-val micrometerRegistryPrometheusVersion = "1.17.1"
-val mockOAuth2ServerVersion = "6.0.2"
-val mockWebServerVersion = "5.5.0"
-val mockkVersion = "1.14.11"
-val nettyVersion = "4.2.18.Final"
-val nimbusSdkVersion = "11.38.2"
-val openTelemetryAnnotationsVersion = "2.31.1"
-val openTelemetryVersion = "1.65.0"
-val postgresqlVersion = "42.7.13"
-val prometheusDropWizardVersion = "0.16.0"
-val testcontainersPostgresVersion = "2.0.5"
-
 val mainClassKt = "io.nais.security.oauth2.TokenExchangeAppKt"
 
 plugins {
     application
-    kotlin("jvm") version "2.4.10"
-    id("org.jmailen.kotlinter") version "5.7.0"
-    id("io.github.ben-manes.versions") version "0.61.0"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinter)
+    alias(libs.plugins.dependency.updates)
 }
 
 kotlin {
@@ -57,59 +29,66 @@ repositories {
 }
 
 dependencies {
-    implementation(platform("io.netty:netty-bom:$nettyVersion"))
-    implementation(platform("tools.jackson:jackson-bom:$jacksonVersion"))
+    // Platforms
+    implementation(platform(libs.jackson.bom))
+    implementation(platform(libs.netty.bom))
 
-    implementation(kotlin("stdlib"))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-script-runtime:$kotlinVersion")
-    implementation("com.natpryce:konfig:$konfigVersion")
-    implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
-    implementation("io.micrometer:micrometer-registry-prometheus-simpleclient:$micrometerRegistryPrometheusVersion")
-    implementation("com.nimbusds:oauth2-oidc-sdk:$nimbusSdkVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-    implementation("com.zaxxer:HikariCP:$hikaricpVersion")
-    implementation("org.postgresql:postgresql:$postgresqlVersion")
-    implementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-metrics-micrometer-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-jackson-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-id:$ktorVersion")
-    implementation("io.ktor:ktor-server-double-receive:$ktorVersion")
-    implementation("io.ktor:ktor-server-forwarded-header:$ktorVersion")
-    implementation("io.ktor:ktor-client-core-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio-jvm:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
+    // Kotlin
+    implementation(libs.kotlin.reflect)
+    implementation(libs.kotlin.script.runtime)
+    testImplementation(libs.kotlin.test.junit5)
 
-    implementation("io.opentelemetry:opentelemetry-api:$openTelemetryVersion")
-    implementation("io.opentelemetry:opentelemetry-extension-kotlin:$openTelemetryVersion")
-    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$openTelemetryAnnotationsVersion")
-    implementation("io.prometheus:simpleclient_dropwizard:$prometheusDropWizardVersion")
-    implementation("io.dropwizard.metrics:metrics-core:$dropWizardVersion")
+    // Observability
+    implementation(libs.dropwizard.metrics)
+    implementation(libs.micrometer.registry.prometheus)
+    implementation(libs.opentelemetry.api)
+    implementation(libs.opentelemetry.extension.kotlin)
+    implementation(libs.opentelemetry.instrumentation.annotations)
+    implementation(libs.prometheus.dropwizard)
 
-    testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
-    testImplementation("org.apache.httpcomponents.client5:httpclient5:$httpClientVersion")
-    testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
-    runtimeOnly("ch.qos.logback:logback-classic:$logbackVersion")
-    testImplementation("ch.qos.logback:logback-classic:$logbackVersion")
-    implementation("net.logstash.logback:logstash-logback-encoder:$logstashLogbackEncoderVersion")
-    testImplementation("com.h2database:h2:$h2Version")
-    testImplementation("no.nav.security:mock-oauth2-server:$mockOAuth2ServerVersion")
-    testImplementation("org.assertj:assertj-core:$assertjVersion")
-    testImplementation("com.squareup.okhttp3:mockwebserver:$mockWebServerVersion")
-    testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion") // for kotest framework
-    testImplementation("io.kotest:kotest-assertions-core-jvm:$kotestVersion") // for kotest core jvm assertions
-    testImplementation("io.kotest:kotest-property-jvm:$kotestVersion") // for kotest property test
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
-    testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersPostgresVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+    // Logging
+    implementation(libs.kotlin.logging)
+    runtimeOnly(libs.logback.classic)
+    testImplementation(libs.logback.classic)
+    implementation(libs.logstash.encoder)
+
+    // Production
+    implementation(libs.flyway.database.postgresql)
+    implementation(libs.hikaricp)
+    implementation(libs.konfig)
+    implementation(libs.kotliquery)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.serialization.jackson)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
+    implementation(libs.ktor.server.call.id)
+    implementation(libs.ktor.server.call.logging)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.double.receive)
+    implementation(libs.ktor.server.forwarded.header)
+    implementation(libs.ktor.server.metrics.micrometer)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.status.pages)
+    implementation(libs.nimbus.oauth2.oidc)
+    implementation(libs.postgresql)
+
+    // Tests
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.h2)
+    testImplementation(libs.httpclient5)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.kotest.assertions.core) // for kotest core assertions
+    testImplementation(libs.kotest.property) // for kotest property test
+    testImplementation(libs.kotest.runner.junit5) // for kotest framework
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.mock.oauth2.server)
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.testcontainers.postgresql)
 }
 
 tasks {

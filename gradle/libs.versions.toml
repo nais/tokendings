@@ -1,0 +1,97 @@
+[versions]
+assertj = "3.27.7"
+dropwizard = "4.2.40"
+flyway = "13.5.0"
+h2 = "2.4.240"
+hikaricp = "7.1.0"
+httpclient = "5.6.4"
+jackson = "3.2.2"
+junit = "6.1.3"
+konfig = "1.6.10.0"
+kotest = "6.2.4"
+kotlinter = "5.7.0"
+kotlin = "2.4.20"
+kotlin-logging = "3.0.5"
+kotliquery = "1.9.1"
+ktor = "3.5.2"
+logback = "1.6.3"
+logstash-encoder = "9.0"
+micrometer = "1.17.1"
+mock-oauth2-server = "6.0.2"
+mockk = "1.14.11"
+mockwebserver = "5.5.0"
+netty = "4.2.18.Final"
+nimbus = "11.38.2"
+opentelemetry = "1.65.0"
+opentelemetry-annotations = "2.31.1"
+postgresql = "42.7.13"
+prometheus-dropwizard = "0.16.0"
+testcontainers = "2.0.5"
+versions-plugin = "0.61.0"
+
+[libraries]
+
+# Platforms
+jackson-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson" }
+netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
+
+# Kotlin
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-script-runtime = { module = "org.jetbrains.kotlin:kotlin-script-runtime", version.ref = "kotlin" }
+kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+
+# Observability
+dropwizard-metrics = { module = "io.dropwizard.metrics:metrics-core", version.ref = "dropwizard" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus-simpleclient", version.ref = "micrometer" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+opentelemetry-extension-kotlin = { module = "io.opentelemetry:opentelemetry-extension-kotlin", version.ref = "opentelemetry" }
+opentelemetry-instrumentation-annotations = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations", version.ref = "opentelemetry-annotations" }
+prometheus-dropwizard = { module = "io.prometheus:simpleclient_dropwizard", version.ref = "prometheus-dropwizard" }
+
+# Logging
+kotlin-logging = { module = "io.github.microutils:kotlin-logging", version.ref = "kotlin-logging" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logstash-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-encoder" }
+
+# Production
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+konfig = { module = "com.natpryce:konfig", version.ref = "konfig" }
+kotliquery = { module = "com.github.seratch:kotliquery", version.ref = "kotliquery" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation-jvm", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core-jvm", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson-jvm", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt-jvm", version.ref = "ktor" }
+ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "ktor" }
+ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-server-double-receive = { module = "io.ktor:ktor-server-double-receive", version.ref = "ktor" }
+ktor-server-forwarded-header = { module = "io.ktor:ktor-server-forwarded-header", version.ref = "ktor" }
+ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
+ktor-server-status-pages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
+nimbus-oauth2-oidc = { module = "com.nimbusds:oauth2-oidc-sdk", version.ref = "nimbus" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+
+# Tests
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property-jvm", version.ref = "kotest" }
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock-jvm", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+mock-oauth2-server = { module = "no.nav.security:mock-oauth2-server", version.ref = "mock-oauth2-server" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
+
+[plugins]
+dependency-updates = { id = "io.github.ben-manes.versions", version.ref = "versions-plugin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
