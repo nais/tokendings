@@ -62,7 +62,7 @@ spec:
       {{- end }}
   gcp:
     sqlInstances:
-      - type: POSTGRES_14
+      - type: POSTGRES_18
         name: {{ .Values.tokendings.database.sqlinstance_name }}
         diskSize: {{ .Values.tokendings.database.diskSize }}
         highAvailability: {{ .Values.tokendings.database.highAvailability }}

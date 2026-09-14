@@ -145,7 +145,7 @@ fun <R> withLogAppender(
 
 internal object PostgresContainer {
     val instance by lazy {
-        PostgreSQLContainer("postgres:14").apply {
+        PostgreSQLContainer("postgres:18").apply {
             start()
         }
     }
