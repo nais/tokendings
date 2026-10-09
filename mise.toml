@@ -2,7 +2,7 @@
 pin = true
 
 [tools]
-java = "temurin-21.0.10+7.0.LTS"
+java = "temurin-21.0.12+101.0.LTS"
 helm = "3.16.2"
 step = "0.30.2"
 "aqua:sethvargo/ratchet" = "0.11.4"
