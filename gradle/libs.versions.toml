@@ -1,38 +1,40 @@
 [versions]
 assertj = "3.27.7"
 dropwizard = "4.2.40"
-flyway = "13.5.0"
-h2 = "2.4.240"
+flyway = "13.10.0"
+h2 = "2.5.252"
 hikaricp = "7.1.0"
 httpclient = "5.6.4"
-jackson = "3.2.2"
+jackson = "3.2.3"
+jackson2 = "2.22.3"
 junit = "6.1.3"
 konfig = "1.6.10.0"
-kotest = "6.2.4"
+kotest = "6.2.5"
 kotlinter = "5.7.0"
 kotlin = "2.4.20"
 kotlin-logging = "3.0.5"
 kotliquery = "1.9.1"
-ktor = "3.5.2"
-logback = "1.6.3"
+ktor = "3.6.0"
+logback = "1.6.5"
 logstash-encoder = "9.0"
 micrometer = "1.17.1"
-mock-oauth2-server = "6.0.2"
+mock-oauth2-server = "6.0.5"
 mockk = "1.14.11"
 mockwebserver = "5.5.0"
-netty = "4.2.18.Final"
+netty = "4.2.19.Final"
 nimbus = "11.38.2"
-opentelemetry = "1.65.0"
-opentelemetry-annotations = "2.31.1"
-postgresql = "42.7.13"
+opentelemetry = "1.66.0"
+opentelemetry-annotations = "2.32.0"
+postgresql = "42.7.14"
 prometheus-dropwizard = "0.16.0"
 testcontainers = "2.0.5"
-versions-plugin = "0.61.0"
+versions-plugin = "0.65.0"
 
 [libraries]
 
 # Platforms
 jackson-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson2" }
 netty-bom = { module = "io.netty:netty-bom", version.ref = "netty" }
 
 # Kotlin

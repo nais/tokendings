@@ -31,6 +31,7 @@ repositories {
 dependencies {
     // Platforms
     implementation(platform(libs.jackson.bom))
+    implementation(platform(libs.jackson2.bom))
     implementation(platform(libs.netty.bom))
 
     // Kotlin
