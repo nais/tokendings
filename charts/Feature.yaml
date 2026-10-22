@@ -1,6 +1,8 @@
 dependencies:
   - allOf:
       - naiserator
+      - fqdn-policy-crds
+      - replicator
 environmentKinds:
   - tenant
   - onprem
