@@ -3,9 +3,9 @@ pin = true
 
 [tools]
 java = "temurin-21.0.13+9.0.LTS"
-helm = "3.16.2"
-step = "0.30.2"
-"aqua:sethvargo/ratchet" = "0.11.4"
+helm = "3.22.1"
+step = "0.31.0"
+"aqua:sethvargo/ratchet" = "0.12.0"
 
 [tasks.services]
 description = "Start local infrastructure (Postgres, mock-oauth2-server, otel)"

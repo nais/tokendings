@@ -59,7 +59,7 @@ jobs:
       - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # ratchet:azure/setup-helm@v5
         name: "Setup Helm"
         with:
-          version: "v3.15.1"
+          version: "v3.22.1"
       - name: Build Chart
         run: |-
           yq -i ".version = \"${{ steps.build-push-sign.outputs.version }}\"" charts/Chart.yaml
