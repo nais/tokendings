@@ -29,6 +29,12 @@ repositories {
 }
 
 dependencies {
+    constraints {
+        implementation(libs.jwks.rsa) {
+            because("pull in the Guava fix for CVE-2026-102554 until Ktor updates jwks-rsa")
+        }
+    }
+
     // Platforms
     implementation(platform(libs.jackson.bom))
     implementation(platform(libs.jackson2.bom))

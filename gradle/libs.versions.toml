@@ -1,34 +1,35 @@
 [versions]
 assertj = "3.27.7"
 dropwizard = "4.2.40"
-flyway = "13.11.1"
+flyway = "13.12.2"
 h2 = "2.5.252"
 hikaricp = "7.1.0"
 httpclient = "5.6.5"
-jackson = "3.2.4"
-jackson2 = "2.22.4"
+jackson = "3.3.0"
+jackson2 = "2.23.0"
 junit = "6.1.3"
+jwks-rsa = "0.24.2"
 konfig = "1.6.10.0"
-kotest = "6.2.6"
+kotest = "6.2.7"
 kotlinter = "5.7.0"
 kotlin = "2.4.21"
 kotlin-logging = "3.0.5"
 kotliquery = "1.9.1"
-ktor = "3.6.0"
-logback = "1.6.6"
+ktor = "3.6.1"
+logback = "1.6.7"
 logstash-encoder = "9.0"
 micrometer = "1.17.2"
-mock-oauth2-server = "6.1.3"
-mockk = "1.14.11"
+mock-oauth2-server = "6.1.5"
+mockk = "1.14.12"
 mockwebserver = "5.5.1"
-netty = "4.2.19.Final"
-nimbus = "11.38.2"
-opentelemetry = "1.67.0"
+netty = "4.2.20.Final"
+nimbus = "11.39"
+opentelemetry = "1.68.0"
 opentelemetry-annotations = "2.33.1"
 postgresql = "42.7.14"
 prometheus-dropwizard = "0.16.0"
 testcontainers = "2.0.5"
-versions-plugin = "0.66.0"
+versions-plugin = "0.67.0"
 
 [libraries]
 
@@ -58,6 +59,7 @@ logstash-encoder = { module = "net.logstash.logback:logstash-logback-encoder", v
 # Production
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+jwks-rsa = { module = "com.auth0:jwks-rsa", version.ref = "jwks-rsa" }
 konfig = { module = "com.natpryce:konfig", version.ref = "konfig" }
 kotliquery = { module = "com.github.seratch:kotliquery", version.ref = "kotliquery" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio-jvm", version.ref = "ktor" }
