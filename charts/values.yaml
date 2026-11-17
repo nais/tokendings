@@ -22,7 +22,7 @@ tokendings:
       memory: 2Gi
     requests:
       memory: 1Gi
-      cpu: 750m
+      cpu: 100m
   image: tokendings
   tag: latest
   env:
