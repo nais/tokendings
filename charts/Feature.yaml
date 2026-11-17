@@ -92,3 +92,11 @@ values:
     description: Maximum number of replicas for tokendings
     config:
       type: int
+  tokendings.replicas.cpuThresholdPercentage:
+    description: Target CPU utilization as a percentage of the CPU request for tokendings autoscaling
+    config:
+      type: int
+  tokendings.resources.requests.cpu:
+    description: CPU request for tokendings, as a Kubernetes quantity (for example 750m or 1)
+    config:
+      type: string

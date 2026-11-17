@@ -16,6 +16,7 @@ tokendings:
   replicas:
     min: 2
     max: 4
+    cpuThresholdPercentage: 70
   resources:
     limits:
       memory: 2Gi
