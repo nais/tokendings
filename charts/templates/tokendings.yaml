@@ -16,7 +16,11 @@ spec:
   replicas:
     min: {{.Values.tokendings.replicas.min}}
     max: {{.Values.tokendings.replicas.max}}
-    cpuThresholdPercentage: {{ .Values.tokendings.replicas.cpuThresholdPercentage }}
+    scalingStrategy:
+      cpu:
+        thresholdPercentage: {{ .Values.tokendings.replicas.cpuThresholdPercentage }}
+      scaleUpStabilizationWindowSeconds: {{ .Values.tokendings.replicas.scaleUpStabilizationWindowSeconds }}
+      scaleDownStabilizationWindowSeconds: {{ .Values.tokendings.replicas.scaleDownStabilizationWindowSeconds }}
   startup:
     initialDelay: 10
     failureThreshold: 30 # allow up to 1 minute (30 attempts * 2 second period) for the application to start

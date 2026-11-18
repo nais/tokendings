@@ -17,6 +17,8 @@ tokendings:
     min: 2
     max: 4
     cpuThresholdPercentage: 70
+    scaleUpStabilizationWindowSeconds: 60
+    scaleDownStabilizationWindowSeconds: 300
   resources:
     limits:
       memory: 2Gi

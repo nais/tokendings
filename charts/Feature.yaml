@@ -96,6 +96,14 @@ values:
     description: Target CPU utilization as a percentage of the CPU request for tokendings autoscaling
     config:
       type: int
+  tokendings.replicas.scaleUpStabilizationWindowSeconds:
+    description: Scale-up stabilization window in seconds for tokendings autoscaling
+    config:
+      type: int
+  tokendings.replicas.scaleDownStabilizationWindowSeconds:
+    description: Scale-down stabilization window in seconds for tokendings autoscaling
+    config:
+      type: int
   tokendings.resources.requests.cpu:
     description: CPU request for tokendings, as a Kubernetes quantity (for example 750m or 1)
     config:
